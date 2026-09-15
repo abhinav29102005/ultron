@@ -31,7 +31,8 @@ class TelemetryRecorder:
         fname = self.log_dir / f"telemetry_{name}.jsonl"
         try:
             with fname.open("a", encoding="utf-8") as fh:
-                fh.write(json.dumps(trace.dict(), default=str) + "\n")
+                data = trace.model_dump() if hasattr(trace, "model_dump") else trace.dict()
+                fh.write(json.dumps(data, default=str) + "\n")
             logger.debug("Telemetry trace written to %s", fname)
         except Exception:
             logger.exception("Failed to write telemetry trace to %s", fname)
