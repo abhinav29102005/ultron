@@ -148,6 +148,12 @@ async def run_no_wake_mode(container) -> None:
     controller = HoldToTalkController(key_name=hold_key)
     controller.start_listening()
 
+    import uuid
+
+    # Session id for this run; turns increment per user utterance.
+    session_id = str(uuid.uuid4())
+    turn_id = 0
+
     try:
         CLI.print_startup()
         print(f"No-Wake mode active. Hold {hold_key} to talk, release to process.\n")
@@ -156,14 +162,49 @@ async def run_no_wake_mode(container) -> None:
             if audio is not None:
                 stop_audio()
                 CLI.print_processing()
-                # Use a quick STT on the captured audio
+                # Use a quick STT on the captured audio. Stream partial
+                # transcript chunks (timestamped) for early-retrieval experiments
+                # while still delivering the final utterance as a single event.
                 from speech.speech_to_text.transcriber import Transcriber
+                from speech.stt_stream import STTStreamer
+
                 transcriber = Transcriber()
-                text = transcriber.transcribe(audio)
-                if text.strip():
-                    CLI.print_user_input(text)
+                streamer = STTStreamer(transcriber)
+
+                final_text = ""
+                try:
+                    # New utterance -> increment turn id and mark active
+                    turn_id += 1
+                    container.cancellation_manager.set_active_turn(session_id, turn_id)
+
+                    async for chunk in streamer.stream_from_audio(audio, chunk_words=8):
+                        # Publish incremental partials so downstream controllers
+                        # can react before the whole utterance is complete.
+                        await container.event_bus.publish(
+                            UserInputEvent(
+                                text=chunk["text"],
+                                source="voice_partial",
+                                session_id=session_id,
+                                turn_id=turn_id,
+                            )
+                        )
+                        final_text = chunk["text"]
+                except Exception:
+                    # Best-effort: fall back to a single-shot transcription
+                    try:
+                        final_text = Transcriber().transcribe(audio)
+                    except Exception:
+                        final_text = ""
+
+                if final_text.strip():
+                    CLI.print_user_input(final_text)
                     await container.event_bus.publish(
-                        UserInputEvent(text=text, source="voice")
+                        UserInputEvent(
+                            text=final_text,
+                            source="voice",
+                            session_id=session_id,
+                            turn_id=turn_id,
+                        )
                     )
     except asyncio.CancelledError:
         pass
@@ -207,9 +248,20 @@ async def run_wakeword_mode(container) -> None:
             text = await asyncio.to_thread(pipeline.listen)
 
             if text.strip():
+                # Wake-word interactions are their own turns.
+                import uuid as _uuid
+
+                turn_id += 1
+                container.cancellation_manager.set_active_turn(session_id, turn_id)
+
                 CLI.print_user_input(text)
                 await container.event_bus.publish(
-                    UserInputEvent(text=text, source="voice")
+                    UserInputEvent(
+                        text=text,
+                        source="voice",
+                        session_id=session_id,
+                        turn_id=turn_id,
+                    )
                 )
     except asyncio.CancelledError:
         pass

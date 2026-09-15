@@ -45,6 +45,32 @@ class ServiceContainer:
         self._logger.info("Initializing ServiceContainer core services...")
         # Eagerly construct the event bus
         _ = self.event_bus
+        # Start retrieval controller early so it can subscribe to partial
+        # transcript events if implemented.
+        try:
+            await self.retrieval_controller.start()
+        except Exception:
+            # The controller is optional at this stage; startup should not fail
+            # because it is missing a concrete event subscription implementation.
+            self._logger.debug("RetrievalController start skipped or failed.")
+        # Start the retrieval handler (consumer) so it can process retrieval
+        # requests and produce retrieval results for downstream components.
+        try:
+            await self.retrieval_handler.start()
+        except Exception:
+            self._logger.debug("RetrievalHandler start skipped or failed.")
+        # Start the decomposer so it can subscribe to retrieval results and
+        # emit decomposed queries for downstream retrieval tasks.
+        try:
+            await self.decomposer.start()
+        except Exception:
+            self._logger.debug("Decomposer start skipped or failed.")
+        # Start a minimal retriever stub to return documents for decomposed
+        # queries so the rest of the pipeline can be exercised end-to-end.
+        try:
+            await self.retriever.start()
+        except Exception:
+            self._logger.debug("Retriever start skipped or failed.")
         self._logger.info("ServiceContainer core services ready.")
 
     async def shutdown(self) -> None:
@@ -198,6 +224,51 @@ class ServiceContainer:
             )
 
         return self._registry["intent_detector"]
+
+    @property
+    def retrieval_controller(self):
+        """Get the RetrievalController instance, lazily initialized."""
+        if "retrieval_controller" not in self._registry:
+            from intelligence.retrieval_controller import RetrievalController
+
+            self._registry["retrieval_controller"] = RetrievalController(container=self)
+        return self._registry["retrieval_controller"]
+
+    @property
+    def retrieval_handler(self):
+        """Get the RetrievalHandler instance, lazily initialized."""
+        if "retrieval_handler" not in self._registry:
+            from intelligence.retrieval_handler import RetrievalHandler
+
+            self._registry["retrieval_handler"] = RetrievalHandler(container=self)
+        return self._registry["retrieval_handler"]
+
+    @property
+    def decomposer(self):
+        """Get the Decomposer instance, lazily initialized."""
+        if "decomposer" not in self._registry:
+            from intelligence.decomposer import Decomposer
+
+            self._registry["decomposer"] = Decomposer(container=self)
+        return self._registry["decomposer"]
+
+    @property
+    def retriever(self):
+        """Get the Retriever instance, lazily initialized."""
+        if "retriever" not in self._registry:
+            from intelligence.retriever import Retriever
+
+            self._registry["retriever"] = Retriever(container=self)
+        return self._registry["retriever"]
+
+    @property
+    def cancellation_manager(self):
+        """Get the CancellationManager instance, lazily initialized."""
+        if "cancellation_manager" not in self._registry:
+            from core.cancellation import CancellationManager
+
+            self._registry["cancellation_manager"] = CancellationManager()
+        return self._registry["cancellation_manager"]
 
     @property
     def planner(self) -> Planner:

@@ -53,6 +53,8 @@ class UserInputEvent(BaseEvent):
     """Published when the user provides text or spoken input."""
     text: str
     source: str
+    session_id: str | None = None
+    turn_id: int | None = None
 
 
 @dataclass

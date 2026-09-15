@@ -1,0 +1,134 @@
+"""
+intelligence/retrieval_controller.py
+==================================
+
+Stub for a Retrieval Controller that listens to partial transcript events
+and decides whether to WAIT, RETRIEVE_EARLY, or SUPPRESS retrieval. The
+implementation is intentionally minimal: it exposes a `Decision` enum and a
+`RetrievalController` class with a synchronous `decide` method and an
+`async start()` method placeholder for event subscription.
+
+Later: hook into the EventBus to receive `UserInputEvent` partials and
+publish `retrieval_events` as structured telemetry.
+"""
+
+from __future__ import annotations
+
+from enum import Enum
+from typing import Any
+import logging
+from dataclasses import dataclass
+
+from core.event_bus import UserInputEvent, BaseEvent
+
+logger = logging.getLogger("retrieval")
+
+
+class Decision(Enum):
+    WAIT = "wait"
+    RETRIEVE_EARLY = "retrieve_early"
+    SUPPRESS = "suppress"
+
+
+class RetrievalController:
+    """Simple rule-based controller for early retrieval decisions.
+
+    This is a scaffold: replace `decide` with a model-backed classifier
+    or token-entropy estimator later.
+    """
+
+    def __init__(self, container: Any) -> None:
+        self.container = container
+        self._subscribed = False
+        self._handler = None
+
+    def decide(self, partial_text: str) -> Decision:
+        """Return a Decision for the given partial transcript.
+
+        Current heuristic rules:
+        - If partial_text contains presentation keywords, return SUPPRESS.
+        - If length exceeds 6 words, return RETRIEVE_EARLY.
+        - Otherwise return WAIT.
+        """
+        if not partial_text or not partial_text.strip():
+            return Decision.WAIT
+
+        text = partial_text.lower()
+
+        presentation_tokens = ["bullet", "short", "summar", "translate", "repeat"]
+        if any(tok in text for tok in presentation_tokens):
+            return Decision.SUPPRESS
+
+        word_count = len(text.split())
+        if word_count >= 6:
+            return Decision.RETRIEVE_EARLY
+
+        return Decision.WAIT
+
+    async def start(self) -> None:
+        """Placeholder to subscribe to event bus and run controller loop.
+
+        The container's EventBus should be used to receive partial voice
+        events and publish retrieval_events. Implement once EventBus
+        subscription conventions are finalised.
+        """
+        # Subscribe to UserInputEvent to receive partial voice transcripts.
+        if self._subscribed:
+            return
+
+        async def _on_user_input(event: UserInputEvent) -> None:
+            try:
+                # Only consider partial voice transcripts here
+                if getattr(event, "source", "") != "voice_partial":
+                    return
+
+                decision = self.decide(event.text)
+
+                if decision == Decision.WAIT:
+                    return
+
+                # Publish a lightweight RetrievalEvent for listeners.
+                retrieval = RetrievalEvent(
+                    decision=decision.value,
+                    text=event.text,
+                    session_id=getattr(event, "session_id", None),
+                    turn_id=getattr(event, "turn_id", None),
+                )
+                await self.container.event_bus.publish(retrieval)
+                logger.debug(f"Published retrieval event: {decision} for '{event.text}'")
+            except Exception:
+                logger.exception("RetrievalController handler failed")
+
+        # Register handler
+        self._handler = _on_user_input
+        try:
+            self.container.event_bus.subscribe(UserInputEvent, self._handler)
+            self._subscribed = True
+            logger.info("RetrievalController started and subscribed to UserInputEvent.")
+        except Exception:
+            logger.exception("Failed to subscribe RetrievalController to EventBus")
+
+    async def close(self) -> None:
+        """Unsubscribe from the EventBus."""
+        if self._subscribed and self._handler is not None:
+            try:
+                self.container.event_bus.unsubscribe(UserInputEvent, self._handler)
+            except Exception:
+                logger.debug("Failed to unsubscribe RetrievalController handler")
+            self._subscribed = False
+            self._handler = None
+            logger.info("RetrievalController stopped.")
+
+
+@dataclass
+class RetrievalEvent(BaseEvent):
+    """Event published when the controller wants retrieval or suppression.
+
+    Fields:
+        decision: one of 'wait'|'retrieve_early'|'suppress'
+        text: the partial transcript that triggered the decision
+    """
+    decision: str
+    text: str
+    session_id: str | None = None
+    turn_id: int | None = None
