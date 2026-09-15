@@ -1,5 +1,5 @@
 """
-run.py – Unified Launcher for FRIDAY Agent
+run.py – Unified Launcher for ULTRON Agent
 ==========================================
 Supports three interaction modes:
   1. text       – Terminal text input (default)
@@ -34,8 +34,8 @@ load_env_file()
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="friday",
-        description="JARVIS / FRIDAY – AI Desktop Assistant",
+        prog="ultron",
+        description="ULTRON – Autonomous AI Desktop Assistant & Streaming Live RAG",
     )
     parser.add_argument(
         "--mode",

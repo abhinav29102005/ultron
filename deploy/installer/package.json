@@ -1,7 +1,7 @@
 {
-  "name": "friday-installer",
+  "name": "ultron-installer",
   "version": "1.0.0",
-  "description": "Cloudflare Worker serving the FRIDAY Agent installer script",
+  "description": "Cloudflare Worker serving the ULTRON Agent installer script and landing portal",
   "main": "src/index.ts",
   "scripts": {
     "deploy": "wrangler deploy",

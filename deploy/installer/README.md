@@ -1,40 +1,32 @@
-# FRIDAY Agent Installer Endpoint
+# ULTRON Agent Installer & Portal Endpoint
 
-This directory contains the Cloudflare Worker that powers the one-line installation command:
+This directory contains the Cloudflare Worker that powers the one-line installation commands and web portal:
 
 ```bash
+# Linux / macOS
 curl -fsSL https://friday.mlsctiet.com/install | bash
+
+# Windows (PowerShell)
+irm https://friday.mlsctiet.com/install | iex
+```
+
+Or via direct Workers endpoint:
+```bash
+curl -fsSL https://ultron-installer.msc-295.workers.dev/install | bash
 ```
 
 ## How it works
 
-1. The user requests `https://friday.mlsctiet.com/install`.
-2. This Cloudflare Worker (`src/index.ts`) intercepts the request.
-3. The Worker dynamically fetches the *latest* version of `scripts/install.sh` from the `main` branch of this GitHub repository via `raw.githubusercontent.com`.
-4. The Worker returns the raw bash script text to the user's terminal, where `bash` executes it.
+1. **Request Interception**: Incoming requests to `/install` or custom paths are routed through Cloudflare edge network.
+2. **Dynamic Live Fetch**: The worker fetches the latest `scripts/install.sh` or `scripts/install.ps1` directly from `https://raw.githubusercontent.com/abhinav29102005/ultron/main/`.
+3. **Resilient Embedded Fallback**: If GitHub is unreachable or throttled, it immediately falls back to high-fidelity embedded scripts.
+4. **Interactive Portal**: Requests to `/` serve a responsive, cybernetic dark-mode landing portal with copy-to-clipboard actions and architecture highlights.
+5. **Health Telemetry**: `/health` and `/api/status` expose machine-readable JSON status.
 
-**Benefit:** You can update the `scripts/install.sh` file in the repository, and the installer command will immediately serve the new version without needing to redeploy the Cloudflare Worker!
-
-## Deployment
-
-Deployment is handled automatically via GitHub Actions (`.github/workflows/deploy-installer.yml`). 
-
-### Prerequisites for GitHub Actions
-1. Get a Cloudflare API Token (with Edit Cloudflare Workers permissions).
-2. Go to your GitHub Repository Settings > Secrets and variables > Actions.
-3. Add a new Repository Secret:
-   - **Name:** `CLOUDFLARE_API_TOKEN`
-   - **Secret:** Your token value
-
-Any changes pushed to the `main` branch affecting files in the `deploy/installer/` directory will trigger an automatic deployment.
-
-### Manual Deployment
-If you need to deploy manually:
+## Manual Deployment
 
 ```bash
 cd deploy/installer
 npm install
 npx wrangler deploy
 ```
-
-*(Note: You will need to run `npx wrangler login` first if you haven't authenticated locally).*

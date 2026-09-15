@@ -1,16 +1,16 @@
-# FRIDAY Agent - One-line Installer for Windows
+# ULTRON Agent - One-line Installer for Windows
 # Run via: irm https://friday.mlsctiet.com/install | iex
 
 $ErrorActionPreference = 'Stop'
 
 # --- Configuration ---
-$REPO_URL = 'https://github.com/MicrosoftStudentChapter/friday-agent.git'
-$INSTALL_DIR = Join-Path $HOME '.friday-agent'
+$REPO_URL = 'https://github.com/abhinav29102005/ultron.git'
+$INSTALL_DIR = Join-Path $HOME '.ultron'
 $PYTHON_MIN_VERSION = [version]'3.11'
 
 Write-Host ''
 Write-Host '============================================================' -ForegroundColor Cyan
-Write-Host '                   FRIDAY AGENT INSTALLER                   ' -ForegroundColor Cyan
+Write-Host '                   ULTRON AGENT INSTALLER                   ' -ForegroundColor Cyan
 Write-Host '============================================================' -ForegroundColor Cyan
 Write-Host ''
 
@@ -23,7 +23,7 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
 }
 
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-    Write-Host '[ERROR] python is not installed or not in PATH. FRIDAY requires Python 3.11+.' -ForegroundColor Red
+    Write-Host '[ERROR] python is not installed or not in PATH. ULTRON requires Python 3.11+.' -ForegroundColor Red
     exit 1
 }
 
@@ -55,7 +55,7 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
 }
 
 # --- Clone Repository ---
-Write-Host "[INFO] Installing FRIDAY to $INSTALL_DIR..." -ForegroundColor Cyan
+Write-Host "[INFO] Installing ULTRON to $INSTALL_DIR..." -ForegroundColor Cyan
 
 if (Test-Path $INSTALL_DIR) {
     Write-Host '[INFO] Existing installation found. Updating...' -ForegroundColor Cyan
@@ -77,23 +77,25 @@ if (-not (Test-Path '.env')) {
 }
 
 # --- Add Alias ---
-Write-Host "[INFO] Setting up 'friday' alias in PowerShell Profile..." -ForegroundColor Cyan
+Write-Host "[INFO] Setting up 'ultron' & 'friday' aliases in PowerShell Profile..." -ForegroundColor Cyan
 
 if (-not (Test-Path $PROFILE)) {
     New-Item -Type File -Path $PROFILE -Force | Out-Null
 }
 
-$alias_cmd = "function friday { Set-Location '$INSTALL_DIR'; uv run python main.py }"
+$alias_ultron = "function ultron { Set-Location '$INSTALL_DIR'; uv run python run.py }"
+$alias_friday = "function friday { Set-Location '$INSTALL_DIR'; uv run python run.py }"
 $profile_content = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
-if ($profile_content -notmatch 'function friday') {
-    Add-Content $PROFILE "`n# FRIDAY Agent Alias"
-    Add-Content $PROFILE $alias_cmd
-    Write-Host "[OK] Added alias to $PROFILE" -ForegroundColor Green
+if ($profile_content -notmatch 'function ultron') {
+    Add-Content $PROFILE "`n# ULTRON Agent Aliases"
+    Add-Content $PROFILE $alias_ultron
+    Add-Content $PROFILE $alias_friday
+    Write-Host "[OK] Added ultron & friday aliases to $PROFILE" -ForegroundColor Green
 }
 
 Write-Host ''
 Write-Host '============================================================' -ForegroundColor Green
-Write-Host '               FRIDAY AGENT SUCCESSFULLY INSTALLED!         ' -ForegroundColor Green
+Write-Host '               ULTRON AGENT SUCCESSFULLY INSTALLED!         ' -ForegroundColor Green
 Write-Host '============================================================' -ForegroundColor Green
 Write-Host ''
 Write-Host 'Next Steps:'
@@ -101,5 +103,5 @@ Write-Host '1. Restart your terminal, or run: . $PROFILE'
 Write-Host '2. Edit your configuration file to add API keys:'
 Write-Host "   $INSTALL_DIR\.env"
 Write-Host '3. Start the agent by typing:'
-Write-Host '   friday' -ForegroundColor Cyan
+Write-Host '   ultron' -ForegroundColor Cyan
 Write-Host ''

@@ -38,8 +38,8 @@ def parse_args() -> argparse.Namespace:
     Parse command-line arguments.
     """
     parser = argparse.ArgumentParser(
-        prog="friday",
-        description="JARVIS / FRIDAY – AI Desktop Assistant",
+        prog="ultron",
+        description="ULTRON – Autonomous AI Desktop Assistant & Streaming Live RAG",
     )
     parser.add_argument(
         "--config",

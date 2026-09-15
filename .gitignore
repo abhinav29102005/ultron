@@ -115,3 +115,7 @@ site/
 
 # Brainstorming session scratch
 .superpowers/
+
+# Node dependencies
+**/node_modules/
+

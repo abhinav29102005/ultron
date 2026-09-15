@@ -39,7 +39,7 @@ async def run(app: QApplication) -> None:
     # wrong and the rest of boot logs to file, so a healthy start used to
     # produce no console output at all -- leaving "it is working" and "it is
     # hung" looking identical from the terminal.
-    print("[FRIDAY] Starting…", flush=True)
+    print("[ULTRON] Starting…", flush=True)
 
     settings = Settings.load()
     configure_logging(settings)
@@ -153,11 +153,11 @@ def main() -> None:
     # running at once in the first place.
     _instance_lock = SingleInstance()
     if not _instance_lock.acquired:
-        print("[FRIDAY] Already running - look for the orb or the tray icon.", flush=True)
+        print("[ULTRON] Already running - look for the orb or the tray icon.", flush=True)
         QMessageBox.information(
             None,
-            "FRIDAY",
-            "FRIDAY is already running.\n\nLook for the orb, or the tray icon.",
+            "ULTRON",
+            "ULTRON is already running.\n\nLook for the orb, or the tray icon.",
         )
         return
 

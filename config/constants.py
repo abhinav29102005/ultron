@@ -10,11 +10,11 @@ Phase: 0 (Implementation)
 from __future__ import annotations
 
 # Application Metadata
-APP_NAME: str = "FRIDAY"
-APP_VERSION: str = "0.1.0"
+APP_NAME: str = "ULTRON"
+APP_VERSION: str = "0.2.0"
 
 # Defaults
-DEFAULT_LOG_FILE: str = "friday.log"
+DEFAULT_LOG_FILE: str = "ultron.log"
 DEFAULT_ENV_FILE: str = ".env"
 
 # Event Bus Settings

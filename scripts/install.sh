@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# FRIDAY Agent - One-line Installer
-# Run via: curl -fsSL https://friday.mlsctiet.com/install | bash
+# ULTRON Agent - One-line Installer
+# Run via: curl -fsSL https://ultron.mlsctiet.com/install | bash
 
 set -e
 
 # --- Configuration ---
-REPO_URL="https://github.com/MicrosoftStudentChapter/friday-agent.git"
-INSTALL_DIR="$HOME/.friday-agent"
+REPO_URL="https://github.com/abhinav29102005/ultron.git"
+INSTALL_DIR="$HOME/.ultron"
 PYTHON_MIN_VERSION="3.11"
 
 # --- Colors ---
@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}"
 echo "============================================================"
-echo "                   FRIDAY AGENT INSTALLER                   "
+echo "                   ULTRON AGENT INSTALLER                   "
 echo "============================================================"
 echo -e "${NC}"
 
@@ -31,7 +31,7 @@ if ! command -v git &> /dev/null; then
 fi
 
 if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}[ERROR]${NC} python3 is not installed. FRIDAY requires Python $PYTHON_MIN_VERSION+."
+    echo -e "${RED}[ERROR]${NC} python3 is not installed. ULTRON requires Python $PYTHON_MIN_VERSION+."
     exit 1
 fi
 
@@ -86,7 +86,7 @@ else
 fi
 
 # --- Clone Repository ---
-echo -e "${BLUE}[INFO]${NC} Installing FRIDAY to $INSTALL_DIR..."
+echo -e "${BLUE}[INFO]${NC} Installing ULTRON to $INSTALL_DIR..."
 
 if [ -d "$INSTALL_DIR" ]; then
     echo -e "${BLUE}[INFO]${NC} Existing installation found. Updating..."
@@ -107,17 +107,20 @@ if [ ! -f ".env" ]; then
 fi
 
 # --- Add Alias ---
-echo -e "${BLUE}[INFO]${NC} Setting up 'friday' alias..."
+echo -e "${BLUE}[INFO]${NC} Setting up 'ultron' & 'ultron' aliases..."
 
 add_alias_if_needed() {
     local rc_file="$1"
-    local alias_cmd="alias friday='cd $INSTALL_DIR && uv run python main.py'"
+    local ultron_cmd="alias ultron='cd $INSTALL_DIR && uv run python run.py'"
+    local friday_cmd="alias friday='cd $INSTALL_DIR && uv run python run.py'"
     
     if [ -f "$rc_file" ]; then
-        if ! grep -q "alias friday=" "$rc_file"; then
-            echo -e "\n# FRIDAY Agent Alias" >> "$rc_file"
-            echo "$alias_cmd" >> "$rc_file"
-            echo -e "${GREEN}[OK]${NC} Added alias to $rc_file"
+        if ! grep -q "alias ultron=" "$rc_file"; then
+            echo -e "
+# ULTRON Agent Aliases" >> "$rc_file"
+            echo "$ultron_cmd" >> "$rc_file"
+            echo "$friday_cmd" >> "$rc_file"
+            echo -e "${GREEN}[OK]${NC} Added aliases (ultron, friday) to $rc_file"
         fi
     fi
 }
@@ -126,7 +129,7 @@ add_alias_if_needed "$HOME/.bashrc"
 add_alias_if_needed "$HOME/.zshrc"
 
 echo -e "${GREEN}============================================================${NC}"
-echo -e "${GREEN}               FRIDAY AGENT SUCCESSFULLY INSTALLED!         ${NC}"
+echo -e "${GREEN}               ULTRON AGENT SUCCESSFULLY INSTALLED!         ${NC}"
 echo -e "${GREEN}============================================================${NC}"
 echo ""
 echo "Next Steps:"
@@ -134,5 +137,5 @@ echo "1. Restart your terminal, or run: source ~/.bashrc (or ~/.zshrc)"
 echo "2. Edit your configuration file to add API keys:"
 echo "   $INSTALL_DIR/.env"
 echo "3. Start the agent by typing:"
-echo -e "${BLUE}   friday${NC}"
+echo -e "${BLUE}   ultron${NC}"
 echo ""

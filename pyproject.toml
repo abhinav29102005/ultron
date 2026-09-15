@@ -3,16 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "friday-agent"
+name = "ultron"
 version = "0.1.0"
-description = "JARVIS / FRIDAY – Production-ready AI Desktop Assistant"
+description = "ULTRON – Production-ready Autonomous AI Desktop Assistant & Streaming Live RAG"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11,<3.12"
 authors = [
     { name = "JARVIS Dev Team" },
 ]
-keywords = ["ai", "assistant", "voice", "llm", "jarvis", "friday"]
+keywords = ["ai", "assistant", "voice", "llm", "jarvis", "ultron", "friday"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
@@ -164,6 +164,8 @@ docs = [
 ]
 
 [project.scripts]
+ultron = "main_gui:main"
+ultron-cli = "run:main"
 friday = "main_gui:main"
 jarvis = "main_gui:main"
 

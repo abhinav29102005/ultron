@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     )
 
     # ── Application Settings ──
-    app_name: str = Field(default="FRIDAY")
+    app_name: str = Field(default="ULTRON")
     app_version: str = Field(default="0.1.0")
     app_env: str = Field(default="development")
     debug: bool = Field(default=False)
@@ -133,7 +133,7 @@ class Settings(BaseSettings):
     # On by default now that control_my_chrome exists to enable it. Before
     # that tool, attaching could only fail -- Chrome exposes the debug port
     # only when launched with the flag, so a normally-started browser was
-    # unreachable and FRIDAY silently used its own logged-out Chromium
+    # unreachable and ULTRON silently used its own logged-out Chromium
     # instead. "Control the browser" should mean the user's browser; the
     # owned Chromium remains the fallback when they decline the restart.
     browser_attach: bool = Field(default=True)
@@ -210,7 +210,7 @@ class Settings(BaseSettings):
 
     # ── Wake Word Settings ──
     wakeword_engine: str = Field(default="porcupine")
-    wakeword_keyword: str = Field(default="friday")
+    wakeword_keyword: str = Field(default="ultron")
     picovoice_access_key: SecretStr = Field(default=SecretStr(""))
     wakeword_sensitivity: float = Field(default=0.5)
 
