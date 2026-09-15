@@ -34,12 +34,12 @@ def _rrf_fuse(ranked_lists: list[list[dict]], k: int = 60) -> list[dict]:
     docs_by_key: dict[str, dict] = {}
     for ranked in ranked_lists:
         for rank, doc in enumerate(ranked, start=1):
-            key = doc.get("url") or doc.get("title") or str(rank)
-            scores[key] = scores.get(key, 0.0) + 1.0 / (k + rank)
-            if key not in docs_by_key:
-                docs_by_key[key] = doc
-    sorted_keys = sorted(scores, key=lambda k: scores[k], reverse=True)
-    return [docs_by_key[k] for k in sorted_keys]
+            doc_key = doc.get("url") or doc.get("title") or str(rank)
+            scores[doc_key] = scores.get(doc_key, 0.0) + 1.0 / (k + rank)
+            if doc_key not in docs_by_key:
+                docs_by_key[doc_key] = doc
+    sorted_keys = sorted(scores, key=lambda key_: scores[key_], reverse=True)
+    return [docs_by_key[sk] for sk in sorted_keys]
 
 
 class HybridRetriever:
