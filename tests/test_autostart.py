@@ -22,7 +22,7 @@ pytestmark = pytest.mark.skipif(
 
 TEST_KEY_PATH = r"Software\FridayAgentTest\Run"
 TEST_KEY_PARENT = r"Software\FridayAgentTest"
-TEST_VALUE_NAME = "FridayAssistantTest"
+TEST_VALUE_NAME = "UltronAssistantTest"
 
 
 def _delete_test_tree() -> None:
@@ -62,7 +62,7 @@ class TestCommandConstruction:
     def test_launcher_script_exists(self) -> None:
         script = autostart.launcher_script()
         assert script.is_absolute()
-        assert script.is_file(), "scripts/friday_launcher.pyw must ship with the repo"
+        assert script.is_file(), "scripts/ultron_launcher.pyw must ship with the repo"
 
     def test_uses_windowed_interpreter_so_no_console_appears(self) -> None:
         exe = autostart.pythonw_executable()
@@ -298,7 +298,7 @@ class TestRealKeyUntouched:
                 winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run"
             ) as key:
                 with pytest.raises(FileNotFoundError):
-                    winreg.QueryValueEx(key, "FridayAssistant")
+                    winreg.QueryValueEx(key, "UltronAssistant")
         except FileNotFoundError:  # pragma: no cover - the Run key always exists
             pass
 

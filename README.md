@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/friday-banner.jpg" alt="FRIDAY Agent" width="200" />
+  <img src="assets/ultron-banner.jpg" alt="ULTRON Agent" width="200" />
 </p>
 
 <h1 align="center">FRIDAY Agent</h1>
@@ -106,7 +106,7 @@ Built with a clean, layered architecture, FRIDAY supports multiple interaction m
 setup.bat
 
 :: Launch FRIDAY
-run_jarvis.bat
+run_ultron.bat
 ```
 
 ### Linux / macOS

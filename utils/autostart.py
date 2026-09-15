@@ -9,7 +9,7 @@ Mechanism
 A single string value under the *per-user* Run key::
 
     HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
-        FridayAssistant = "<repo>\\.venv\\Scripts\\pythonw.exe" "<repo>\\scripts\\friday_launcher.pyw"
+        UltronAssistant = "<repo>\\.venv\\Scripts\\pythonw.exe" "<repo>\\scripts\\ultron_launcher.pyw"
 
 Why the registry and not a Startup-folder shortcut:
 
@@ -31,14 +31,14 @@ FRIDAY is a PyQt GUI app. ``python.exe`` is a console subsystem binary, so
 Windows allocates a black console window for it on every boot. ``pythonw.exe``
 is the same interpreter built for the GUI subsystem -- no console is created.
 The trade-off is that anything written to stdout/stderr is discarded, so the
-launcher script logs startup failures to a file (see ``scripts/friday_launcher.pyw``).
+launcher script logs startup failures to a file (see ``scripts/ultron_launcher.pyw``).
 
 Why the launcher script
 -----------------------
 At login the working directory is *not* the repository (it is typically
 ``C:\\Windows\\system32``). Any relative path in the codebase -- the project has
 already had a bug of exactly this class with a relative memory path -- would
-resolve against the wrong directory. ``friday_launcher.pyw`` chdir's to the
+resolve against the wrong directory. ``ultron_launcher.pyw`` chdir's to the
 repository root and fixes ``sys.path`` before importing the app, so boot-time
 startup behaves identically to launching from a shell inside the repo.
 
@@ -78,7 +78,7 @@ __all__ = [
 RUN_KEY_PATH: str = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
 #: Name of the value this module owns. Anything else under the key is left alone.
-VALUE_NAME: str = "FridayAssistant"
+VALUE_NAME: str = "UltronAssistant"
 
 #: Human-readable identifier for the mechanism, surfaced by ``status()``.
 METHOD: str = "HKCU Run registry key"
@@ -101,7 +101,7 @@ def repo_root() -> Path:
 
 def launcher_script() -> Path:
     """Absolute path to the GUI launcher shim started at login."""
-    return repo_root() / "scripts" / "friday_launcher.pyw"
+    return repo_root() / "scripts" / "ultron_launcher.pyw"
 
 
 def pythonw_executable() -> Path:
