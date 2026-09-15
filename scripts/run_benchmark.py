@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 scripts/run_benchmark.py
 ========================
@@ -20,6 +20,11 @@ from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Callable
+
+# Ensure repository root is on sys.path
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 
 @dataclass

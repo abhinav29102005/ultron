@@ -11,7 +11,38 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from loguru import logger
+try:
+    from loguru import logger
+except ImportError:
+    import logging
+
+    class _FallbackLogger:
+        def __init__(self, name: str = "ultron"):
+            self._logger = logging.getLogger(name)
+
+        def bind(self, **kwargs):
+            name = kwargs.get("name", "ultron")
+            return logging.getLogger(name)
+
+        def debug(self, msg, *args, **kwargs):
+            self._logger.debug(msg, *args, **kwargs)
+
+        def info(self, msg, *args, **kwargs):
+            self._logger.info(msg, *args, **kwargs)
+
+        def warning(self, msg, *args, **kwargs):
+            self._logger.warning(msg, *args, **kwargs)
+
+        def error(self, msg, *args, **kwargs):
+            self._logger.error(msg, *args, **kwargs)
+
+        def remove(self, *args, **kwargs):
+            pass
+
+        def add(self, *args, **kwargs):
+            pass
+
+    logger = _FallbackLogger()
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

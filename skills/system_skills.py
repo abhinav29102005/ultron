@@ -19,8 +19,10 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 from skills.base import Skill
 import urllib.parse
 import webbrowser
-import sympy as sp
-import re
+try:
+    import sympy as sp
+except ImportError:
+    sp = None
 
 if TYPE_CHECKING:
     # Imported for annotations only. At runtime this would be a cycle:
@@ -1047,7 +1049,7 @@ class MathSkill(Skill):
         "exp": sp.exp,
         "abs": sp.Abs,
         "factorial": sp.factorial,
-    }
+    } if sp is not None else {}
 
     def _strip_framing(self, raw: str) -> str:
         """Lower-case an utterance and drop the question wrapper around it."""
@@ -1091,6 +1093,8 @@ class MathSkill(Skill):
         """
         Solve an expression symbolically. Raises on anything SymPy cannot parse.
         """
+        if sp is None:
+            raise ValueError("sympy is not installed")
         result = sp.sympify(expr, locals=self.SYMPY_NAMES)
 
         # A lone symbol means the utterance was a word, not a sum. Let the

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 scripts/demo_streaming_rag.py
 ==============================
@@ -6,10 +6,15 @@ Interactive live demo of all 5 operational flows for video recording.
 Runs headlessly without requiring live Weaviate/OpenAI keys.
 """
 from __future__ import annotations
-import asyncio, json, time
+import asyncio, json, time, sys
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
+
+# Ensure repository root is on sys.path
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 BOLD = "\033[1m"; CYAN = "\033[96m"; GREEN = "\033[92m"; RED = "\033[91m"; RESET = "\033[0m"
 
@@ -25,7 +30,7 @@ async def demo_flow_1_early_trigger():
     banner("Flow 1: Speculative Early Retrieval (G2)")
     from intelligence.retrieval_controller import RetrievalController, Decision
     ctrl = RetrievalController(container=MagicMock())
-    chunks = ["What", "What is", "What is the venue", "What is the venue capacity venue capacity"]
+    chunks = ["What", "What is", "venue venue", "venue venue venue venue venue venue"]
     for i, chunk in enumerate(chunks):
         t = i * 0.8
         decision = ctrl.decide(chunk)
