@@ -65,12 +65,13 @@ class ServiceContainer:
             await self.decomposer.start()
         except Exception:
             self._logger.debug("Decomposer start skipped or failed.")
-        # Start a minimal retriever stub to return documents for decomposed
-        # queries so the rest of the pipeline can be exercised end-to-end.
+        # Start the hybrid retriever (web + optional vector DB) for production
+        # retrieval behaviour. If it fails, the earlier retriever stub remains
+        # available but is not started.
         try:
-            await self.retriever.start()
+            await self.hybrid_retriever.start()
         except Exception:
-            self._logger.debug("Retriever start skipped or failed.")
+            self._logger.debug("HybridRetriever start skipped or failed.")
         self._logger.info("ServiceContainer core services ready.")
 
     async def shutdown(self) -> None:
@@ -260,6 +261,15 @@ class ServiceContainer:
 
             self._registry["retriever"] = Retriever(container=self)
         return self._registry["retriever"]
+
+    @property
+    def hybrid_retriever(self):
+        """Get the HybridRetriever instance, lazily initialized."""
+        if "hybrid_retriever" not in self._registry:
+            from intelligence.hybrid_retriever import HybridRetriever
+
+            self._registry["hybrid_retriever"] = HybridRetriever(container=self)
+        return self._registry["hybrid_retriever"]
 
     @property
     def cancellation_manager(self):
