@@ -10,13 +10,9 @@ echo                    ULTRON
 echo ============================================================
 echo.
 
-if not exist ".ultron\install.json" (
-    echo [ERROR] ULTRON is not installed.
-    echo.
-    echo Please run setup.bat first.
-    echo.
-    pause
-    exit /b 1
+if not exist ".venv" (
+    echo [INFO] First run: initializing Python virtual environment...
+    uv sync
 )
 
 set "UV_PATH=%USERPROFILE%\.local\bin"
