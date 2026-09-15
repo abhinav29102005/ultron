@@ -1,17 +1,17 @@
 @echo off
 setlocal
 
-title JARVIS
+title ULTRON
 
 cd /d "%~dp0"
 
 echo ============================================================
-echo                    JARVIS
+echo                    ULTRON
 echo ============================================================
 echo.
 
-if not exist ".jarvis\install.json" (
-    echo [ERROR] JARVIS is not installed.
+if not exist ".ultron\install.json" (
+    echo [ERROR] ULTRON is not installed.
     echo.
     echo Please run setup.bat first.
     echo.
@@ -36,7 +36,7 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-echo [INFO] Starting JARVIS...
+echo [INFO] Starting ULTRON...
 echo.
 
 uv run python main_gui.py
@@ -44,10 +44,11 @@ uv run python main_gui.py
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo ============================================================
-    echo [ERROR] JARVIS exited with an error.
+    echo [ERROR] ULTRON exited with an error.
     echo ============================================================
     echo.
     pause
 )
 
 endlocal
+

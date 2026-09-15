@@ -102,7 +102,7 @@ class Assistant:
     def _start_reminders(self) -> None:
         """Begin polling for due reminders.
 
-        Failing to start this must not stop FRIDAY from booting: an assistant
+        Failing to start this must not stop ULTRON from booting: an assistant
         that comes up without reminders is degraded, one that refuses to come
         up at all is broken.
         """
@@ -129,7 +129,7 @@ class Assistant:
             await self._reminders.stop()
             self._reminders = None
 
-        # Only closes a browser FRIDAY launched itself. One it merely attached
+        # Only closes a browser ULTRON launched itself. One it merely attached
         # to belongs to the user, along with every tab in it.
         try:
             from skills.browser_skill import close_session
@@ -253,7 +253,7 @@ class Assistant:
         # Before the interrupt, not after. When the agent is parked on a
         # confirmation it *is* the turn in progress, so interrupting first
         # would cancel the very thing this answer is for -- the user would say
-        # "yes" and watch FRIDAY abandon the edit they just approved.
+        # "yes" and watch ULTRON abandon the edit they just approved.
         if self.consume_confirmation(event.text):
             logger.info("Utterance consumed as an answer to a confirmation.")
             return
@@ -527,7 +527,7 @@ class Assistant:
         finally:
             # The pipeline returns early on a failed validation or permission
             # check, so this has to be a finally rather than an else.
-            # Speech outlives the turn: settling to IDLE here while FRIDAY is
+            # Speech outlives the turn: settling to IDLE here while ULTRON is
             # still talking would drop the orb out of its speaking form
             # mid-sentence. _on_speech_finished does it instead.
             if not interrupted and not self._speech_tasks:
@@ -538,7 +538,7 @@ class Assistant:
     def _schedule_memory_capture(self, text: str) -> None:
         """Remember what the user said, in the background.
 
-        Only the user's own words are remembered. Feeding FRIDAY's replies back
+        Only the user's own words are remembered. Feeding ULTRON's replies back
         into the store would let the model treat its own inventions as facts
         about the user.
 
@@ -629,7 +629,7 @@ class Assistant:
         shortening those would lose the citations that make a researched
         answer checkable.
         """
-        print(f"FRIDAY: {message}\n")
+        print(f"ULTRON: {message}\n")
 
         self._container.state.last_response = message
         self._container.state.conversation_history.append(
@@ -651,7 +651,7 @@ class Assistant:
         Fire-and-forget text-to-speech.
 
         The voice stack (piper plus a downloaded voice model) is optional:
-        without it FRIDAY is still a fully usable text assistant, so a missing
+        without it ULTRON is still a fully usable text assistant, so a missing
         speaker is reported once and never fatal.
         """
         if self._tts_available is False:

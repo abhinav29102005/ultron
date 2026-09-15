@@ -1,7 +1,7 @@
 """
 tests/test_vision_context.py – A screen answer survives the next question
 ==========================================================================
-FRIDAY looked at the screen, answered, and forgot everything about it. The
+ULTRON looked at the screen, answered, and forgot everything about it. The
 user's next words — "what does the second one say?" — name no screen, so they
 fell through to ChatSkill, which has never seen one and answered anyway.
 

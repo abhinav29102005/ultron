@@ -4,15 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ultron"
-version = "0.1.0"
+version = "0.2.0"
 description = "ULTRON – Production-ready Autonomous AI Desktop Assistant & Streaming Live RAG"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11,<3.12"
 authors = [
-    { name = "JARVIS Dev Team" },
+    { name = "ULTRON Dev Team" },
 ]
-keywords = ["ai", "assistant", "voice", "llm", "jarvis", "ultron", "friday"]
+keywords = ["ai", "assistant", "voice", "llm", "ultron", "streaming-rag"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
@@ -58,6 +58,7 @@ dependencies = [
     "openai>=1.30",
     "httpx>=0.27",
     "ollama>=0.6.2",
+    "weaviate-client>=4.0",
 
     # ── Web search / scraping ─────────────────────────────────────────────
     "beautifulsoup4>=4.12",
@@ -123,7 +124,7 @@ dependencies = [
     # ── Document creation (skills/document_skill.py) ──────────────────────
     # The model only ever emits markdown; these turn it into a file. Keeping
     # the model out of PDF/HTML structure removes a whole class of failure
-    # for nothing -- see docs/JARVIS_FEATURES_V2.md section 1.
+    # for nothing -- see docs/ULTRON_FEATURES_V2.md section 1.
     "markdown>=3.5",
     # xhtml2pdf rather than WeasyPrint or Pandoc, which the draft spec
     # suggested: both need something outside pip on Windows (WeasyPrint wants
@@ -166,8 +167,6 @@ docs = [
 [project.scripts]
 ultron = "main_gui:main"
 ultron-cli = "run:main"
-friday = "main_gui:main"
-jarvis = "main_gui:main"
 
 [tool.hatch.build.targets.wheel]
 packages = [

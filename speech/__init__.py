@@ -1,7 +1,7 @@
 """
 speech/__init__.py – Speech Package
 =====================================
-The ``speech`` package handles all audio I/O for JARVIS / FRIDAY, including:
+The ``speech`` package handles all audio I/O for ULTRON, including:
 
   - Microphone access and stream management
   - Audio recording with silence detection

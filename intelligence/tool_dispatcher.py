@@ -1,7 +1,7 @@
 """
 intelligence/tool_dispatcher.py – Running a tool call
 ======================================================
-The join between the agent loop and everything FRIDAY could already do.
+The join between the agent loop and everything ULTRON could already do.
 
 A tool call becomes an ordinary :class:`~intelligence.task.Task` carrying the
 tool's intent, and that Task goes through the existing router and executor

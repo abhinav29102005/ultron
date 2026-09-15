@@ -24,6 +24,24 @@ from .retrieval_handler import RetrievalResultEvent
 logger = logging.getLogger("hybrid_retriever")
 
 
+def _rrf_fuse(ranked_lists: list[list[dict]], k: int = 60) -> list[dict]:
+    """Reciprocal Rank Fusion across multiple ranked result lists.
+
+    RRF score = sum(1 / (k + rank_i)) for each list that contains the doc.
+    Deduplication key is the url field; first occurrence wins for metadata.
+    """
+    scores: dict[str, float] = {}
+    docs_by_key: dict[str, dict] = {}
+    for ranked in ranked_lists:
+        for rank, doc in enumerate(ranked, start=1):
+            key = doc.get("url") or doc.get("title") or str(rank)
+            scores[key] = scores.get(key, 0.0) + 1.0 / (k + rank)
+            if key not in docs_by_key:
+                docs_by_key[key] = doc
+    sorted_keys = sorted(scores, key=lambda k: scores[k], reverse=True)
+    return [docs_by_key[k] for k in sorted_keys]
+
+
 class HybridRetriever:
     """Hybrid retriever combining web search and optional vector DB lookups.
 
@@ -106,14 +124,52 @@ class HybridRetriever:
                 weaviate_url = None
 
             if weaviate_url:
-                # Attempt to import client lazily; if it fails, log and continue.
+                # Use the new `weaviate_client` wrapper if available via container
                 try:
-                    import weaviate  # type: ignore
+                    # Prefer the container-managed weaviate client (lazily created)
+                    wc = getattr(self.container, "weaviate_client", None)
 
-                    # TODO: implement vector search and merge with `docs`.
-                    logger.debug("Weaviate configured; vector search hook available.")
+                    if wc is not None:
+                        # If an embeddings service is available, use it to embed subqueries
+                        emb = getattr(self.container, "embeddings", None)
+                        vec_groups = []
+                        for sq in event.subqueries:
+                            try:
+                                if emb is not None:
+                                    embedding = await emb.embed_texts([sq])
+                                    vec = wc.vector_search(embedding=embedding[0], top_k=3)
+                                else:
+                                    vec = wc.vector_search(query=sq, top_k=3)
+                                # Ensure doc_id/section fields are propagated
+                                for item in vec:
+                                    if "doc_id" not in item:
+                                        item["doc_id"] = item.get("title", "")
+                                    if "section" not in item:
+                                        item["section"] = "1"
+                                vec_groups.append(vec)
+                            except Exception:
+                                logger.exception("Weaviate vector search failed for '%s'", sq)
+
+                        # RRF fusion: merge web docs and all vector groups
+                        all_ranked_lists = [docs] + vec_groups
+                        docs = _rrf_fuse(all_ranked_lists)
+                        logger.debug("RRF fused %d lists → %d unique docs", len(all_ranked_lists), len(docs))
                 except Exception:
-                    logger.exception("Weaviate client import failed; skipping vector search")
+                    logger.exception("Weaviate integration failed; continuing with web-only results")
+
+            # Re-rank fused candidates using cross-encoder reranker if available
+            try:
+                reranker = getattr(self.container, "reranker", None)
+                if reranker is not None:
+                    try:
+                        ranked = await reranker.rerank(event.original_query, docs)
+                        # Replace docs with ranked results
+                        docs = ranked
+                        logger.debug("Re-ranked %d documents using cross-encoder", len(docs))
+                    except Exception:
+                        logger.exception("Reranker failed; publishing unranked docs")
+            except Exception:
+                logger.exception("Failed while attempting to rerank results")
 
             # Publish RetrievalResultEvent with gathered documents
             result_event = RetrievalResultEvent(

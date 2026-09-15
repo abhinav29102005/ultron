@@ -1,6 +1,6 @@
 """
-main.py – JARVIS / FRIDAY AI Desktop Assistant Bootstrapper
-===========================================================
+main.py – ULTRON AI Desktop Assistant Bootstrapper
+===================================================
 Entry point for the application. Sets up DI container and boots the assistant.
 
 Team: Core Platform Team
@@ -61,7 +61,7 @@ async def run(args: argparse.Namespace) -> None:
     settings = Settings.load(env_file=args.config)
     configure_logging(settings)
 
-    # See utils/preflight.py: a stopped Ollama does not stop Friday from
+    # See utils/preflight.py: a stopped Ollama does not stop ULTRON from
     # hearing the user, only from understanding them, so it has to be checked
     # explicitly rather than discovered one wrong answer at a time.
     from utils.preflight import check_llm, report

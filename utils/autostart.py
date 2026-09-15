@@ -1,7 +1,7 @@
 """
 utils/autostart.py – Windows Login Autostart Registration
 ==========================================================
-Registers (or unregisters) FRIDAY so it launches automatically when the user
+Registers (or unregisters) ULTRON so it launches automatically when the user
 logs into Windows, without a visible console window and without admin rights.
 
 Mechanism
@@ -27,7 +27,7 @@ Why the registry and not a Startup-folder shortcut:
 
 Why ``pythonw.exe``
 -------------------
-FRIDAY is a PyQt GUI app. ``python.exe`` is a console subsystem binary, so
+ULTRON is a PyQt GUI app. ``python.exe`` is a console subsystem binary, so
 Windows allocates a black console window for it on every boot. ``pythonw.exe``
 is the same interpreter built for the GUI subsystem -- no console is created.
 The trade-off is that anything written to stdout/stderr is discarded, so the
@@ -169,13 +169,13 @@ def _read_value() -> str | None:
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def is_enabled() -> bool:
-    """``True`` if FRIDAY is registered to start at login."""
+    """``True`` if ULTRON is registered to start at login."""
     return _read_value() is not None
 
 
 def enable() -> None:
     """
-    Register FRIDAY to start at login.
+    Register ULTRON to start at login.
 
     Idempotent: the registry value is keyed by name, so calling this twice
     overwrites the single existing entry instead of adding a second one. It is
@@ -197,7 +197,7 @@ def enable() -> None:
 
 def disable() -> None:
     """
-    Unregister FRIDAY from login startup.
+    Unregister ULTRON from login startup.
 
     Idempotent: removing an entry that is already gone is a no-op, not an error.
     Only the value this module owns is deleted; the Run key itself and every
@@ -293,14 +293,14 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point for ``python -m utils.autostart``. Returns a process exit code."""
     parser = argparse.ArgumentParser(
         prog="python -m utils.autostart",
-        description="Register or unregister FRIDAY to start when you log into Windows.",
+        description="Register or unregister ULTRON to start when you log into Windows.",
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        "--enable", action="store_true", help="start FRIDAY automatically at login"
+        "--enable", action="store_true", help="start ULTRON automatically at login"
     )
     group.add_argument(
-        "--disable", action="store_true", help="stop starting FRIDAY at login"
+        "--disable", action="store_true", help="stop starting ULTRON at login"
     )
     group.add_argument(
         "--status",

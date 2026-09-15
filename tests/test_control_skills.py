@@ -7,7 +7,7 @@ about restraint:
   * a keystroke tool that will send anything a model produces is a liability;
     only ordinary keys and shortcuts get through;
   * an attached browser is the user's own logged-in Chrome, and closing it
-    because FRIDAY is shutting down would take their tabs with it;
+    because ULTRON is shutting down would take their tabs with it;
   * the browser session is shared across calls, or "open the page, then click
     the button" cannot work at all.
 
@@ -389,7 +389,7 @@ class TestHeadfulFallback:
 
     Launching headful Chromium needs a real interactive desktop session. It
     fails with "spawn UNKNOWN" from a service, a scheduled task, or any
-    non-interactive context -- and FRIDAY does run from an autostart entry.
+    non-interactive context -- and ULTRON does run from an autostart entry.
     Falling back to headless there keeps every browser tool working (the agent
     can still open, read, click and type); refusing to launch at all would
     lose the whole capability over a window nobody was going to look at.

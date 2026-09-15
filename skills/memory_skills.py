@@ -1,7 +1,7 @@
 """
 skills/memory_skills.py – Context Memory Skills
 =================================================
-Deterministic skills for reading back and erasing what FRIDAY remembers
+Deterministic skills for reading back and erasing what ULTRON remembers
 about the user.
 
 Team: Core Platform Team
@@ -29,7 +29,7 @@ class MemorySkill(Skill):
     """
 
     name = "MemorySkill"
-    description = "Recalls or erases the durable facts FRIDAY knows about the user."
+    description = "Recalls or erases the durable facts ULTRON knows about the user."
     version = "1.0.0"
     enabled = True
 

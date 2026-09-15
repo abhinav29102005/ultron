@@ -2,7 +2,7 @@
 llm/__init__.py – LLM Package
 ==============================
 The ``llm`` package provides a clean, provider-agnostic interface for
-interacting with Large Language Models in JARVIS / FRIDAY.
+interacting with Large Language Models in ULTRON.
 
 Architecture:
     - :class:`~llm.base.BaseLLM` defines the abstract contract.

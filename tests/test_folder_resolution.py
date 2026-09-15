@@ -32,7 +32,7 @@ def home(tmp_path, monkeypatch):
     """A fake home directory with the usual folders and a project."""
     for name in ("Desktop", "Downloads", "Documents", "Pictures"):
         (tmp_path / name).mkdir()
-    (tmp_path / "Desktop" / "friday-agent-main").mkdir()
+    (tmp_path / "Desktop" / "ULTRON-agent-main").mkdir()
     (tmp_path / "Desktop" / "Physics Notes").mkdir()
     (tmp_path / "Documents" / "academic info").mkdir()
 
@@ -82,8 +82,8 @@ class TestSearchingDisk:
         assert resolved == str(home / "Desktop" / "Physics Notes")
 
     def test_a_partial_name_matches(self, home):
-        resolved = FolderSkill()._resolve_path("friday agent")
-        assert resolved == str(home / "Desktop" / "friday-agent-main")
+        resolved = FolderSkill()._resolve_path("ULTRON agent")
+        assert resolved == str(home / "Desktop" / "ULTRON-agent-main")
 
     def test_a_known_shortcut_still_wins_over_a_disk_search(self, home):
         """A folder named "Downloads" on the Desktop must not shadow the real
@@ -105,10 +105,10 @@ class TestSearchingDisk:
 class TestEmptyFolderTiebreak:
     """An empty folder is almost never the one somebody means.
 
-    Found live: the user has a stray empty ``~/friday agent`` left over from
-    an earlier session, and their real project is ``~/Desktop/friday-agent-main``.
+    Found live: the user has a stray empty ``~/ULTRON agent`` left over from
+    an earlier session, and their real project is ``~/Desktop/ULTRON-agent-main``.
     The empty one won on an exact-name match -- correct by the scoring rules
-    and useless in practice, because "open my friday agent project" opened an
+    and useless in practice, because "open my ULTRON agent project" opened an
     empty folder.
 
     Exact-name matching still wins over a prefix match; this only breaks the
@@ -137,17 +137,17 @@ class TestEmptyFolderTiebreak:
         assert FolderSkill._search_disk("solo") == str(home / "Desktop" / "solo")
 
     def test_a_populated_near_match_beats_an_empty_exact_match(self, home):
-        """The exact live case: an empty ~/"friday agent" left over from an
-        old session, against the real ~/Desktop/friday-agent-main.
+        """The exact live case: an empty ~/"ULTRON agent" left over from an
+        old session, against the real ~/Desktop/ULTRON-agent-main.
 
         Emptiness is strong evidence of a stub. A folder with nothing in it
         cannot be the project somebody is asking to open, even when its name
         is a perfect match.
         """
-        (home / "friday agent").mkdir()  # empty leftover
-        # friday-agent-main already exists on the fixture's Desktop; give it
+        (home / "ULTRON agent").mkdir()  # empty leftover
+        # ULTRON-agent-main already exists on the fixture's Desktop; give it
         # contents so it is a real project rather than another empty stub.
-        real = home / "Desktop" / "friday-agent-main"
+        real = home / "Desktop" / "ULTRON-agent-main"
         (real / "main.py").write_text("x", encoding="utf-8")
 
-        assert FolderSkill._search_disk("friday agent") == str(real)
+        assert FolderSkill._search_disk("ULTRON agent") == str(real)

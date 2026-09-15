@@ -1,7 +1,7 @@
 """
 tests/test_app_website_routing.py – "open youtube" is a site, not a program
 ===========================================================================
-A user asked FRIDAY to "open youtube in chrome and look up <youtuber>" and
+A user asked ULTRON to "open youtube in chrome and look up <youtuber>" and
 got the YouTube Music desktop app instead. Three separate faults lined up:
 
 * The Start menu's containment score treated "youtube" inside "youtube music"

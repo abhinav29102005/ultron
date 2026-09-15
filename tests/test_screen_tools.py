@@ -1,5 +1,5 @@
 """
-Tests for the tools that let FRIDAY read the machine precisely:
+Tests for the tools that let ULTRON read the machine precisely:
 
   * skills/screen_text_skill.py – OCR, the exact characters on screen
   * skills/window_skill.py      – which window the user is actually in

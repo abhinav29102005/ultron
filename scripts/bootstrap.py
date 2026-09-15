@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bootstrap.py – FRIDAY Agent Bootstrap Script
+bootstrap.py – ULTRON Agent Bootstrap Script
 =============================================
 Checks for required software, installs missing dependencies,
 and requests elevated permissions when needed.
@@ -426,20 +426,20 @@ def write_model_to_env(project_root: Path, model: str) -> None:
 def print_next_steps(project_root: Path, venv_path: Optional[Path] = None) -> None:
     """Print next steps for the user."""
     print_header("Bootstrap Complete!")
-    print(f"{Colors.GREEN}FRIDAY Agent is ready to run.{Colors.RESET}\n")
+    print(f"{Colors.GREEN}ULTRON Agent is ready to run.{Colors.RESET}\n")
 
     if venv_path:
         if platform.system() == "Windows":
             activate = venv_path / "Scripts" / "activate.bat"
-            run_cmd = f"{venv_path}\\Scripts\\python -m friday"
+            run_cmd = f"{venv_path}\\Scripts\\python -m ULTRON"
         else:
             activate = venv_path / "bin" / "activate"
-            run_cmd = f"source {activate} && python -m friday"
+            run_cmd = f"source {activate} && python -m ULTRON"
         print(f"{Colors.CYAN}To activate the virtual environment:{Colors.RESET}")
         print(f"  {Colors.WHITE}{activate}{Colors.RESET}\n")
 
-    print(f"{Colors.CYAN}To run FRIDAY:{Colors.RESET}")
-    print(f"  {Colors.WHITE}python -m friday{Colors.RESET}          (text mode)")
+    print(f"{Colors.CYAN}To run ULTRON:{Colors.RESET}")
+    print(f"  {Colors.WHITE}python -m ULTRON{Colors.RESET}          (text mode)")
     print(f"  {Colors.WHITE}python run.py --mode wakeword{Colors.RESET}  (voice with wake word)")
     print(f"  {Colors.WHITE}python run.py --mode no-wake{Colors.RESET}   (continuous voice)\n")
 
@@ -452,7 +452,7 @@ def print_next_steps(project_root: Path, venv_path: Optional[Path] = None) -> No
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="FRIDAY Agent Bootstrap Script",
+        description="ULTRON Agent Bootstrap Script",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
@@ -497,7 +497,7 @@ def main() -> int:
     project_root = Path(__file__).parent.absolute()
     venv_path = args.venv_path if not args.no_venv else None
 
-    print_header("FRIDAY Agent Bootstrap")
+    print_header("ULTRON Agent Bootstrap")
 
     # 1. Check Python version
     print_step("Checking Python version...")

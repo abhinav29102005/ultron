@@ -57,7 +57,7 @@ def run_skill_sync(skill, **parameters):
 class SkillTesterApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("FRIDAY Skill Tester")
+        self.title("ULTRON Skill Tester")
         self.geometry("400x550")
         self.resizable(False, False)
 

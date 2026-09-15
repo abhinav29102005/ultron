@@ -184,7 +184,7 @@ class ChatPanel(QWidget):
 
         # --- input row ---
         self.input_box = QLineEdit(self)
-        self.input_box.setPlaceholderText("Ask FRIDAY…")
+        self.input_box.setPlaceholderText("Ask ULTRON…")
         self.input_box.returnPressed.connect(self._submit)
         # The paste is caught as an event rather than by polling the clipboard
         # (the obvious PIL.ImageGrab loop): in a Qt app the paste keystroke is
@@ -219,7 +219,7 @@ class ChatPanel(QWidget):
 
     # ------------------------------------------------------------------ API
     def append(self, role: str, text: str) -> None:
-        """Add a history bubble. `role` is 'user', 'friday' or 'note'."""
+        """Add a history bubble. `role` is 'user', 'ULTRON' or 'note'."""
         bubble = _Bubble(role, text, self._history_host)
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -264,7 +264,7 @@ class ChatPanel(QWidget):
     def set_mic_enabled(self, enabled: bool) -> None:
         self.mic_button.setEnabled(enabled)
         self.mic_button.setToolTip(
-            "Speak to FRIDAY" if enabled else "Speech recognition is still loading…",
+            "Speak to ULTRON" if enabled else "Speech recognition is still loading…",
         )
 
     def focus_input(self) -> None:

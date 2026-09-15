@@ -53,14 +53,57 @@ class RetrievalController:
         if not partial_text or not partial_text.strip():
             return Decision.WAIT
 
-        text = partial_text.lower()
+        import re
+        import math
 
+        text = partial_text.strip()
+        if not text:
+            return Decision.WAIT
+
+        lower = text.lower()
+
+        # Presentation suppression tokens (formatting / presentation requests)
         presentation_tokens = ["bullet", "short", "summar", "translate", "repeat"]
-        if any(tok in text for tok in presentation_tokens):
+        if any(tok in lower for tok in presentation_tokens):
             return Decision.SUPPRESS
 
-        word_count = len(text.split())
-        if word_count >= 6:
+        # Tokenize into word tokens (simple alphanumeric tokens)
+        tokens = re.findall(r"\w+", lower)
+        n = len(tokens)
+
+        # Semantic stability S(t): based on token entropy (lower entropy => more stable)
+        if n <= 1:
+            stability = 0.0
+        else:
+            from collections import Counter
+
+            counts = Counter(tokens)
+            probs = [c / n for c in counts.values()]
+            entropy = -sum(p * math.log2(p) for p in probs if p > 0)
+            max_entropy = math.log2(n) if n > 1 else 1.0
+            normalized_entropy = entropy / max_entropy if max_entropy > 0 else 0.0
+            stability = 1.0 - normalized_entropy
+
+        # Trailing-preposition and partial-word penalties
+        prepositions = {
+            "in", "on", "at", "for", "with", "about", "of", "to", "from",
+            "by", "as", "like", "through", "during", "before", "after",
+            "between", "into", "over", "under", "around", "among", "against"
+        }
+        last_tok = tokens[-1] if tokens else ""
+        # If the partial ends with a preposition, reduce stability
+        if last_tok in prepositions:
+            stability = max(0.0, stability - 0.25)
+
+        # If the user appears to be mid-word (no trailing whitespace), slightly lower stability
+        if partial_text and not partial_text.endswith(" ") and partial_text[-1].isalnum():
+            stability = max(0.0, stability - 0.10)
+
+        # Debug log
+        logger.debug("Semantic stability=%.3f for partial='%s'", stability, partial_text)
+
+        # Threshold for early retrieval
+        if stability >= 0.80:
             return Decision.RETRIEVE_EARLY
 
         return Decision.WAIT

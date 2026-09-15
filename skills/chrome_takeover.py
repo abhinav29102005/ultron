@@ -8,7 +8,7 @@ protocol, and Chrome only speaks that protocol when it is *launched* with
 ``--remote-debugging-port``. There is no way to switch it on afterwards --
 diagnosed live on this machine: Chrome running, nothing listening on 9222.
 
-So every attach attempt failed and FRIDAY quietly fell back to its own
+So every attach attempt failed and ULTRON quietly fell back to its own
 Chromium, which is logged into nothing. From the user's side that reads as
 "it opened some other browser and couldn't do anything".
 

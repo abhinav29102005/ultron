@@ -719,7 +719,7 @@ class ApplicationSkill(Skill):
                     capture_output=True,
                     text=True,
                     # taskkill is a console program; without this it opens a
-                    # visible console window when Friday runs under the GUI.
+                    # visible console window when ULTRON runs under the GUI.
                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
 
@@ -1404,7 +1404,7 @@ class ChatSkill(Skill):
     # The reply is read aloud, so brevity matters more than completeness, and
     # every extra token is latency on a local model.
     SYSTEM_PROMPT = (
-        "You are FRIDAY, a friendly and capable assistant running locally on "
+        "You are ULTRON, a friendly and capable assistant running locally on "
         "the user's computer.\n"
         "Your reply is spoken aloud, so answer in plain conversational prose: "
         "no markdown, no bullet points, no emoji, no code fences.\n"

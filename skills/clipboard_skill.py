@@ -7,7 +7,7 @@ recognised it and then nothing happened.
 It earns its place beyond finishing that stub. When a user is stuck on an
 error, they have very often already selected and copied it, and reading the
 clipboard costs nothing next to a screenshot plus OCR plus a vision-model
-turn. It is the cheapest way FRIDAY has of finding out what the user is
+turn. It is the cheapest way ULTRON has of finding out what the user is
 looking at.
 """
 

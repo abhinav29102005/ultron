@@ -3,7 +3,7 @@ vision/screen_context.py – Remember the last look at the screen
 ===============================================================
 A screen question is almost never the end of it. The user asks "what's on my
 screen", hears the answer, and then asks "what does the second one say?" —
-which means nothing on its own. Answering it needs the picture FRIDAY was
+which means nothing on its own. Answering it needs the picture ULTRON was
 already looking at, the question it was already asked, and the answer it
 already gave.
 
@@ -24,7 +24,7 @@ written to disk, never logged, never sent anywhere the screenshot was not
 already going. It holds exactly one look — each :meth:`ScreenContext.remember`
 drops the previous image — it expires on its own after ``DEFAULT_TTL_SECONDS``,
 and it dies with the process. "Not retained" means nothing outlives the
-conversation it belongs to, not that FRIDAY has to forget between one sentence
+conversation it belongs to, not that ULTRON has to forget between one sentence
 and the next.
 """
 

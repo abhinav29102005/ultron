@@ -70,7 +70,7 @@ class _FakeContainer:
 
 @pytest.fixture(autouse=True, scope="module")
 def _isolated_settings(tmp_path_factory):
-    """Keep QSettings("FRIDAY", "orb") out of the real user registry."""
+    """Keep QSettings("ULTRON", "orb") out of the real user registry."""
     path = tmp_path_factory.mktemp("qsettings")
     previous = QSettings.defaultFormat()
     QSettings.setDefaultFormat(QSettings.Format.IniFormat)
@@ -162,7 +162,7 @@ class TestModeSelection:
         window._expanded = mode == MODE_CARD
         window._apply_mode_layout(mode)
         window.resize(*MODE_SIZES[mode])
-        window.chat.append("friday", "a reply long enough to wrap onto a second line")
+        window.chat.append("ULTRON", "a reply long enough to wrap onto a second line")
         pixmap = window.grab()
         assert not pixmap.isNull()
         assert (pixmap.width(), pixmap.height()) == MODE_SIZES[mode]
@@ -252,7 +252,7 @@ class TestChatPanel:
         qtbot.addWidget(panel)
         assert panel.message_count() == 0
         panel.append("user", "hi")
-        panel.append("friday", "hello")
+        panel.append("ULTRON", "hello")
         assert panel.message_count() == 2
 
     @pytest.mark.asyncio
@@ -263,11 +263,11 @@ class TestChatPanel:
             published.append(event)
 
         window._event_bus.subscribe(UserInputEvent, _capture)
-        window.chat.input_box.setText("hello friday")
+        window.chat.input_box.setText("hello ULTRON")
         window.chat.send_button.click()
         await asyncio.sleep(0.05)
 
-        assert [e.text for e in published] == ["hello friday"]
+        assert [e.text for e in published] == ["hello ULTRON"]
         assert published[0].source == "text"
         assert window.chat.message_count() == 1
 

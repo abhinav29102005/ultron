@@ -3,7 +3,7 @@ tests/test_vision_hardening.py – Regressions from adversarial review
 =====================================================================
 The window is excluded from capture, but three things were still visible to a
 screen share: the tray context menu, the orb's tooltip, and the tray tooltip —
-the last two of which announced what FRIDAY was doing.
+the last two of which announced what ULTRON was doing.
 """
 
 from __future__ import annotations
@@ -143,7 +143,7 @@ class TestPopupsDoNotLeak:
 
 class TestTooltipsDoNotAnnounceState:
     """A tooltip renders in its own native window and does not inherit the
-    exclusion, so "FRIDAY — Listening" hovered over an invisible orb."""
+    exclusion, so "ULTRON — Listening" hovered over an invisible orb."""
 
     def test_tray_tooltip_carries_no_state(self, monkeypatch):
         import ui.tray as tray_module
@@ -160,7 +160,7 @@ class TestTooltipsDoNotAnnounceState:
         )
         controller.set_state("LISTENING")
 
-        assert captured == ["FRIDAY"]
+        assert captured == ["ULTRON"]
         assert "Listening" not in captured[0]
 
     # The property getter is called unbound: instantiating a QWidget without a

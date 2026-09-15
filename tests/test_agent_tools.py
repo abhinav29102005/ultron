@@ -1,7 +1,7 @@
 """
 Tests for the tool-calling layer (llm/tools.py, intelligence/tool_registry.py).
 
-Why this exists: FRIDAY classified every utterance into one of 29 fixed
+Why this exists: ULTRON classified every utterance into one of 29 fixed
 intents with a single 3B-model call. Anything outside those buckets -- "fix
 the bug in my code", "open youtube and search MKBHD" -- was forced into the
 nearest wrong one, which is how a request to fix code became a web search for

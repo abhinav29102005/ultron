@@ -38,7 +38,7 @@ def _settings(log_dir: Path) -> types.SimpleNamespace:
 class TestConsoleHandlerWithoutStderr:
     """Under ``pythonw.exe`` — which is what the autostart launcher runs —
     ``sys.stderr`` is None. loguru refuses a None sink, so configure_logging
-    raised before it reached the file handler and FRIDAY never started at
+    raised before it reached the file handler and ULTRON never started at
     login. See logs/autostart_launcher.log, 2026-08-26T16:23."""
 
     def test_configure_logging_survives_a_missing_stderr(
@@ -63,7 +63,7 @@ class TestConsoleHandlerWithoutStderr:
         logger.info("hello from a windowless process")
         logger.complete()
 
-        log_file = tmp_path / "friday.log"
+        log_file = tmp_path / "ULTRON.log"
         assert log_file.is_file(), "no log file was created without a stderr"
         assert "hello from a windowless process" in log_file.read_text(
             encoding="utf-8"
@@ -134,7 +134,7 @@ class TestLogPlaceholders:
     """loguru interpolates with ``str.format``, not printf. Given
     ``logger.info("loaded %s", model)`` it calls ``"loaded %s".format(model)``,
     which finds no ``{}``, discards the argument, and logs a literal ``%s`` —
-    exactly what logs/friday.log recorded on 2026-08-25."""
+    exactly what logs/ULTRON.log recorded on 2026-08-25."""
 
     def test_no_source_file_uses_printf_placeholders(self) -> None:
         offenders = [

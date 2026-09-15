@@ -168,7 +168,7 @@ class CachedLLM:
         filled with "Agent turn failed ('CachedLLM' object has no attribute
         'complete_with_tools')" — the container wraps every LLM in this class,
         so agent mode never ran at all and each turn quietly fell back to the
-        classifier. To the user that read as "FRIDAY can't reach the web",
+        classifier. To the user that read as "ULTRON can't reach the web",
         because web questions were answered by the chat model's own
         disclaimer instead of the research tool.
 

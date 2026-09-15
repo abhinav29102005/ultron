@@ -28,7 +28,7 @@ class TestSettings:
 
     def test_default_settings(self) -> None:
         settings = Settings(
-            app_name="FRIDAY",
+            app_name="ULTRON",
             app_version="0.1.0",
             app_env="development",
             debug=False,
@@ -48,14 +48,14 @@ class TestSettings:
             audio_channels=1,
             audio_chunk_size=1024,
             wakeword_engine="porcupine",
-            wakeword_keyword="friday",
+            wakeword_keyword="ULTRON",
             picovoice_access_key=SecretStr(""),
             wakeword_sensitivity=0.5,
             intent_confidence_threshold=0.75,
             max_plan_steps=10,
             secret_key=SecretStr("dev_secret_key")
         )
-        assert settings.app_name == "FRIDAY"
+        assert settings.app_name == "ULTRON"
         assert settings.log_level == "INFO"
         assert settings.secret_key.get_secret_value() == "dev_secret_key"
 
@@ -63,7 +63,7 @@ class TestSettings:
         with pytest.raises(Exception):
             # log_level must be one of DEBUG, INFO, WARNING, ERROR, CRITICAL
             Settings(
-                app_name="FRIDAY",
+                app_name="ULTRON",
                 app_version="0.1.0",
                 app_env="development",
                 debug=False,
@@ -83,7 +83,7 @@ class TestSettings:
                 audio_channels=1,
                 audio_chunk_size=1024,
                 wakeword_engine="porcupine",
-                wakeword_keyword="friday",
+                wakeword_keyword="ULTRON",
                 picovoice_access_key=SecretStr(""),
                 wakeword_sensitivity=0.5,
                 intent_confidence_threshold=0.75,
@@ -204,7 +204,7 @@ class TestServiceContainer:
 
     def test_lazy_service_creation(self) -> None:
         settings = Settings(
-            app_name="FRIDAY",
+            app_name="ULTRON",
             app_version="0.1.0",
             app_env="development",
             debug=False,
@@ -224,7 +224,7 @@ class TestServiceContainer:
             audio_channels=1,
             audio_chunk_size=1024,
             wakeword_engine="porcupine",
-            wakeword_keyword="friday",
+            wakeword_keyword="ULTRON",
             picovoice_access_key=SecretStr(""),
             wakeword_sensitivity=0.5,
             intent_confidence_threshold=0.75,
@@ -250,7 +250,7 @@ class TestServiceContainer:
 
     def test_custom_registration(self) -> None:
         settings = Settings(
-            app_name="FRIDAY",
+            app_name="ULTRON",
             app_version="0.1.0",
             app_env="development",
             debug=False,
@@ -270,7 +270,7 @@ class TestServiceContainer:
             audio_channels=1,
             audio_chunk_size=1024,
             wakeword_engine="porcupine",
-            wakeword_keyword="friday",
+            wakeword_keyword="ULTRON",
             picovoice_access_key=SecretStr(""),
             wakeword_sensitivity=0.5,
             intent_confidence_threshold=0.75,
@@ -288,7 +288,7 @@ class TestServiceContainer:
 
     def test_unregistered_raises(self) -> None:
         settings = Settings(
-            app_name="FRIDAY",
+            app_name="ULTRON",
             app_version="0.1.0",
             app_env="development",
             debug=False,
@@ -308,7 +308,7 @@ class TestServiceContainer:
             audio_channels=1,
             audio_chunk_size=1024,
             wakeword_engine="porcupine",
-            wakeword_keyword="friday",
+            wakeword_keyword="ULTRON",
             picovoice_access_key=SecretStr(""),
             wakeword_sensitivity=0.5,
             intent_confidence_threshold=0.75,

@@ -7,7 +7,7 @@ Two independent pieces:
     Grabs the screen as a JPEG small enough for a local vision model.
 
 ``screen_hider``
-    Marks FRIDAY's own windows as excluded from capture, so a screen share
+    Marks ULTRON's own windows as excluded from capture, so a screen share
     shows the user's desktop without the assistant on top of it.
 
 Both degrade rather than raise: a missing dependency or an unsupported

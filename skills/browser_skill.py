@@ -120,7 +120,7 @@ class BrowserSession:
             except Exception as exc:
                 raise RuntimeError(_ATTACH_HINT) from exc
 
-        # Headful first: the user asked to watch FRIDAY use the browser, and a
+        # Headful first: the user asked to watch ULTRON use the browser, and a
         # window they can see is also a window they can take over.
         try:
             return await self._playwright.chromium.launch(headless=False)
@@ -129,7 +129,7 @@ class BrowserSession:
 
         # Headful Chromium needs a real interactive desktop session and fails
         # with "spawn UNKNOWN" without one -- from a service, a scheduled task,
-        # or any non-interactive context. FRIDAY does start from an autostart
+        # or any non-interactive context. ULTRON does start from an autostart
         # entry, so this is a real case rather than a theoretical one. Every
         # browser tool still works headless; only the window is missing, and
         # losing the whole capability over that would be the worse trade.
@@ -287,7 +287,7 @@ class BrowserControlSkill(Skill):
         import tempfile
         from pathlib import Path
 
-        target = Path(tempfile.gettempdir()) / "friday-page.png"
+        target = Path(tempfile.gettempdir()) / "ULTRON-page.png"
         await page.screenshot(path=str(target), full_page=False)
         return f"Saved a picture of {page.url} to {target}."
 

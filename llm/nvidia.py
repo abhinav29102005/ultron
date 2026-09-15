@@ -113,7 +113,7 @@ class NvidiaLLM(BaseLLM):
 
         ``tool_choice="auto"`` rather than forcing a call: most turns are
         answered without one, and a forced call on "good morning" would send
-        FRIDAY off to read the screen.
+        ULTRON off to read the screen.
         """
         response = await self._with_retry(
             lambda: self._client.chat.completions.create(

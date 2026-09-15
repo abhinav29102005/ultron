@@ -1,7 +1,7 @@
 """
 Tests for skills/code_skill.py – reading, listing and editing files.
 
-Why this exists: FRIDAY could see a screen and search the web, but had no way
+Why this exists: ULTRON could see a screen and search the web, but had no way
 to read or change the user's actual code. Asked to fix a bug it searched the
 web for the error text, because looking at the file was not something it could
 do. These are the tools that close that gap.
@@ -98,7 +98,7 @@ class TestWriteFile:
 
         await CodeSkill().execute(_task("write_file", path=str(target), content="patched\n"))
 
-        backups = list(tmp_path.glob("*.friday-bak"))
+        backups = list(tmp_path.glob("*.ULTRON-bak"))
         assert len(backups) == 1
         assert backups[0].read_text(encoding="utf-8") == "original\n"
 

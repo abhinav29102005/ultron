@@ -1,7 +1,7 @@
 """
 tests/__init__.py – Test Suite
 ================================
-Test suite for the JARVIS / FRIDAY AI Desktop Assistant.
+Test suite for the ULTRON AI Desktop Assistant.
 
 Each test module corresponds to a source package:
   - :mod:`tests.test_core` → :mod:`core`

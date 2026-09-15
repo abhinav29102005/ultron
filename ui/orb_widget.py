@@ -1,7 +1,7 @@
 """
 ui/orb_widget.py – The orb / pill visual
 =========================================
-Paints FRIDAY's floating presence: a small circle at rest, a wider pill with a
+Paints ULTRON's floating presence: a small circle at rest, a wider pill with a
 live waveform while listening or speaking, and a compact dot when it sits in
 the expanded card's header.
 
@@ -229,4 +229,4 @@ class OrbWidget(QWidget):
         text_rect = QRectF(rect.right() + 8, 0, self.width() - rect.right() - 12, self.height())
         painter.drawText(text_rect,
                          int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter),
-                         f"FRIDAY · {self._state.title().replace('_', ' ')}")
+                         f"ULTRON · {self._state.title().replace('_', ' ')}")

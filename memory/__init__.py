@@ -1,7 +1,7 @@
 """
 memory/__init__.py – Memory Package
 =====================================
-The ``memory`` package gives FRIDAY context retention: durable facts the
+The ``memory`` package gives ULTRON context retention: durable facts the
 user states about themselves survive a restart and are injected back into
 conversation.
 

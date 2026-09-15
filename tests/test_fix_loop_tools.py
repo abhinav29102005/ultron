@@ -1,7 +1,7 @@
 """
 Tests for the verified-fix tools – W6.
 
-Why these exist: asked to fix an error, FRIDAY read the file and then pasted
+Why these exist: asked to fix an error, ULTRON read the file and then pasted
 the corrected code into the conversation. It had no choice. ``write_file``
 demands the *complete* new contents, which a small model will not reproduce
 faithfully for a 200-line file, and nothing could run anything, so "check the
@@ -115,7 +115,7 @@ class TestEditFile:
             _task("edit_file", path=str(target), old_text="a = 1", new_text="a = 2")
         )
 
-        backups = list(tmp_path.glob("*.friday-bak"))
+        backups = list(tmp_path.glob("*.ULTRON-bak"))
         assert len(backups) == 1
         assert backups[0].read_text(encoding="utf-8") == "a = 1\n"
 

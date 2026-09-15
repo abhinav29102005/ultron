@@ -2,7 +2,7 @@
 scripts/wakeword_tune.py – Live wake-word score meter
 ======================================================
 Answers one question the app cannot: *what score does YOUR voice, on YOUR
-microphone, in YOUR room, actually reach when you say "hey jarvis"?*
+microphone, in YOUR room, actually reach when you say "hey ULTRON"?*
 
 The detector fires when a frame's score beats (1 - WAKEWORD_SENSITIVITY).
 Everything below that threshold is a silent miss, so a wake word that "takes
@@ -13,8 +13,8 @@ Usage (from the repo root):
 
     .venv/Scripts/python.exe scripts/wakeword_tune.py [seconds]
 
-Say "hey jarvis" 5-10 times at your normal distance and volume, in the
-conditions you actually use FRIDAY in. Default run time is 30 seconds.
+Say "hey ULTRON" 5-10 times at your normal distance and volume, in the
+conditions you actually use ULTRON in. Default run time is 30 seconds.
 """
 
 from __future__ import annotations
@@ -53,7 +53,7 @@ def main(seconds: float) -> int:
     threshold = min(max(1.0 - sensitivity, 0.05), 0.95)
 
     print(f"Current WAKEWORD_SENSITIVITY={sensitivity}  ->  threshold={threshold:.2f}")
-    print(f"Listening for {seconds:.0f}s — say \"hey jarvis\" 5-10 times, normally.\n")
+    print(f"Listening for {seconds:.0f}s — say \"hey ULTRON\" 5-10 times, normally.\n")
 
     model = Model(wakeword_models=[MODEL])
     audio: queue.Queue = queue.Queue(maxsize=64)

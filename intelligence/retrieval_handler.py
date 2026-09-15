@@ -56,16 +56,50 @@ class RetrievalHandler:
             try:
                 logger.info(f"Retrieval requested: {event.decision} -> {event.text}")
 
-                # Stubbed results: empty list for now. Real retriever goes here.
-                result_event = RetrievalResultEvent(
-                    query=event.text,
-                    results=[],
-                    decision=event.decision,
-                    session_id=getattr(event, "session_id", None),
-                    turn_id=getattr(event, "turn_id", None),
-                )
-                await self.container.event_bus.publish(result_event)
-                logger.debug("Published RetrievalResultEvent stub.")
+                # Delegate to hybrid retriever when configured
+                if getattr(self.container.settings, "weaviate_url", None):
+                    # If hybrid retriever is available it will subscribe to DecomposedQueryEvent
+                    logger.debug("Weaviate configured; RetrievalHandler acting as pass-through stub.")
+                    # Publish a minimal result so the pipeline continues while hybrid retriever runs
+                    result_event = RetrievalResultEvent(
+                        query=event.text,
+                        results=[],
+                        decision=event.decision,
+                        session_id=getattr(event, "session_id", None),
+                        turn_id=getattr(event, "turn_id", None),
+                    )
+                    await self.container.event_bus.publish(result_event)
+                else:
+                    # No vector DB configured: keep stub behaviour but include web search hints
+                    logger.debug("No Weaviate configured; performing web-only quick pass.")
+                    web = self.container.web_skill
+                    docs = []
+                    try:
+                        results = await web.search(event.text, max_results=3)
+                        for r in results:
+                            try:
+                                text = await web.fetch_page(r.url, max_chars=1600)
+                            except Exception:
+                                text = ""
+                            docs.append({
+                                "title": r.title,
+                                "url": r.url,
+                                "snippet": r.snippet,
+                                "content": text,
+                                "source": r.source or "web",
+                            })
+                    except Exception:
+                        logger.exception("Quick web pass failed in RetrievalHandler")
+
+                    result_event = RetrievalResultEvent(
+                        query=event.text,
+                        results=docs,
+                        decision=event.decision,
+                        session_id=getattr(event, "session_id", None),
+                        turn_id=getattr(event, "turn_id", None),
+                    )
+                    await self.container.event_bus.publish(result_event)
+                    logger.debug("Published RetrievalResultEvent with %d web docs.", len(docs))
             except Exception:
                 logger.exception("RetrievalHandler failed processing event")
 

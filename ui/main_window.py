@@ -1,5 +1,5 @@
 """
-ui/main_window.py – FRIDAY's floating orb
+ui/main_window.py – ULTRON's floating orb
 ==========================================
 A frameless, always-on-top widget with three forms and one animated transition
 between them:
@@ -137,9 +137,9 @@ class MainWindow(QWidget):
         self._drag_origin: QPoint | None = None
         self._drag_start_pos: QPoint | None = None
         self._dragging = False
-        self._settings = QSettings("FRIDAY", "orb")
+        self._settings = QSettings("ULTRON", "orb")
 
-        self.setWindowTitle("FRIDAY")
+        self.setWindowTitle("ULTRON")
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
@@ -304,7 +304,7 @@ class MainWindow(QWidget):
         self._animate_to(MODE_CARD)
 
     def collapse(self) -> None:
-        """Return the card to the orb (or pill, if FRIDAY is mid-utterance)."""
+        """Return the card to the orb (or pill, if ULTRON is mid-utterance)."""
         if not self._expanded:
             return
         self._expanded = False
@@ -438,7 +438,7 @@ class MainWindow(QWidget):
             await self._event_bus.publish(ResponseReadyEvent(response=answer))
 
     def _on_mic_click(self) -> None:
-        # Barge-in: a mic click cuts whatever FRIDAY is saying, and abandons
+        # Barge-in: a mic click cuts whatever ULTRON is saying, and abandons
         # the turn behind it. Without the second half, an interrupted question
         # still delivers its answer some seconds later, over the new one.
         self._stop_speech()
@@ -588,7 +588,7 @@ class MainWindow(QWidget):
 
     # =========================================================== bus handlers
     async def _on_response(self, event: ResponseReadyEvent) -> None:
-        self.chat.append("friday", event.response)
+        self.chat.append("ULTRON", event.response)
         self._set_inputs_enabled(True)
 
     async def _on_exit_requested(self, event: ExitRequestedEvent) -> None:
@@ -628,12 +628,12 @@ class MainWindow(QWidget):
         self.tray.set_state(self._state)
         # A tooltip renders in its own native window, which does not inherit
         # this window's capture exclusion — so on a shared screen the orb
-        # itself is invisible but "FRIDAY — Listening" hovers over it. When we
+        # itself is invisible but "ULTRON — Listening" hovers over it. When we
         # are hidden from capture, the tooltip says nothing.
         self.setToolTip(
             ""
             if self.hidden_from_capture
-            else f"FRIDAY — {self._state.title().replace('_', ' ')}"
+            else f"ULTRON — {self._state.title().replace('_', ' ')}"
         )
         if not self._expanded:
             self._animate_to(mode_for_state(self._state, False))
@@ -869,7 +869,7 @@ class MainWindow(QWidget):
         menu.addAction(quit_action)
 
         # A popup is its own native window, so it does not inherit the orb's
-        # capture exclusion. Without this the menu is the one part of FRIDAY
+        # capture exclusion. Without this the menu is the one part of ULTRON
         # a screen share would still show.
         menu.winId()
         try:

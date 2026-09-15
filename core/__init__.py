@@ -1,7 +1,7 @@
 """
 core/__init__.py – Core Package
 ================================
-The ``core`` package is the heart of the JARVIS / FRIDAY assistant.
+The ``core`` package is the heart of the ULTRON assistant.
 It owns the top-level orchestration, lifecycle management, event routing,
 dependency injection container, and shared state.
 

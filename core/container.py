@@ -72,6 +72,12 @@ class ServiceContainer:
             await self.hybrid_retriever.start()
         except Exception:
             self._logger.debug("HybridRetriever start skipped or failed.")
+        # Start the synthesizer so it can listen to retrieval results, compose
+        # grounded answers with [Doc_XX §YY] citations, and record telemetry.
+        try:
+            await self.synthesizer.start()
+        except Exception:
+            self._logger.debug("Synthesizer start skipped or failed.")
         self._logger.info("ServiceContainer core services ready.")
 
     async def shutdown(self) -> None:
@@ -245,6 +251,15 @@ class ServiceContainer:
         return self._registry["retrieval_handler"]
 
     @property
+    def synthesizer(self):
+        """Get the Synthesizer instance, lazily initialized."""
+        if "synthesizer" not in self._registry:
+            from intelligence.synthesizer import Synthesizer
+
+            self._registry["synthesizer"] = Synthesizer(container=self)
+        return self._registry["synthesizer"]
+
+    @property
     def decomposer(self):
         """Get the Decomposer instance, lazily initialized."""
         if "decomposer" not in self._registry:
@@ -270,6 +285,74 @@ class ServiceContainer:
 
             self._registry["hybrid_retriever"] = HybridRetriever(container=self)
         return self._registry["hybrid_retriever"]
+
+    @property
+    def weaviate_client(self):
+        """Optional Weaviate client wrapper. Lazily created when settings indicate a URL."""
+        if "weaviate_client" not in self._registry:
+            try:
+                url = getattr(self._settings, "weaviate_url", None)
+            except Exception:
+                url = None
+
+            if url:
+                try:
+                    from intelligence.weaviate_client import WeaviateClientWrapper
+
+                    api_key = getattr(self._settings, "weaviate_api_key", None)
+                    self._registry["weaviate_client"] = WeaviateClientWrapper(url, api_key=api_key)
+                except Exception:
+                    # Keep container functional even if Weaviate is unavailable
+                    self._registry["weaviate_client"] = None
+            else:
+                self._registry["weaviate_client"] = None
+
+        return self._registry["weaviate_client"]
+
+    @property
+    def embeddings(self):
+        """Get an embeddings provider instance (OpenAI) when configured."""
+        if "embeddings" not in self._registry:
+            try:
+                api_key = getattr(self._settings, "openai_api_key", None)
+            except Exception:
+                api_key = None
+
+            if api_key:
+                try:
+                    from intelligence.embeddings import OpenAIEmbeddings
+
+                    model = getattr(self._settings, "openai_embedding_model", "text-embedding-3-small")
+                    self._registry["embeddings"] = OpenAIEmbeddings(str(api_key), model=model)
+                except Exception:
+                    self._registry["embeddings"] = None
+            else:
+                self._registry["embeddings"] = None
+
+        return self._registry["embeddings"]
+
+    @property
+    def reranker(self):
+        """Get the cross-encoder reranker instance (OpenAI-backed) when configured.
+
+        If no OpenAI key is configured, a fallback lexical reranker is still
+        returned so calling code does not need to special-case missing service.
+        """
+        if "reranker" not in self._registry:
+            try:
+                api_key = getattr(self._settings, "openai_api_key", None)
+            except Exception:
+                api_key = None
+
+            try:
+                from intelligence.reranker import CrossEncoderReranker
+
+                key = str(api_key) if api_key is not None else None
+                self._registry["reranker"] = CrossEncoderReranker(api_key=key)
+            except Exception:
+                self._registry["reranker"] = None
+
+        return self._registry["reranker"]
 
     @property
     def cancellation_manager(self):

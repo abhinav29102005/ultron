@@ -6,7 +6,7 @@ One cheap call that changes what every other tool should do.
 "Fix this" means something different in VS Code than in Chrome than in a
 terminal, and the agent has no way to tell them apart from the words alone.
 The window title usually says outright which file is open and which project it
-belongs to ("preflight.py - friday-agent - Visual Studio Code"), which is
+belongs to ("preflight.py - ULTRON-agent - Visual Studio Code"), which is
 often enough to skip a screenshot entirely and go straight to reading the file.
 
 Cheap on purpose: a title lookup costs a fraction of a millisecond, against a

@@ -18,10 +18,10 @@ from utils.single_instance import SingleInstance
 @pytest.fixture
 def name():
     """A per-test mutex name so tests cannot collide with each other or a
-    genuinely running FRIDAY."""
+    genuinely running ULTRON."""
     import uuid
 
-    return f"friday-test-{uuid.uuid4().hex}"
+    return f"ULTRON-test-{uuid.uuid4().hex}"
 
 
 class TestSingleInstance:

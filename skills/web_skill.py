@@ -41,7 +41,7 @@ class SearchResult:
 #: copies of this regex would drift, and the second copy would be the one that
 #: forgets "could you".
 LEADING_NOISE = re.compile(
-    r"^(?:hey\s+)?(?:friday|jarvis)?[,\s]*"
+    r"^(?:hey\s+)?(?:ULTRON|ultron)?[,\s]*"
     r"(?:can you\s+|could you\s+|please\s+|)"
     r"(?:go\s+)?(?:and\s+)?"
     r"(?:search(?:\s+the\s+web)?(?:\s+for)?|look\s+up|look\s+for|google|"
@@ -375,7 +375,7 @@ class WebSkill(Skill):
     #: browser, which is why fetch_page keeps both and retries rather than
     #: picking a winner.
     FETCH_USER_AGENT = (
-        "FridayAgent/1.0 (+https://github.com/MicrosoftStudentChapter/friday-agent) httpx"
+        "FridayAgent/1.0 (+https://github.com/MicrosoftStudentChapter/ULTRON-agent) httpx"
     )
 
     def __init__(self, container: "Any" = None) -> None:

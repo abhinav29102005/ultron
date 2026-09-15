@@ -7,7 +7,7 @@ answer.
 The vision model is configured separately from the chat model. They are asked
 to do different jobs and the good local options differ: a 3B text model is a
 fine conversationalist and cannot see at all. Keeping ``VISION_MODEL`` apart
-from ``QWEN_MODEL`` also means installing vision never changes how FRIDAY
+from ``QWEN_MODEL`` also means installing vision never changes how ULTRON
 talks.
 
 Nothing is captured unless an utterance routes here. There is no background
@@ -47,7 +47,7 @@ DEFAULT_VISION_MODEL = "qwen2.5vl:3b"
 
 #: Spoken answers, so: no markdown, no lists, no preamble.
 SYSTEM_PROMPT = (
-    "You are FRIDAY, looking at the user's screen through a screenshot. "
+    "You are ULTRON, looking at the user's screen through a screenshot. "
     "Answer what they asked about it directly and briefly, in one to three "
     "spoken sentences. Describe only what is actually visible. If the screen "
     "does not show what they are asking about, say so plainly. Never use "

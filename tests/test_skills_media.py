@@ -71,7 +71,7 @@ def match(utterance: str) -> str:
 #
 # This is the judgement call the whole feature turns on: a question needs the
 # web when answering it requires current or external information, and must not
-# open a tab when Friday, the OS, or arithmetic can answer it.
+# open a tab when ULTRON, the OS, or arithmetic can answer it.
 
 
 class TestWebLookupBoundary:
@@ -94,7 +94,7 @@ class TestWebLookupBoundary:
             # The weather has its own skill.
             "what's the weather today",
             "what's the temperature right now",
-            # Questions about Friday itself.
+            # Questions about ULTRON itself.
             "what can you do",
             "who are you",
             "what's your name",
@@ -222,7 +222,7 @@ class TestNewIntentDetection:
 
     @pytest.mark.parametrize(
         "utterance",
-        ["good morning friday", "hello there", "hi"],
+        ["good morning ULTRON", "hello there", "hi"],
     )
     def test_greetings_are_not_farewells(self, utterance):
         assert match(utterance) != "farewell"

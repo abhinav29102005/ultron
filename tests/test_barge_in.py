@@ -1,5 +1,5 @@
 """
-tests/test_barge_in.py – Interrupting FRIDAY mid-sentence
+tests/test_barge_in.py – Interrupting ULTRON mid-sentence
 =========================================================
 Covers the five defects that together made a barge-in print a PortAudio input
 overflow, hang the assistant for seconds, and then kill it. See

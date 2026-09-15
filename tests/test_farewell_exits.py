@@ -1,4 +1,4 @@
-"""Saying goodbye shuts FRIDAY down.
+"""Saying goodbye shuts ULTRON down.
 
 It used to hide to the system tray and leave the wake word listening, so an
 assistant the user had just said good night to was still running and still

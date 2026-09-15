@@ -1,5 +1,5 @@
 """
-utils/single_instance.py – One FRIDAY at a time
+utils/single_instance.py – One ULTRON at a time
 ================================================
 Four copies of ``main_gui.py`` were found running at once. Nothing stopped a
 second launch, and closing the orb hides it to the tray rather than quitting
@@ -11,13 +11,13 @@ fix for both.
 
 A named kernel mutex rather than a lockfile, deliberately. The stale
 instances were cleaned up with Stop-Process, and a lockfile survives its
-holder's death -- the next launch would find the file, conclude FRIDAY is
+holder's death -- the next launch would find the file, conclude ULTRON is
 already running, and refuse to start until someone hunts the file down. A
 kernel object is released by the OS the moment the holding process dies, no
 matter how it dies.
 
 Off Windows there is no CreateMutex; the guard degrades to always-acquired
-rather than importing a POSIX equivalent nobody runs. FRIDAY's GUI is a
+rather than importing a POSIX equivalent nobody runs. ULTRON's GUI is a
 Windows app.
 """
 
@@ -31,8 +31,8 @@ from config.logging_config import get_logger
 logger = get_logger("single_instance")
 
 #: The GUI's mutex name. ``Local\`` scopes it to this login session: two
-#: different users on one machine may each run their own FRIDAY.
-GUI_LOCK_NAME = "friday-agent-gui"
+#: different users on one machine may each run their own ULTRON.
+GUI_LOCK_NAME = "ultron-agent-gui"
 
 _ERROR_ALREADY_EXISTS = 183
 
@@ -41,7 +41,7 @@ class SingleInstance:
     """Holds a named mutex for the life of the process.
 
     ``acquired`` is the whole interface: True means this is the only holder
-    and the caller should start normally; False means another FRIDAY already
+    and the caller should start normally; False means another ULTRON already
     owns the name and the caller should say so and exit.
     """
 

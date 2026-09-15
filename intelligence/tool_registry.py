@@ -1,7 +1,7 @@
 """
 intelligence/tool_registry.py – The tools the agent may call
 =============================================================
-Every capability FRIDAY has, described in the words the model reads when it
+Every capability ULTRON has, described in the words the model reads when it
 decides what to do.
 
 These descriptions are load-bearing. The failure this whole subsystem exists
@@ -13,7 +13,7 @@ explicitly here, in each tool's description, rather than left to inference.
 
 Each tool names an ``intent`` from :class:`~intelligence.router.TaskRouter`'s
 routing table. Executing a tool builds an ordinary Task with that intent and
-runs it through the existing router and executor, so every skill FRIDAY
+runs it through the existing router and executor, so every skill ULTRON
 already has keeps working untouched.
 """
 
@@ -314,11 +314,11 @@ ALL_TOOLS: tuple[ToolDef, ...] = (
     ToolDef(
         name="end_session",
         description=(
-            "Say goodbye and shut FRIDAY down. Use this whenever the user "
+            "Say goodbye and shut ULTRON down. Use this whenever the user "
             "dismisses you -- 'bye', 'bye bye', 'goodbye', 'good night', "
             "'see you later', 'that's all', 'you can go now'. Do not simply "
             "reply with a farewell of your own: saying goodbye without "
-            "calling this leaves FRIDAY running, which is not what the user "
+            "calling this leaves ULTRON running, which is not what the user "
             "asked for. This tool speaks the goodbye itself."
         ),
         intent="farewell",
@@ -572,7 +572,7 @@ ALL_TOOLS: tuple[ToolDef, ...] = (
     ),
     ToolDef(
         name="recall_memory",
-        description="Look up something FRIDAY was told to remember about the user.",
+        description="Look up something ULTRON was told to remember about the user.",
         intent="memory_recall",
         properties={"query": _str("What to recall.")},
         required=("query",),

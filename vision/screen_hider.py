@@ -1,5 +1,5 @@
 """
-vision/screen_hider.py – Keep FRIDAY out of screen shares
+vision/screen_hider.py – Keep ULTRON out of screen shares
 =========================================================
 ``SetWindowDisplayAffinity`` with ``WDA_EXCLUDEFROMCAPTURE`` removes a window
 from every capture path the OS offers — Google Meet, Zoom, Teams, OBS, the
@@ -11,7 +11,7 @@ Two things follow from doing this at the OS level rather than by filtering our
 own screenshots:
 
 * it holds for capture software we have never heard of, and
-* our own ``screen_capture`` cannot see FRIDAY either, so the vision model is
+* our own ``screen_capture`` cannot see ULTRON either, so the vision model is
   never shown a picture of the assistant asking about the picture.
 
 Requires Windows 10 version 2004 (build 19041) or newer. The older

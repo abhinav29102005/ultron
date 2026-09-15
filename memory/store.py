@@ -1,7 +1,7 @@
 """
 memory/store.py – Persistent Fact Store
 =========================================
-Owns the on-disk JSON file holding what FRIDAY knows about the user.
+Owns the on-disk JSON file holding what ULTRON knows about the user.
 Deliberately free of any LLM dependency so it can be exercised with no
 model server running.
 
@@ -31,7 +31,7 @@ _KEY_ILLEGAL = re.compile(r"[^a-z0-9_]+")
 
 #: Where a relative store path is anchored. The configured default is
 #: "data/memory.json", which against the process working directory would point
-#: at a different file every time FRIDAY is launched from another folder — the
+#: at a different file every time ULTRON is launched from another folder — the
 #: user would appear to have lost everything they told it.
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -229,7 +229,7 @@ class MemoryStore:
                     self._facts[fact.key] = fact
 
         except Exception as exc:
-            # A damaged store must never stop FRIDAY from booting: quarantine
+            # A damaged store must never stop ULTRON from booting: quarantine
             # the file so it can still be inspected, and carry on empty.
             self._facts = {}
             self._quarantine(exc)

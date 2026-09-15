@@ -1,7 +1,7 @@
 """
 Tests for intelligence/tool_dispatcher.py – running a tool call.
 
-The dispatcher is the join between the new agent loop and everything FRIDAY
+The dispatcher is the join between the new agent loop and everything ULTRON
 already does. A tool call becomes an ordinary Task with the tool's intent, and
 that Task goes through the existing router and executor untouched. That is the
 whole point of the design: no skill had to be rewritten to become callable.

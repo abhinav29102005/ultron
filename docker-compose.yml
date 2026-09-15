@@ -1,0 +1,31 @@
+﻿version: "3.9"
+
+services:
+  ultron:
+    build: .
+    image: ultron:latest
+    container_name: ultron_rag
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - WEAVIATE_URL=${WEAVIATE_URL:-}
+    volumes:
+      - ./logs:/app/logs
+    command: python scripts/run_benchmark.py
+
+  weaviate:
+    image: semitechnologies/weaviate:1.24.1
+    container_name: ultron_weaviate
+    ports:
+      - "8080:8080"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      ENABLE_MODULES: ""
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    restart: unless-stopped
+
+volumes:
+  weaviate_data:

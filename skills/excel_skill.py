@@ -1,7 +1,7 @@
 """
 skills/excel_skill.py – Read and edit Excel workbooks through the real API
 ===========================================================================
-Excel is the one desktop app FRIDAY already had the wrong tools for. There is
+Excel is the one desktop app ULTRON already had the wrong tools for. There is
 UI-automation machinery in ``skills/desktop_skill.py`` and it must never be
 pointed at a spreadsheet: keystrokes into a grid are unverifiable, silently
 land in the wrong cell when focus moves, and cannot be undone. Excel exposes a
@@ -94,7 +94,7 @@ MAX_SCAN_CELLS = 2_000
 MAX_BACKUPS = 10
 
 #: Where a relative backup root is anchored -- the project root, never the
-#: working directory, for the reason ``memory/store.py`` spells out: FRIDAY is
+#: working directory, for the reason ``memory/store.py`` spells out: ULTRON is
 #: launched from wherever the user happened to be.
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_BACKUP_ROOT = _PROJECT_ROOT / "data" / "excel_backups"
@@ -195,7 +195,7 @@ class ExcelSkill(Skill):
         super().__init__(container)
         self._backup_root = Path(backup_root) if backup_root else DEFAULT_BACKUP_ROOT
         # Per-workbook, per-session: the point of the backup is the state the
-        # workbook was in when FRIDAY first touched it. Copying again on the
+        # workbook was in when ULTRON first touched it. Copying again on the
         # third op would rotate that original out behind our own edits.
         self._backed_up: set[str] = set()
 
@@ -323,7 +323,7 @@ class ExcelSkill(Skill):
         Which is exactly what a ``{stem}_*{suffix}`` glob did. For
         ``report.xlsx`` it also matched ``report_2025_<stamp>.xlsx`` -- the
         backups of a *different* workbook, ``report_2025.xlsx`` -- and since
-        those sort earlier they were the first thing deleted. FRIDAY silently
+        those sort earlier they were the first thing deleted. ULTRON silently
         destroyed the undo history of a file the user never asked it to
         touch. The name has to be matched exactly, timestamp and all.
 

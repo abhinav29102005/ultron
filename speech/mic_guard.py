@@ -7,7 +7,7 @@ transcriber gets the song instead of the user.
 
 This module silences our own output for the duration of a listen:
 
-  * FRIDAY's own TTS is stopped outright (``stop_audio``).
+  * ULTRON's own TTS is stopped outright (``stop_audio``).
   * External playback (Spotify) is *paused* and then resumed, but only if it
     was actually playing. Toggling blindly would start music that was never
     playing in the first place.

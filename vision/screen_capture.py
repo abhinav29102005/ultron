@@ -6,7 +6,7 @@ game: a raw 4K PNG costs seconds of encode time and thousands of image tokens
 without telling the model anything a 1280px JPEG does not.
 
 Capture targets the monitor under the mouse pointer, which is the one the user
-is looking at. FRIDAY's own window never appears in the result — not because
+is looking at. ULTRON's own window never appears in the result — not because
 this module filters it, but because ``screen_hider`` marks it excluded from
 capture at the OS level, which applies to us exactly as it applies to Zoom.
 """

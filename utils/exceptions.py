@@ -1,6 +1,6 @@
 """
-utils/exceptions.py – Exception Hierarchy for JARVIS / FRIDAY
-============================================================
+utils/exceptions.py – Exception Hierarchy for ULTRON
+=====================================================
 Defines all custom exceptions for the application and its subsystems.
 
 Team: Core Platform Team
@@ -10,9 +10,9 @@ Phase: 0 (Implementation)
 from __future__ import annotations
 
 
-class FridayError(Exception):
+class UltronError(Exception):
     """
-    Base exception class for all errors in the JARVIS / FRIDAY system.
+    Base exception class for all errors in the ULTRON system.
     """
 
     def __init__(self, message: str = "", *args: object) -> None:
@@ -23,48 +23,49 @@ class FridayError(Exception):
         return self.message
 
 
-# Maintain alias for compatibility
-FridayBaseError = FridayError
+# Deprecated aliases – kept for backward compatibility
+FridayError = UltronError
+FridayBaseError = UltronError
 
 
-class AssistantNotInitialisedError(FridayError):
+class AssistantNotInitialisedError(UltronError):
     """
     Raised when a method is called before the Assistant has been started.
     """
     pass
 
 
-class ConfigurationError(FridayError):
+class ConfigurationError(UltronError):
     """
     Raised when there is a configuration error (e.g. missing environment variables or validation errors).
     """
     pass
 
 
-class EventBusError(FridayError):
+class EventBusError(UltronError):
     """
     Raised when an error occurs in the EventBus operations.
     """
     pass
 
 
-class ValidationError(FridayError):
+class ValidationError(UltronError):
     """
     Raised when input validation fails.
     """
     pass
 
 
-class ServiceNotFoundError(FridayError):
+class ServiceNotFoundError(UltronError):
     """
     Raised when a requested service cannot be resolved from the container.
     """
     pass
 
 
-# ── Subsystem exceptions (Stubs for future phases) ──
+# ── Subsystem exceptions ──────────────────────────────────────────────────────
 
-class LLMError(FridayError):
+class LLMError(UltronError):
     """Base class for all LLM-related errors."""
     pass
 
@@ -79,7 +80,7 @@ class LLMAuthenticationError(LLMError):
     pass
 
 
-class SpeechError(FridayError):
+class SpeechError(UltronError):
     """Base class for all speech subsystem errors."""
     pass
 
@@ -99,12 +100,12 @@ class TTSError(SpeechError):
     pass
 
 
-class WakeWordError(FridayError):
+class WakeWordError(UltronError):
     """Raised when the wake-word detection engine fails."""
     pass
 
 
-class PlannerError(FridayError):
+class PlannerError(UltronError):
     """Base class for planner / intent errors."""
     pass
 
@@ -114,7 +115,7 @@ class IntentDetectionError(PlannerError):
     pass
 
 
-class SkillError(FridayError):
+class SkillError(UltronError):
     """Base class for skill execution errors."""
     pass
 

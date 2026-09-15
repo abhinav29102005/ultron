@@ -6,7 +6,7 @@ opened then it can't take control". Diagnosed live and confirmed: their Chrome
 was running with nothing listening on port 9222. Chrome only exposes the
 DevTools protocol when it is *started* with ``--remote-debugging-port``, and
 there is no way to switch it on afterwards. So attaching could never work, and
-FRIDAY silently fell back to its own Chromium -- logged into nothing, which is
+ULTRON silently fell back to its own Chromium -- logged into nothing, which is
 exactly the "it isn't my browser" experience.
 
 The only fix is to restart Chrome with the flag. That closes the user's

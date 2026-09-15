@@ -2,7 +2,7 @@
 utils/__init__.py – Utilities Package
 ======================================
 The ``utils`` package provides shared, framework-agnostic helpers that are
-used across all JARVIS / FRIDAY modules.
+used across all ULTRON modules.
 
 Contents:
     - :mod:`~utils.helpers` – General-purpose utility functions
@@ -13,7 +13,7 @@ Contents:
 
 from utils.exceptions import (
     AssistantNotInitialisedError,
-    FridayBaseError,
+    UltronError,
     LLMError,
     PlannerError,
     SkillError,
@@ -22,7 +22,7 @@ from utils.exceptions import (
 )
 
 __all__: list[str] = [
-    "FridayBaseError",
+    "UltronError",
     "AssistantNotInitialisedError",
     "LLMError",
     "SpeechError",

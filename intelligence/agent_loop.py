@@ -8,7 +8,7 @@ intent up in a table, run that one skill, speak the result. It worked for
 "what's the time" and broke for everything else, because the model had to
 choose exactly one bucket for a sentence that might mean several things or
 none of them. "Fix the bug in my code" has no bucket, so it landed in
-``search_web`` and FRIDAY googled the word "error".
+``search_web`` and ULTRON googled the word "error".
 
 The new turn is: hand the model typed tools, let it call them -- none, one, or
 several, over as many rounds as it needs -- and speak whatever it says once it
@@ -85,7 +85,7 @@ REPEAT_LIMIT = 2
 #: no capitalised emphasis, no metaphors, and the fix procedure written as a
 #: numbered recipe, because a numbered list is the one structure these models
 #: reliably execute in order.
-SYSTEM_PROMPT = """You are FRIDAY, a voice assistant on the user's Windows laptop.
+SYSTEM_PROMPT = """You are ULTRON, a voice assistant on the user's Windows laptop.
 
 Use tools to do things. Do not describe what you would do, and do not answer from memory when a tool can check.
 

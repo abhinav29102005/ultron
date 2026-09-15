@@ -74,7 +74,7 @@ class FactExtractor:
             The system prompt instructing the model to emit fact JSON.
         """
         return """
-You are the long-term memory extractor for the FRIDAY desktop assistant.
+You are the long-term memory extractor for the ULTRON desktop assistant.
 
 Read the user's message and pull out ONLY durable personal facts that the
 user stated about THEMSELVES: their name, job, where they live, their

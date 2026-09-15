@@ -1,7 +1,7 @@
 """
 utils/preflight.py – Startup Health Checks
 ===========================================
-Verifies that the things Friday needs in order to *think* are actually
+Verifies that the things ULTRON needs in order to *think* are actually
 present before the microphone opens.
 
 Why this module exists
@@ -58,7 +58,7 @@ STARTUP_POLL_SECONDS = 0.4
 class PreflightResult:
     """Outcome of the startup checks.
 
-    ``ok`` means Friday can reason. Warnings are things worth printing that
+    ``ok`` means ULTRON can reason. Warnings are things worth printing that
     do not stop it from running; ``problems`` are the ones that do.
     """
 
@@ -163,12 +163,12 @@ def start_ollama_server() -> bool:
     #
     # CREATE_NO_WINDOW *alone*, deliberately. It already does what
     # DETACHED_PROCESS was added for -- the server gets its own console rather
-    # than Friday's, so it cannot print into the conversation and Ctrl+C does
+    # than ULTRON's, so it cannot print into the conversation and Ctrl+C does
     # not reach it -- and the two must not be combined: Windows documents
     # CREATE_NO_WINDOW as ignored when passed with DETACHED_PROCESS. That left
     # the server with no console at all, and a console process with no console
     # allocates a fresh visible one for every console child it spawns. Ollama
-    # spawns several (GPU probes, a runner per model), so starting Friday
+    # spawns several (GPU probes, a runner per model), so starting ULTRON
     # sprayed black console windows across the screen.
     creation_flags = 0
     if sys.platform == "win32":
@@ -227,7 +227,7 @@ def check_llm(settings: Settings, *, autostart: bool = True) -> PreflightResult:
 
         # One cheap listing, and only to catch a model that no longer exists.
         # The configured default was retired upstream and started answering
-        # 410 Gone; nothing said so, so every later symptom looked like FRIDAY
+        # 410 Gone; nothing said so, so every later symptom looked like ULTRON
         # being broken. A warning rather than a failure: the listing does not
         # always include every model a key can reach, and refusing to start
         # over that would be worse than the silence it replaces.
@@ -285,7 +285,7 @@ def check_llm(settings: Settings, *, autostart: bool = True) -> PreflightResult:
             problems=[
                 f"Ollama is not responding at {base_url} and could not be "
                 f"started automatically. Run `ollama serve` in another "
-                f"terminal, then start Friday again."
+                f"terminal, then start ULTRON again."
             ],
         )
 
@@ -316,7 +316,7 @@ def report(result: PreflightResult) -> None:
     if result.ok:
         return
 
-    print("\n[PRE] Friday cannot reason properly right now:\n")
+    print("\n[PRE] ULTRON cannot reason properly right now:\n")
     for problem in result.problems:
         print(f"  - {problem}")
     print(

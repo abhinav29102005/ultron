@@ -1,13 +1,13 @@
 """
 skills/notes_skill.py – Jot something down and find it again
 =============================================================
-``notes`` was one of three intents routed to ``DefaultSkill``: FRIDAY
+``notes`` was one of three intents routed to ``DefaultSkill``: ULTRON
 recognised "make a note of that" and then did nothing with it.
 
 Notes are stored on disk rather than in memory for the obvious reason -- a
 note that a restart loses is not a note -- and separately from the fact store
 in ``memory/``. The two look similar and are not: the fact store holds things
-FRIDAY *inferred* about the user and prunes them on its own, while a note is
+ULTRON *inferred* about the user and prunes them on its own, while a note is
 something the user asked to keep verbatim and expects to still be there.
 """
 

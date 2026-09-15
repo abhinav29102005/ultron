@@ -224,6 +224,14 @@ class Settings(BaseSettings):
     max_plan_steps: int = Field(default=10)
     secret_key: SecretStr = Field(default=SecretStr("dev_secret_key_change_in_production"))
 
+    # Optional Weaviate configuration for vector search
+    weaviate_url: str | None = Field(default=None)
+    weaviate_api_key: SecretStr | None = Field(default=None)
+
+    # Embeddings / external API keys
+    openai_api_key: SecretStr | None = Field(default=None)
+    openai_embedding_model: str = Field(default="text-embedding-3-small")
+
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v: str) -> str:

@@ -91,8 +91,8 @@ class FolderSkill(Skill):
         """Look for a folder called ``name`` near the user's home directory.
 
         Scored rather than first-match: an exact name beats a prefix beats a
-        substring, and the shortest path wins a tie, so "friday agent" finds
-        "friday-agent-main" without being derailed by a longer neighbour that
+        substring, and the shortest path wins a tie, so "ULTRON agent" finds
+        "ULTRON-agent-main" without being derailed by a longer neighbour that
         also contains the words. The same approach ApplicationSkill uses for
         Start-menu shortcuts, for the same reason.
         """
@@ -100,7 +100,7 @@ class FolderSkill(Skill):
         if not needle:
             return None
 
-        # "friday agent" should match "friday-agent-main": compare on letters
+        # "ULTRON agent" should match "ULTRON-agent-main": compare on letters
         # and digits only, so spoken spacing and punctuation stop mattering.
         squashed = "".join(ch for ch in needle if ch.isalnum())
         home = os.path.expanduser("~")
@@ -136,8 +136,8 @@ class FolderSkill(Skill):
                     # An empty folder is almost never what somebody means
                     # by "open my project", so emptiness costs more than one
                     # grade of name match. That is deliberate: the live case
-                    # was an empty leftover named exactly "friday agent"
-                    # beating the real friday-agent-main on the Desktop. A
+                    # was an empty leftover named exactly "ULTRON agent"
+                    # beating the real ULTRON-agent-main on the Desktop. A
                     # populated exact match still wins over everything.
                     score = score + (2 if cls._has_contents(entry.path) else 0)
 

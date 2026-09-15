@@ -451,7 +451,7 @@ class TestBackups:
         self, skill, book, tmp_path
     ):
         """Backing up again on every op would rotate the original out behind
-        FRIDAY's own edits."""
+        ULTRON's own edits."""
         for column in ("A2", "A3", "A4"):
             await skill.execute(
                 _task(
@@ -641,7 +641,7 @@ class TestBackupPruningIsolation:
     Pruning globbed ``{stem}_*{suffix}``, so tidying ``report.xlsx``'s backups
     also matched ``report_2025_<stamp>.xlsx`` -- the backups of a different
     workbook that merely starts with the same characters. Those sort earlier,
-    so they were deleted first: FRIDAY destroying the undo history of a file
+    so they were deleted first: ULTRON destroying the undo history of a file
     nobody asked it to touch.
     """
 

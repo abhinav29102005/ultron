@@ -1,9 +1,9 @@
 """
 skills/code_skill.py – Read, list and edit files
 =================================================
-The hands FRIDAY did not have.
+The hands ULTRON did not have.
 
-Asked to fix a bug, FRIDAY used to search the web for the error text -- not
+Asked to fix a bug, ULTRON used to search the web for the error text -- not
 because searching seemed right, but because reading the user's file was not
 something it could do at all. Three tools close that: list a folder, read a
 file, write a file.
@@ -11,7 +11,7 @@ file, write a file.
 Safety is deliberately boring rather than clever:
 
   * a write always leaves the previous version beside the file as
-    ``.friday-bak``. A voice-driven edit has no diff review and no undo, so
+    ``.ULTRON-bak``. A voice-driven edit has no diff review and no undo, so
     the recoverable copy is the whole safety story;
   * a write refuses to create missing parent folders, because a misheard path
     should not scatter directories across the disk;
@@ -50,7 +50,7 @@ MAX_READ_CHARS = 60_000
 MAX_LIST_ENTRIES = 200
 
 #: Suffix for the copy kept beside an overwritten file.
-BACKUP_SUFFIX = ".friday-bak"
+BACKUP_SUFFIX = ".ULTRON-bak"
 
 #: Command output handed back to the model. A stack trace is a few hundred
 #: characters; a runaway loop printing to stdout is unbounded, and the model
@@ -64,7 +64,7 @@ DEFAULT_RUN_ALLOWLIST = ("python", "py", "pytest", "node", "npm", "code")
 DEFAULT_RUN_TIMEOUT = 45.0
 
 #: Where shadow copies live, under the system temp directory.
-SHADOW_DIRNAME = "friday-fix"
+SHADOW_DIRNAME = "ULTRON-fix"
 
 
 def _looks_binary(raw: bytes) -> bool:

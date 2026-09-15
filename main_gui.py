@@ -1,5 +1,5 @@
 """
-main_gui.py – PyQt Desktop Entry Point for FRIDAY
+main_gui.py – PyQt Desktop Entry Point for ULTRON
 ==================================================
 Separate launcher from main.py. Boots the same ServiceContainer/Assistant,
 but runs inside a Qt event loop (via qasync) and shows MainWindow instead
@@ -134,7 +134,7 @@ async def run(app: QApplication) -> None:
 
 #: Module-level, and that is load-bearing. The mutex lives exactly as long as
 #: the object holding its handle: a local in main() would be collected on the
-#: way out of the function and the guard would end while FRIDAY was still
+#: way out of the function and the guard would end while ULTRON was still
 #: running. Nothing ever calls release() -- run() finishes with os._exit(0),
 #: which skips finalizers, and the OS drops the mutex when the process dies
 #: however it dies. That is the whole reason this is a kernel object rather

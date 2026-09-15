@@ -126,7 +126,7 @@ class CLI:
             sys.stdout.flush()
 
     @staticmethod
-    def print_jarvis_response(text: str) -> None:
+    def print_ultron_response_compat(text: str) -> None:
         """Backwards compatible signature for legacy callers."""
         CLI.print_ultron_response(text)
 

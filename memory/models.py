@@ -18,7 +18,7 @@ from typing import Any
 @dataclass
 class MemoryFact:
     """
-    A single durable fact FRIDAY remembers about the user.
+    A single durable fact ULTRON remembers about the user.
 
     Contains fields only. No methods.
     """

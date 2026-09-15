@@ -3,7 +3,7 @@ speech/speech_to_text/recorder.py – Microphone capture with VAD segmentation
 
 The PortAudio callback runs whether or not anyone is listening. It used to
 push into an unbounded queue that only ``listen()`` drained, so every second
-FRIDAY spent thinking or speaking added roughly sixteen stale blocks. The next
+ULTRON spent thinking or speaking added roughly sixteen stale blocks. The next
 ``listen()`` then ran the Silero VAD once per stale block before it reached
 live audio, which is what made the assistant appear to hang after an interrupt.
 
@@ -155,7 +155,7 @@ class Recorder:
         if timeout is None:
             timeout = SILENCE_LISTEN_TIMEOUT
 
-        # Start from live audio. Anything queued while FRIDAY was thinking or
+        # Start from live audio. Anything queued while ULTRON was thinking or
         # speaking is stale by definition and only costs VAD time.
         self.flush()
 

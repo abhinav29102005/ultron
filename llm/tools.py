@@ -3,10 +3,10 @@ llm/tools.py – Tool definitions for function calling
 =====================================================
 The vocabulary the agent loop speaks in.
 
-FRIDAY used to classify each utterance into one of 29 fixed intents with a
+ULTRON used to classify each utterance into one of 29 fixed intents with a
 single model call. That works for "what's the time" and falls apart for
 anything compound or unanticipated: the model had to pick one bucket, so
-"fix the bug in my code" landed in ``search_web`` and FRIDAY googled "error".
+"fix the bug in my code" landed in ``search_web`` and ULTRON googled "error".
 
 A tool call is the same information with the shape inverted. Instead of
 asking the model to *name* what the user wants, we hand it typed capabilities
@@ -31,7 +31,7 @@ class ToolDef:
 
     ``intent`` is the bridge back to the existing pipeline: executing a tool
     builds a :class:`~intelligence.task.Task` with this intent and runs it
-    through the ordinary router and executor. Every skill FRIDAY already has
+    through the ordinary router and executor. Every skill ULTRON already has
     keeps working unchanged -- the agent loop replaces how a skill is *chosen*,
     not what skills do.
     """

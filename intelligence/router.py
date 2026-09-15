@@ -71,7 +71,7 @@ class TaskRouter:
 
     ROUTING_TABLE = {
         "greeting": ChatSkill,
-        # Another agent owns what Friday actually does on a goodbye; routing it
+        # Another agent owns what ULTRON actually does on a goodbye; routing it
         # to the fallback keeps the intent detectable without claiming that
         # behaviour here.
         "farewell": FarewellSkill,

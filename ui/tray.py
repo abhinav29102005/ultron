@@ -52,7 +52,7 @@ class TrayController(QObject):
             return
 
         self._tray = QSystemTrayIcon(make_orb_icon("IDLE"), self)
-        self._tray.setToolTip("FRIDAY")
+        self._tray.setToolTip("ULTRON")
 
         self._menu = QMenu()
         show_action = QAction("Show", self._menu)
@@ -102,9 +102,9 @@ class TrayController(QObject):
             self._tray.setIcon(make_orb_icon(state))
             # Deliberately stateless. A tray tooltip is drawn by the shell, not
             # by a window we own, so SetWindowDisplayAffinity cannot reach it —
-            # "FRIDAY — Listening" would be readable on a shared screen with no
+            # "ULTRON — Listening" would be readable on a shared screen with no
             # way to suppress it. The icon already conveys state to the user.
-            self._tray.setToolTip("FRIDAY")
+            self._tray.setToolTip("ULTRON")
 
     def hide(self) -> None:
         if self._tray is not None:

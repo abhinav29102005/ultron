@@ -2,7 +2,7 @@
 skills/__init__.py – Skills Package
 =====================================
 The ``skills`` package implements the extensible skill system for
-JARVIS / FRIDAY.
+ULTRON.
 
 A **skill** is a self-contained unit of capability (e.g., open an app,
 search the web, set a timer). Skills are registered at startup and

@@ -102,7 +102,7 @@ def _default_root() -> Path:
     A function rather than a module constant so tests can redirect it without
     a real home directory ever being touched.
     """
-    return Path.home() / "Documents" / "FRIDAY"
+    return Path.home() / "Documents" / "ULTRON"
 
 
 def _no_window_flags() -> int:
@@ -223,7 +223,7 @@ class DocumentSkill(Skill):
     """Write a document the user can open, from markdown the model wrote."""
 
     name = "DocumentSkill"
-    description = "Renders markdown into a md, html or pdf file in Documents/FRIDAY."
+    description = "Renders markdown into a md, html or pdf file in Documents/ULTRON."
     version = "1.0.0"
     enabled = True
 
@@ -272,7 +272,7 @@ class DocumentSkill(Skill):
         try:
             root.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
-            return f"I couldn't create the FRIDAY documents folder: {exc}"
+            return f"I couldn't create the ULTRON documents folder: {exc}"
 
         # Joined against the root *after* basename extraction, so there is no
         # path to escape from -- traversal never gets a component to work with.
@@ -330,7 +330,7 @@ class DocumentSkill(Skill):
     def _write_docx(self, content_md: str, target: Path) -> None:
         """Hand the markdown to Pandoc, which the caller has already found."""
         pandoc = shutil.which("pandoc")
-        with tempfile.TemporaryDirectory(prefix="friday-doc-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="ULTRON-doc-") as tmp:
             source = Path(tmp) / "source.md"
             source.write_text(content_md, encoding="utf-8")
             result = subprocess.run(
@@ -348,7 +348,7 @@ class DocumentSkill(Skill):
 
         xhtml2pdf can return success and leave a zero-byte or header-only file
         behind, and a document the user cannot open is indistinguishable from
-        one that was never written -- except that FRIDAY said it was there.
+        one that was never written -- except that ULTRON said it was there.
         """
         try:
             if not path.is_file():

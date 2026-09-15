@@ -6,7 +6,7 @@ That is not hypothetical: it proxied complete/stream but not
 complete_with_tools, so every agent turn since the wrapper was introduced
 died with AttributeError and fell back to the classifier — the log was a
 wall of "Agent turn failed ('CachedLLM' object has no attribute
-'complete_with_tools')", and to the user it looked like FRIDAY could not
+'complete_with_tools')", and to the user it looked like ULTRON could not
 reach the web.
 """
 

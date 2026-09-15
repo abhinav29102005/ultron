@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 # blocker does, a tab opens even if the model wanted to answer from memory.
 # Between the two, the model decides.
 
-#: Utterances another part of Friday already answers. Never a web lookup.
+#: Utterances another part of ULTRON already answers. Never a web lookup.
 WEB_LOOKUP_BLOCKERS = (
     # Arithmetic — MathSkill's job. "what is 2+2", "calculate 15 times 4".
     r"^\s*(?:what(?:'?s| is)|calculate|compute|how much is)?\s*"
@@ -54,7 +54,7 @@ WEB_LOOKUP_BLOCKERS = (
     # The weather — WeatherSkill's job.
     r"\b(?:weather|temperature|forecast|humidity)\b",
 
-    # Questions about Friday itself, and for its help.
+    # Questions about ULTRON itself, and for its help.
     r"\b(?:what can you do|who are you|what(?:'?s| is) your name|"
     r"how do you work|are you (?:there|awake|listening)|help me with|"
     r"what are your (?:commands|skills))\b",
@@ -317,7 +317,7 @@ def continues_a_screen_turn(text: str, *, after_screen_turn: bool) -> bool:
     """True when this utterance elaborates on the screen just discussed.
 
     ``after_screen_turn`` is not optional context, it is half the signal.
-    "What about that one?" is a screen question after FRIDAY has just read the
+    "What about that one?" is a screen question after ULTRON has just read the
     screen and an ordinary sentence at any other moment, and letting every
     "what about that" reach the vision model would hijack the assistant.
 
@@ -442,7 +442,7 @@ class IntentDetector:
             )
 
         except Exception as exc:
-            # Keep Friday usable if the local LLM fails.
+            # Keep ULTRON usable if the local LLM fails.
             print(f"LLM intent detection failed: {exc}")
             return self._remember(self._fallback(utterance, parsed_data))
 
@@ -530,7 +530,7 @@ class IntentDetector:
         Supports returning multiple intents for compound requests.
         """
         return """
-You are the intent detection engine for the FRIDAY desktop assistant.
+You are the intent detection engine for the ULTRON desktop assistant.
 
 The user's request may contain ONE action or MULTIPLE actions
 chained together (e.g. "Open Chrome and search for AI news").
@@ -669,9 +669,9 @@ asked you to search or look something up, asked about news, prices, scores,
 recent events, or asked about a real person, place, company or event whose
 facts you should not assert from memory.
 
-Do NOT use "web_lookup" for anything Friday already answers itself:
+Do NOT use "web_lookup" for anything ULTRON already answers itself:
 arithmetic (use calculator), the time or date (use time/date), the weather
-(use weather), questions about Friday itself (use help), greetings,
+(use weather), questions about ULTRON itself (use help), greetings,
 goodbyes, or ordinary small talk (use greeting/farewell/general_chat).
 
 For "web_lookup", entities must be:
@@ -1096,7 +1096,7 @@ User: "Good night"
   ]
 }
 
-User: "Bye bye Friday"
+User: "Bye bye ULTRON"
 {
   "intents": [
     {
@@ -1332,7 +1332,7 @@ Return JSON only.
         the whole sentence — which would match nothing.
         """
         stripped = re.sub(
-            r"^\s*(?:can you|could you|please|hey friday|friday)\s+", "", text
+            r"^\s*(?:can you|could you|please|hey ULTRON|ULTRON)\s+", "", text
         )
         match = re.search(
             r"\b(?:open|find|locate|search for|look for|where is)\s+"

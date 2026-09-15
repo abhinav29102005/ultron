@@ -28,7 +28,7 @@ class FarewellSkill(Skill):
     version = "1.0.0"
     enabled = True
 
-    #: Wording matters here: these used to promise FRIDAY was still
+    #: Wording matters here: these used to promise ULTRON was still
     #: listening ("say my name whenever you need me"), which is now untrue.
     GOODBYES = (
         "Goodbye! Shutting down now.",

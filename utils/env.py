@@ -5,7 +5,7 @@ One call that every entry point makes, next to ``force_utf8_output()``.
 
 Why this module exists
 ----------------------
-FRIDAY reads configuration two different ways, and until this existed only one
+ULTRON reads configuration two different ways, and until this existed only one
 of them saw ``.env``:
 
 * ``config/settings.py`` is a pydantic ``BaseSettings`` with

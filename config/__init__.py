@@ -2,7 +2,7 @@
 config/__init__.py – Configuration Package
 ===========================================
 The ``config`` package centralises all application configuration for
-JARVIS / FRIDAY, including:
+ULTRON, including:
 
   - Environment-driven settings (via Pydantic Settings)
   - Application-wide constants

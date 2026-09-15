@@ -290,7 +290,7 @@ class TestRealKeyUntouched:
         )
 
     def test_real_registration_is_absent(self) -> None:
-        """This suite must never leave FRIDAY registered on the developer's machine."""
+        """This suite must never leave ULTRON registered on the developer's machine."""
         import winreg
 
         try:

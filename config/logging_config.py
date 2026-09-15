@@ -46,7 +46,7 @@ def configure_logging(settings: Settings) -> None:
         )
 
     # 2. File Logging Handler - Keeps detailed timestamped format
-    log_file_path = Path(settings.log_dir) / "friday.log"
+    log_file_path = Path(settings.log_dir) / "ultron.log"
     logger.add(
         str(log_file_path),
         level=log_level,

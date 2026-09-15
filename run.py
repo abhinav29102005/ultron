@@ -78,8 +78,8 @@ async def run(args: argparse.Namespace) -> None:
     settings = Settings.load(env_file=args.config)
     configure_logging(settings)
 
-    # Before the mic opens. A dead LLM backend does not stop Friday from
-    # hearing the user -- it stops Friday from understanding them, and the
+    # Before the mic opens. A dead LLM backend does not stop ULTRON from
+    # hearing the user -- it stops ULTRON from understanding them, and the
     # regex fallback that covers for it is convincing enough that the failure
     # looks like bad intent detection instead of a service that is down.
     preflight = check_llm(settings, autostart=not args.no_autostart)

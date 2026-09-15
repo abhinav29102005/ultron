@@ -1,7 +1,7 @@
 """
 Tests for utils/preflight.py.
 
-Bug this covers: with Ollama stopped, Friday started normally, transcribed
+Bug this covers: with Ollama stopped, ULTRON started normally, transcribed
 speech correctly, and then silently fell back to regex intent rules for every
 single request -- so it reliably did the wrong thing while looking healthy.
 Nothing anywhere checked that the LLM backend was reachable.
@@ -181,11 +181,11 @@ class TestServerLaunchFlags:
     as *ignored* when combined with DETACHED_PROCESS, so the server came up
     with no console at all -- and every console subprocess Ollama then spawns
     (GPU probes, model runners) had to allocate its own console, which is
-    visible. Starting Friday sprayed black console windows across the screen.
+    visible. Starting ULTRON sprayed black console windows across the screen.
 
     CREATE_NO_WINDOW on its own gives the server a real but windowless console
     that its children inherit, which is what keeps the whole tree invisible.
-    It also still gives the server its *own* console rather than Friday's, so
+    It also still gives the server its *own* console rather than ULTRON's, so
     the server cannot print into the conversation and Ctrl+C does not reach it
     -- the two things DETACHED_PROCESS was there for.
     """
@@ -227,12 +227,12 @@ class TestNvidiaModelProbe:
     startup costs more than it tells you. A *retired model* is different: the
     configured default (meta/llama-3.1-8b-instruct) started returning HTTP 410
     Gone, and nothing said so. The cloud path was silently dead, and every
-    symptom looked like FRIDAY misbehaving rather than a model that no longer
+    symptom looked like ULTRON misbehaving rather than a model that no longer
     exists.
 
     So the model list is checked, and only that. It is one cheap call, it
     cannot be confused with a key problem, and it is a warning rather than a
-    failure -- an unreachable API at boot must not stop FRIDAY starting.
+    failure -- an unreachable API at boot must not stop ULTRON starting.
     """
 
     def test_a_live_model_passes_quietly(self, monkeypatch):

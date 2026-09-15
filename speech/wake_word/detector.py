@@ -34,13 +34,13 @@ CHUNK_SAMPLES = 512  # Porcupine expects 512 samples at 16kHz
 
 # Porcupine settings
 PORCUPINE_ACCESS_KEY = os.getenv("PICOVOICE_ACCESS_KEY", "")
-# Porcupine only accepts its own built-in keyword names. "friday" is NOT one
+# Porcupine only accepts its own built-in keyword names. "ULTRON" is NOT one
 # of them, and the name is "hey google" with a space -- the previous list
-# ("friday", "hey_google") made pvporcupine.create() raise, which silently
+# ("ULTRON", "hey_google") made pvporcupine.create() raise, which silently
 # dropped us back to openWakeWord even when a valid key was configured.
 # Override with WAKEWORD_KEYWORDS (comma separated) or point
 # PORCUPINE_KEYWORD_PATH at a custom .ppn from the Picovoice console.
-_DEFAULT_PORCUPINE_KEYWORDS = ["jarvis", "computer"]
+_DEFAULT_PORCUPINE_KEYWORDS = ["ULTRON", "computer"]
 PORCUPINE_KEYWORDS = [
     k.strip() for k in os.getenv(
         "WAKEWORD_KEYWORDS", ",".join(_DEFAULT_PORCUPINE_KEYWORDS)
@@ -65,7 +65,7 @@ def _oww_threshold(sensitivity: float) -> float:
 
     Before this existed the threshold was a hardcoded 0.5 and the .env knob
     silently tuned an engine that was not running — on a laptop microphone at
-    conversational distance "hey jarvis" peaks in the 0.3-0.5 band often
+    conversational distance "hey ULTRON" peaks in the 0.3-0.5 band often
     enough that 0.5 reads as "it takes a few tries".
     """
     try:
@@ -109,7 +109,7 @@ class WakeWordDetector:
                 if PORCUPINE_KEYWORD_PATH:
                     # A custom phrase trained in the Picovoice console -- the
                     # only way to get a wake word Porcupine has no built-in for
-                    # (e.g. "hey friday").
+                    # (e.g. "hey ULTRON").
                     paths = [
                         p.strip()
                         for p in PORCUPINE_KEYWORD_PATH.split(";")
@@ -268,10 +268,10 @@ class WakeWordDetector:
         )
         stream.start()
         # Reset only after a *detection*, not on every entry. The reset
-        # exists so the "hey jarvis" still sitting in the model's buffer
+        # exists so the "hey ULTRON" still sitting in the model's buffer
         # cannot trigger twice. Wiping the buffer on every call meant every
         # pause/resume cycle re-entered with ~1s of cold, meaningless scores
-        # — and a user who speaks the moment FRIDAY resumes listening lands
+        # — and a user who speaks the moment ULTRON resumes listening lands
         # exactly inside that window, which reads as "it ignored me".
         if self._oww_reset_pending:
             self._oww.reset()

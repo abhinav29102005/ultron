@@ -1,7 +1,7 @@
 """
-Console-window hygiene for every Windows subprocess Friday spawns.
+Console-window hygiene for every Windows subprocess ULTRON spawns.
 
-Bug this covers: black console windows appeared on their own while Friday
+Bug this covers: black console windows appeared on their own while ULTRON
 was running. Any console program started from a process that has no console
 of its own -- which is exactly what the PyQt entry point (main_gui.py) is --
 gets a brand new, *visible* console allocated for it by Windows. The only
