@@ -17,8 +17,18 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
+import subprocess
 import sys
 from pathlib import Path
+
+# Auto-trampoline to .venv Python if invoked via system Python
+_repo_root = Path(__file__).resolve().parent
+_venv_python = _repo_root / ".venv" / "Scripts" / "python.exe"
+if not _venv_python.exists():
+    _venv_python = _repo_root / ".venv" / "bin" / "python"
+if _venv_python.exists() and Path(sys.executable).resolve() != _venv_python.resolve():
+    sys.exit(subprocess.call([str(_venv_python)] + sys.argv))
 
 from utils.console import force_utf8_output
 from utils.env import load_env_file
