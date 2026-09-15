@@ -43,5 +43,4 @@ class OpenAIEmbeddings:
             return await asyncio.to_thread(_call)
         except Exception:
             logger.exception("OpenAI embedding call failed")
-            raise
-*** End Patch
+            raise
