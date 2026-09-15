@@ -1,0 +1,25 @@
+name: Deploy Installer Worker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'deploy/installer/**'
+      # We don't need to trigger on scripts/install.sh changes because 
+      # the worker fetches it dynamically at runtime!
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare Workers
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'deploy/installer'
+          command: deploy

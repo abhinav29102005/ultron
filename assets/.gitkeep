@@ -1,0 +1,5 @@
+# assets directory
+# Place audio responses, wake-word models, and other static files here.
+# Subdirectories:
+#   wakeword_models/ – .onnx or .ppn wake-word model files
+#   audio/           – pre-recorded audio response clips

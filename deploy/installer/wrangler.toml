@@ -1,0 +1,10 @@
+name = "friday-installer"
+main = "src/index.ts"
+compatibility_date = "2024-08-26"
+
+# Route to the custom domain
+routes = [
+  { pattern = "friday.mlsctiet.com", custom_domain = true }
+]
+
+account_id = "295f7c4521a765ab8109a06891d078db"

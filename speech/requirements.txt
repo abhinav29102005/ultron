@@ -1,0 +1,11 @@
+faster-whisper==1.2.1
+piper-tts==1.4.2
+silero-vad==6.2.1
+sounddevice==0.5.5
+onnxruntime-gpu==1.27.0
+torch==2.13.0
+torchaudio==2.11.0
+numpy==2.5.1
+loguru==0.7.3
+pydantic==2.13.4
+pydantic_settings==2.14.2

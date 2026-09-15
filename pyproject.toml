@@ -1,0 +1,216 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "friday-agent"
+version = "0.1.0"
+description = "JARVIS / FRIDAY – Production-ready AI Desktop Assistant"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11,<3.12"
+authors = [
+    { name = "JARVIS Dev Team" },
+]
+keywords = ["ai", "assistant", "voice", "llm", "jarvis", "friday"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+
+dependencies = [
+    # ── Core async / CLI ──────────────────────────────────────────────────
+    "anyio>=4.3",
+    "typer[all]>=0.12",
+    "rich>=13.7",
+
+    # ── Configuration ─────────────────────────────────────────────────────
+    "pydantic>=2.7",
+    "pydantic-settings>=2.2",
+    "python-dotenv>=1.0",
+
+    # ── Speech / Audio ────────────────────────────────────────────────────
+    "SpeechRecognition>=3.10",
+    "pyaudio>=0.2.14",
+    "pyttsx3>=2.90",
+    "sounddevice>=0.4.6",
+    "numpy>=1.26",
+
+    # ── Wake word ─────────────────────────────────────────────────────────
+    "pvporcupine>=3.0",
+    "openwakeword>=0.6.0",
+    "onnxruntime>=1.18.0",
+
+    # ── Push-to-talk hotkey ───────────────────────────────────────────────
+    "pynput>=1.7",
+
+    # ── Speech-to-Text / Voice Activity Detection ─────────────────────────
+    "faster-whisper>=1.2.1",
+    "silero-vad>=6.2.1",
+
+    # ── Text-to-Speech ────────────────────────────────────────────────────
+    "piper-tts>=1.4.2",
+
+    # ── LLM / AI ──────────────────────────────────────────────────────────
+    "openai>=1.30",
+    "httpx>=0.27",
+    "ollama>=0.6.2",
+
+    # ── Web search / scraping ─────────────────────────────────────────────
+    "beautifulsoup4>=4.12",
+
+    # ── Math / symbolic evaluation ────────────────────────────────────────
+    "sympy>=1.13",
+
+
+    # ── Machine Learning ──────────────────────────────────────────────────
+    "torch>=2.0",
+    "torchaudio>=2.0",
+
+    # ── System / Windows ──────────────────────────────────────────────────
+    "psutil>=7.0",
+    "pycaw>=2025.0",
+
+    # ── Logging / Observability ───────────────────────────────────────────
+    "structlog>=24.1",
+    "loguru>=0.7",
+
+    # ── System / GUI ────────────────────────────────────────────────────────
+    "psutil>=7.0",
+    "pycaw>=2025.0",
+    "comtypes>=1.4",
+    "pillow>=10.0",
+    "mss>=9.0",
+    "PyQt6>=6.7",
+    "qasync>=0.27.1",
+
+    # ── Agent tools ───────────────────────────────────────────────────────
+    # OCR for reading the screen exactly (skills/screen_text_skill.py).
+    # RapidOCR rather than pytesseract: it ships its own ONNX models and needs
+    # no system binary on PATH, which on Windows is the difference between
+    # working out of the box and not.
+    "rapidocr-onnxruntime>=1.2",
+    # Which window has focus, so the agent knows whether "fix this" means an
+    # editor or a browser (skills/window_skill.py).
+    "pygetwindow>=0.0.9",
+    # Clipboard read/write (skills/clipboard_skill.py) -- often the cheapest
+    # way to get at an error the user has already copied.
+    "pyperclip>=1.9",
+
+    # ── Browser and desktop control (W3) ──────────────────────────────────
+    # Playwright rather than Selenium: it auto-waits (a voice assistant that
+    # clicks before the button renders fails in a way the user cannot
+    # diagnose) and it can attach to the user's own Chrome over CDP, which is
+    # what "do this in *my* Gmail" needs.
+    #
+    # Needs the browser binary too, once:  python -m playwright install chromium
+    "playwright>=1.50",
+    # Windows UI Automation: finds a window by its real title rather than by
+    # pixel position (skills/desktop_skill.py).
+    "pywinauto>=0.6.9",
+    # Keystroke delivery for the focused window.
+    "pyautogui>=0.9.54",
+
+    # ── Verified fix loop (W6) ────────────────────────────────────────────
+    # No new packages: edit_file, copy_to_shadow and run_command are built on
+    # the standard library (shlex, shutil, asyncio.create_subprocess_exec).
+    # run_command is allowlisted rather than a shell -- see
+    # AGENT_RUN_ALLOWLIST in config/settings.py.
+
+    # ── Document creation (skills/document_skill.py) ──────────────────────
+    # The model only ever emits markdown; these turn it into a file. Keeping
+    # the model out of PDF/HTML structure removes a whole class of failure
+    # for nothing -- see docs/JARVIS_FEATURES_V2.md section 1.
+    "markdown>=3.5",
+    # xhtml2pdf rather than WeasyPrint or Pandoc, which the draft spec
+    # suggested: both need something outside pip on Windows (WeasyPrint wants
+    # the GTK/Pango DLLs, Pandoc is an installer), and a document feature
+    # that fails at import on a clean machine is not a feature.
+    "xhtml2pdf>=0.2.16",
+    # Verification only: a PDF that renders to zero pages must not be
+    # reported as saved.
+    "pypdf>=4.0",
+
+    # ── Excel control (skills/excel_skill.py) ─────────────────────────────
+    # openpyxl for a workbook sitting on disk; xlwings to reach the one the
+    # user is looking at, over COM. Never UI automation -- a real API exists,
+    # and clicking cells is the slowest, most fragile way to do this.
+    "openpyxl>=3.1",
+    # Optional at runtime: needs Excel installed, so the skill degrades to a
+    # sentence rather than a traceback when COM is unavailable.
+    "xlwings>=0.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "pytest-qt>=4.4",
+    "pyinstaller>=6.10.0",
+    "mypy>=1.10",
+    "ruff>=0.4",
+    "pre-commit>=3.7",
+    "ipython>=8.24",
+]
+
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25",
+]
+
+[project.scripts]
+friday = "main_gui:main"
+jarvis = "main_gui:main"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "core",
+    "config",
+    "intelligence",
+    "llm",
+    "memory",
+    "skills",
+    "speech",
+    "ui",
+    "utils",
+    "vision",
+]
+
+# ── Ruff ─────────────────────────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "ANN", "BLE", "B", "A", "COM", "C4", "PT", "RET", "SIM"]
+ignore = ["ANN101", "ANN102", "ANN401", "COM812"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "S101"]
+
+# ── Mypy ──────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+exclude = ["tests/"]
+
+# ── Pytest ────────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --tb=short --cov=. --cov-report=term-missing --ignore=tests/scratch"
+
+# ── Coverage ──────────────────────────────────────────────────────────────────
+[tool.coverage.run]
+source = ["."]
+omit = ["tests/*", "docs/*", "main.py"]
+
+[tool.coverage.report]
+fail_under = 80

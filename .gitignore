@@ -1,0 +1,117 @@
+# ============================================================
+# JARVIS / FRIDAY – .gitignore
+# ============================================================
+
+# ── Secrets / Environment ─────────────────────────────────────
+.env
+.env.local
+.env.*.local
+# Backups of .env hold the same secrets as .env itself.
+.env.bak*
+.env.*.bak
+*.pem
+*.key
+secrets/
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ── Virtual Environments ──────────────────────────────────────
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+.python-version
+
+# ── uv ───────────────────────────────────────────────────────
+.uv/
+
+# ── Testing / Coverage ────────────────────────────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+# ── Ad-hoc Debug / Test Scripts ───────────────────────────────
+tests/scratch/
+
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+test-results/
+
+# ── Type Checking ─────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+
+# ── Linting ───────────────────────────────────────────────────
+.ruff_cache/
+
+# ── IDEs ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Persistent memory ─────────────────────────────────────────
+# The memory store holds facts about the user. Personal data, never committed.
+data/
+
+# ── Logs ─────────────────────────────────────────────────────
+logs/*.log
+logs/*.jsonl
+*.log
+
+# ── Audio / Models ────────────────────────────────────────────
+assets/models/
+assets/audio/recordings/
+*.wav
+*.mp3
+*.onnx
+*.pt
+*.bin
+
+# ── Documentation builds ──────────────────────────────────────
+docs/_build/
+site/
+
+# ── Jupyter ───────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── macOS ─────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Brainstorming session scratch
+.superpowers/
