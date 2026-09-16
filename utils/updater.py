@@ -85,7 +85,7 @@ async def run_upgrade(verbose: bool = True) -> bool:
 
         if commits_behind > 0:
             console.print(f"[bold green]Found {commits_behind} new commit(s) upstream.[/bold green] Pulling updates...")
-            ret, pull_out, pull_err = _run_cmd(["git", "pull", "origin", "main"], cwd=repo_root)
+            ret, pull_out, pull_err = _run_cmd(["git", "pull", "--rebase", "--autostash", "origin", "main"], cwd=repo_root)
             if ret != 0:
                 console.print(f"[bold red]✗ Git pull failed: {pull_err}[/bold red]")
                 return False
