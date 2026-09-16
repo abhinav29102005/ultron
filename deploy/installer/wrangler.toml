@@ -3,9 +3,4 @@ main = "src/index.ts"
 compatibility_date = "2024-08-26"
 workers_dev = true
 
-# Route to custom domain
-routes = [
-  { pattern = "ULTRON.mlsctiet.com", custom_domain = true }
-]
-
-account_id = "295f7c4521a765ab8109a06891d078db"
+account_id = "7070be82c3d9bfcd7962678850e9f7e3"

@@ -4,15 +4,15 @@ This directory contains the Cloudflare Worker that powers the one-line installat
 
 ```bash
 # Linux / macOS
-curl -fsSL https://ultron.mlsctiet.com/install | bash
+curl -fsSL https://ultron-installer.bigboyaks-account.workers.dev/install | bash
 
 # Windows (PowerShell)
-irm https://ultron.mlsctiet.com/install | iex
+irm https://ultron-installer.bigboyaks-account.workers.dev/install | iex
 ```
 
 Or via direct Workers endpoint:
 ```bash
-curl -fsSL https://ultron-installer.msc-295.workers.dev/install | bash
+curl -fsSL https://ultron-installer.bigboyaks-account.workers.dev/install | bash
 ```
 
 ## How it works
