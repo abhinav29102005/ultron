@@ -92,7 +92,7 @@ class HybridRetriever:
                 try:
                     results = await web.search(sq, max_results=3)
                 except Exception:
-                    logger.exception("Web search failed for '%s'", sq)
+                    logger.exception("Web search failed for '{}'", sq)
                     return []
 
                 out = []
@@ -117,12 +117,36 @@ class HybridRetriever:
                     continue
                 docs.extend(grp)
 
+            # Local BM25 sparse search over enterprise policy documents
+            bm25_docs: list[dict] = []
+            try:
+                from streaming_rag.corpus import SAMPLE_CORPUS
+                from streaming_rag.retrieval import BM25Index
+                if not hasattr(self, "_bm25_index"):
+                    self._bm25_index = BM25Index()
+                    self._bm25_index.index_documents(SAMPLE_CORPUS)
+                for sq in event.subqueries:
+                    hits = self._bm25_index.search(sq, top_k=3)
+                    for doc_chunk, _score in hits:
+                        bm25_docs.append({
+                            "title": doc_chunk.title,
+                            "url": f"corpus://{doc_chunk.doc_id}",
+                            "snippet": doc_chunk.text[:200],
+                            "content": doc_chunk.text,
+                            "source": "local_bm25",
+                            "doc_id": doc_chunk.doc_id,
+                            "section": doc_chunk.section,
+                        })
+            except Exception:
+                logger.debug("Local BM25 index unavailable or skipped")
+
             # Placeholder vector DB hook: if configured, enrich/merge vector results
             try:
                 weaviate_url = getattr(self.container.settings, "weaviate_url", None)
             except Exception:
                 weaviate_url = None
 
+            vec_groups: list[list[dict]] = []
             if weaviate_url:
                 # Use the new `weaviate_client` wrapper if available via container
                 try:
@@ -132,7 +156,6 @@ class HybridRetriever:
                     if wc is not None:
                         # If an embeddings service is available, use it to embed subqueries
                         emb = getattr(self.container, "embeddings", None)
-                        vec_groups = []
                         for sq in event.subqueries:
                             try:
                                 if emb is not None:
@@ -148,14 +171,21 @@ class HybridRetriever:
                                         item["section"] = "1"
                                 vec_groups.append(vec)
                             except Exception:
-                                logger.exception("Weaviate vector search failed for '%s'", sq)
-
-                        # RRF fusion: merge web docs and all vector groups
-                        all_ranked_lists = [docs] + vec_groups
-                        docs = _rrf_fuse(all_ranked_lists)
-                        logger.debug("RRF fused %d lists → %d unique docs", len(all_ranked_lists), len(docs))
+                                logger.exception("Weaviate vector search failed for '{}'", sq)
                 except Exception:
-                    logger.exception("Weaviate integration failed; continuing with web-only results")
+                    logger.exception("Weaviate integration failed; continuing with web/bm25 results")
+
+            # RRF fusion: merge web docs, local bm25 docs, and all vector groups
+            ranked_inputs = []
+            if docs:
+                ranked_inputs.append(docs)
+            if bm25_docs:
+                ranked_inputs.append(bm25_docs)
+            ranked_inputs.extend(vec_groups)
+
+            if ranked_inputs:
+                docs = _rrf_fuse(ranked_inputs)
+                logger.debug("RRF fused {} lists → {} unique docs", len(ranked_inputs), len(docs))
 
             # Re-rank fused candidates using cross-encoder reranker if available
             try:
@@ -165,7 +195,7 @@ class HybridRetriever:
                         ranked = await reranker.rerank(event.original_query, docs)
                         # Replace docs with ranked results
                         docs = ranked
-                        logger.debug("Re-ranked %d documents using cross-encoder", len(docs))
+                        logger.debug("Re-ranked {} documents using cross-encoder", len(docs))
                     except Exception:
                         logger.exception("Reranker failed; publishing unranked docs")
             except Exception:
@@ -186,7 +216,7 @@ class HybridRetriever:
                 return
 
             await self.container.event_bus.publish(result_event)
-            logger.info("HybridRetriever published %d documents for '%s'", len(docs), event.original_query)
+            logger.info("HybridRetriever published {} documents for '{}'", len(docs), event.original_query)
         except asyncio.CancelledError:
             logger.info("HybridRetriever retrieval task cancelled")
         except Exception:

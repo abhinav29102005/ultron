@@ -31,7 +31,7 @@ async def _run_query(container: ServiceContainer, query: str, limit: int = 5) ->
     web = container.web_skill
     docs = []
     results = await web.search(query, max_results=limit)
-    for r in results:
+    for i, r in enumerate(results):
         try:
             text = await web.fetch_page(r.url, max_chars=4000)
         except Exception:
@@ -42,6 +42,8 @@ async def _run_query(container: ServiceContainer, query: str, limit: int = 5) ->
             "snippet": r.snippet,
             "content": text,
             "source": r.source or "web",
+            "doc_id": f"Doc_{i+1:02d}",
+            "section": "§1",
         })
     return docs
 
@@ -49,12 +51,20 @@ async def _run_query(container: ServiceContainer, query: str, limit: int = 5) ->
 async def _run_urls(container: ServiceContainer, urls: List[str]) -> List[dict]:
     web = container.web_skill
     docs = []
-    for u in urls:
+    for i, u in enumerate(urls):
         try:
             text = await web.fetch_page(u, max_chars=4000)
         except Exception:
             text = ""
-        docs.append({"title": u, "url": u, "snippet": "", "content": text, "source": "web"})
+        docs.append({
+            "title": u,
+            "url": u,
+            "snippet": "",
+            "content": text,
+            "source": "web",
+            "doc_id": f"Doc_{i+1:02d}",
+            "section": "§1",
+        })
     return docs
 
 

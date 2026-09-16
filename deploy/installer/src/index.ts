@@ -247,6 +247,29 @@ export default {
             "Cache-Control": "public, max-age=300",
           }
         }
+    // Health check endpoint
+    if (url.pathname === "/health") {
+      return new Response(
+        JSON.stringify({
+          status: "healthy",
+          service: "ultron-installer-gateway",
+          version: "0.2.0",
+          timestamp: new Date().toISOString(),
+          endpoints: {
+            installer_sh: "/install.sh",
+            installer_ps1: "/install.ps1",
+            installer_auto: "/install",
+            keys_api: "/keys",
+            health: "/health"
+          }
+        }, null, 2),
+        {
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+          }
+        }
       );
     }
 

@@ -34,6 +34,7 @@ class RetrievalResultEvent(BaseEvent):
     decision: str = ""
     session_id: str | None = None
     turn_id: int | None = None
+    timestamp_s: float | None = None
 
 
 class RetrievalHandler:
@@ -67,6 +68,7 @@ class RetrievalHandler:
                         decision=event.decision,
                         session_id=getattr(event, "session_id", None),
                         turn_id=getattr(event, "turn_id", None),
+                        timestamp_s=getattr(event, "timestamp_s", None),
                     )
                     await self.container.event_bus.publish(result_event)
                 else:
@@ -97,9 +99,10 @@ class RetrievalHandler:
                         decision=event.decision,
                         session_id=getattr(event, "session_id", None),
                         turn_id=getattr(event, "turn_id", None),
+                        timestamp_s=getattr(event, "timestamp_s", None),
                     )
                     await self.container.event_bus.publish(result_event)
-                    logger.debug("Published RetrievalResultEvent with %d web docs.", len(docs))
+                    logger.debug("Published RetrievalResultEvent with {} web docs.", len(docs))
             except Exception:
                 logger.exception("RetrievalHandler failed processing event")
 

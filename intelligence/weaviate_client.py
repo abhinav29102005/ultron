@@ -27,7 +27,7 @@ class WeaviateClientWrapper:
         try:
             import weaviate
         except Exception as exc:
-            logger.exception("Weaviate client not installed: %s", exc)
+            logger.exception("Weaviate client not installed: {}", exc)
             raise WeaviateUnavailable("weaviate client not installed") from exc
 
         self._weaviate = weaviate
@@ -61,14 +61,14 @@ class WeaviateClientWrapper:
 
         try:
             self.client.schema.create_class(class_obj)
-            logger.info("Weaviate schema created for class %s", self.index_name)
+            logger.info("Weaviate schema created for class {}", self.index_name)
         except Exception:
             logger.exception("Failed to create Weaviate schema; continuing without it")
 
     def ingest_documents(self, docs: List[Dict[str, Any]]) -> None:
         """Batch ingest documents into the Weaviate instance.
 
-        Each doc should be a dict with keys: title, url, snippet, content, source.
+        Each doc should be a dict with keys: title, url, snippet, content, source, doc_id, section.
         """
         if not docs:
             return
@@ -86,19 +86,21 @@ class WeaviateClientWrapper:
                         "snippet": doc.get("snippet", ""),
                         "content": doc.get("content", ""),
                         "source": doc.get("source", "web"),
+                        "doc_id": doc.get("doc_id", ""),
+                        "section": doc.get("section", ""),
                     }
                     b.add_data_object(obj, self.index_name)
-            logger.info("Indexed %d documents into Weaviate class %s", len(docs), self.index_name)
+            logger.info("Indexed {} documents into Weaviate class {}", len(docs), self.index_name)
         except Exception:
             logger.exception("Weaviate ingestion failed; continuing without vector index")
 
     def vector_search(self, query: str | None = None, embedding: List[float] | None = None, top_k: int = 5) -> List[Dict[str, Any]]:
         """Perform a vector search using either raw `query` (nearText) or a precomputed `embedding` (nearVector).
 
-        Returns a list of lightweight document dicts.
+        Returns a list of lightweight document dicts including doc_id and section.
         """
         try:
-            q = self.client.query.get(self.index_name, ["title", "url", "snippet", "content", "source"])  # type: ignore
+            q = self.client.query.get(self.index_name, ["title", "url", "snippet", "content", "source", "doc_id", "section"])  # type: ignore
 
             if embedding is not None:
                 q = q.with_near_vector({"vector": embedding})
@@ -118,6 +120,8 @@ class WeaviateClientWrapper:
                     "snippet": props.get("snippet", ""),
                     "content": props.get("content", ""),
                     "source": props.get("source", "weaviate"),
+                    "doc_id": props.get("doc_id", ""),
+                    "section": props.get("section", ""),
                 })
             return objs
         except Exception:

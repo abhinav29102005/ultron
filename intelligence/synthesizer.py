@@ -98,16 +98,20 @@ class Synthesizer:
                 # Also write minimal telemetry
                 try:
                     if self.telemetry:
+                        trigger_ts = getattr(event, "timestamp_s", None)
+                        now_ts = datetime.now().timestamp()
+                        gain_ms = max(0.0, (now_ts - trigger_ts) * 1000.0) if trigger_ts else 0.0
                         tm_payload = {
                             "retrieval_count": len(event.results),
                             "answer_version": version,
                             "uncertainty": bool(uncertainty),
+                            "early_retrieval_gain_ms": round(gain_ms, 2),
                         }
                         self.telemetry.record_minimal(session_id, turn_id, "synthesized_answer", tm_payload)
                 except Exception:
                     logger.exception("Failed to write telemetry for synthesized answer")
 
-                logger.info("Synthesizer produced answer v%d for session=%s (citations=%d)", version, session_id, len(citations))
+                logger.info("Synthesizer produced answer v{} for session={} (citations={})", version, session_id, len(citations))
             except Exception:
                 logger.exception("Synthesizer handler failed")
 

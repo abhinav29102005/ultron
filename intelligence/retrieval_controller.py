@@ -100,7 +100,7 @@ class RetrievalController:
             stability = max(0.0, stability - 0.10)
 
         # Debug log
-        logger.debug("Semantic stability=%.3f for partial='%s'", stability, partial_text)
+        logger.debug("Semantic stability={:.3f} for partial='{}'", stability, partial_text)
 
         # Threshold for early retrieval
         if stability >= 0.80:
@@ -119,6 +119,8 @@ class RetrievalController:
         if self._subscribed:
             return
 
+        import time
+
         async def _on_user_input(event: UserInputEvent) -> None:
             try:
                 # Only consider partial voice transcripts here
@@ -136,9 +138,10 @@ class RetrievalController:
                     text=event.text,
                     session_id=getattr(event, "session_id", None),
                     turn_id=getattr(event, "turn_id", None),
+                    timestamp_s=time.time(),
                 )
                 await self.container.event_bus.publish(retrieval)
-                logger.debug(f"Published retrieval event: {decision} for '{event.text}'")
+                logger.debug("Published retrieval event: {} for '{}'", decision.value, event.text)
             except Exception:
                 logger.exception("RetrievalController handler failed")
 
@@ -170,8 +173,12 @@ class RetrievalEvent(BaseEvent):
     Fields:
         decision: one of 'wait'|'retrieve_early'|'suppress'
         text: the partial transcript that triggered the decision
+        session_id: optional session identifier
+        turn_id: optional turn sequence number
+        timestamp_s: epoch timestamp when early retrieval was triggered
     """
     decision: str
     text: str
     session_id: str | None = None
     turn_id: int | None = None
+    timestamp_s: float | None = None

@@ -38,7 +38,7 @@ class OpenAIEmbeddings:
 
         self._client = openai.OpenAI(api_key=api_key)
         self._model = model
-        logger.info("OpenAIEmbeddings ready (model=%s)", model)
+        logger.info("OpenAIEmbeddings ready (model={})", model)
 
     async def embed_texts(self, texts: List[str]) -> List[List[float]]:
         """Return one embedding vector per input text."""

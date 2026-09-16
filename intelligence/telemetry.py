@@ -33,9 +33,9 @@ class TelemetryRecorder:
             with fname.open("a", encoding="utf-8") as fh:
                 data = trace.model_dump() if hasattr(trace, "model_dump") else trace.dict()
                 fh.write(json.dumps(data, default=str) + "\n")
-            logger.debug("Telemetry trace written to %s", fname)
+            logger.debug("Telemetry trace written to {}", fname)
         except Exception:
-            logger.exception("Failed to write telemetry trace to %s", fname)
+            logger.exception("Failed to write telemetry trace to {}", fname)
 
     def record_minimal(self, session_id: Optional[str], turn_id: Optional[int], event_name: str, payload: Optional[dict] = None) -> None:
         trace = TelemetryTrace(
