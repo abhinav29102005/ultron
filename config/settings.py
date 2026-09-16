@@ -54,8 +54,14 @@ class Settings(BaseSettings):
     llm_max_tokens: int = Field(default=256)      # Reduced for speed
     llm_timeout_seconds: int = Field(default=15)  # Reduced timeout
 
-    # LLM Provider selection (nvidia | qwen)
-    llm_provider: str = Field(default="nvidia")
+    # ── LLM Integration (Groq Cloud) ──
+    groq_api_key: SecretStr = Field(default=SecretStr(""))
+    groq_base_url: str = Field(default="https://api.groq.com/openai/v1")
+    groq_model: str = Field(default="qwen/qwen3.8-27b")
+    groq_fast_model: str = Field(default="openai/gpt-oss-120b")
+
+    # LLM Provider selection (nvidia | qwen | groq)
+    llm_provider: str = Field(default="groq")
 
     # Local Qwen / Ollama settings
     ollama_base_url: str = Field(default="http://localhost:11434")

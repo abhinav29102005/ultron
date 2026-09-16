@@ -34,6 +34,13 @@ class LLMSwitcher(BaseLLM):
         self._provider = settings.llm_provider.lower()
         self._nvidia: BaseLLM | None = None
         self._qwen: BaseLLM | None = None
+        self._groq: BaseLLM | None = None
+
+    def _get_groq(self) -> BaseLLM:
+        if self._groq is None:
+            from llm.groq import GroqLLM
+            self._groq = GroqLLM(self._settings)
+        return self._groq
 
     def _get_nvidia(self) -> BaseLLM:
         if self._nvidia is None:
@@ -49,43 +56,36 @@ class LLMSwitcher(BaseLLM):
 
     def _active(self) -> BaseLLM:
         provider = self._provider
+        if provider == "groq":
+            return self._get_groq()
         if provider == "qwen":
             return self._get_qwen()
         if provider == "nvidia":
             return self._get_nvidia()
-        # Default fallback to nvidia
-        return self._get_nvidia()
+        return self._get_groq() if self.is_available("groq") else self._get_nvidia()
 
     def is_available(self, provider: str) -> bool:
-        """True when this provider is actually usable right now.
-
-        NVIDIA needs an API key. Without one, selecting it does not fail at
-        the point of switching -- it fails on the *next* message, deep inside
-        intent detection, which makes the assistant look randomly broken.
-        """
         provider = (provider or "").lower()
+        if provider == "groq":
+            key = getattr(self._settings, "groq_api_key", None)
+            value = key.get_secret_value() if hasattr(key, "get_secret_value") else str(key or "")
+            return bool(value and not value.startswith("your_"))
         if provider == "nvidia":
             key = self._settings.nvidia_api_key
             value = key.get_secret_value() if hasattr(key, "get_secret_value") else key
-            return bool(value)
+            return bool(value and not str(value).startswith("your_"))
         if provider == "qwen":
-            # Qwen used to be reported as always available on the grounds that
-            # a local model needs no key. But "no key required" is not the same
-            # as "usable": with Ollama stopped, switching to qwen succeeds and
-            # then every message fails inside intent detection -- the exact
-            # failure this method was written to prevent for NVIDIA.
             from utils.preflight import probe_ollama
-
             return probe_ollama(self._settings.ollama_base_url) is not None
         return False
 
     def available_providers(self) -> list[str]:
-        return [p for p in ("qwen", "nvidia") if self.is_available(p)]
+        return [p for p in ("groq", "qwen", "nvidia") if self.is_available(p)]
 
     def switch(self, provider: str) -> None:
         provider = provider.lower()
-        if provider not in ("nvidia", "qwen"):
-            raise ValueError(f"Unknown LLM provider: {provider}. Use 'nvidia' or 'qwen'.")
+        if provider not in ("groq", "nvidia", "qwen"):
+            raise ValueError(f"Unknown LLM provider: {provider}. Use 'groq', 'nvidia' or 'qwen'.")
         if not self.is_available(provider):
             # Refuse here, where the caller can report it, rather than letting
             # every later request blow up.
