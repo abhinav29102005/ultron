@@ -23,6 +23,13 @@ SILENCE_TIMEOUT = float(os.getenv("SILENCE_TIMEOUT", "2.0"))
 # VAD
 VAD_SAMPLE_RATE = int(os.getenv("AUDIO_SAMPLE_RATE", "16000"))
 
-# TTS
-TTS_MODEL_PATH = str(BASE_DIR / "text_to_speech" / "models" / "en_US-lessac-medium.onnx")
-TTS_DEVICE = "cpu"
+# TTS - Default to deep male Bryce model for Avengers Ultron persona, fallback to Lessac
+bryce_onnx = BASE_DIR / "text_to_speech" / "models" / "en_US-bryce-medium.onnx"
+bryce_json = BASE_DIR / "text_to_speech" / "models" / "en_US-bryce-medium.onnx.json"
+lessac_onnx = BASE_DIR / "text_to_speech" / "models" / "en_US-lessac-medium.onnx"
+
+default_tts = str(bryce_onnx) if (bryce_onnx.exists() and bryce_json.exists()) else str(lessac_onnx)
+
+TTS_MODEL_PATH = os.getenv("TTS_MODEL_PATH", default_tts)
+TTS_DEVICE = os.getenv("TTS_DEVICE", "cpu")
+ULTRON_VOICE_EFFECT = os.getenv("ULTRON_VOICE_EFFECT", "true").lower() in ("true", "1", "yes", "on")
