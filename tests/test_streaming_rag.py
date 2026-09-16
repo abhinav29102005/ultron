@@ -1,138 +1,126 @@
 """
 tests/test_streaming_rag.py
 ===========================
-Unit tests for the Streaming Live RAG pipeline components.
-
-Gate coverage:
-  G1 - Headless reproducibility (all tests run without manual input)
-  G2 - Early retrieval: semantic stability score >= 0.80 triggers RETRIEVE_EARLY
-  G3 - Multi-intent: compound query decomposed into >= 2 sub-queries
-  G4 - Factual grounding: synthesizer emits [Doc_XX sec YY] citations
-  G5 - Delta refinement: V1 -> V2 versioning on repeated retrieval
-  G6 - Telemetry: structured JSON trace written per call
+Real-data integration and unit tests for the Streaming Live RAG pipeline.
+ZERO MOCKS: Tested entirely on real corpus documents, real BM25 lexical inverted
+index, real dense semantic embedding vectors, real Reciprocal Rank Fusion,
+real multi-intent decomposition, and real session state management.
 """
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
 import pytest
+from streaming_rag.models import ControllerAction, StreamingChunk, DocumentChunk
+from streaming_rag.pipeline import StreamingLiveRAG
+from streaming_rag.corpus import SAMPLE_CORPUS
+from streaming_rag.retrieval import HybridRetriever, BM25Index, DenseSemanticIndex
+from streaming_rag.controller import RetrievalController
 
 
-def _make_settings(tmp_path):
-    return SimpleNamespace(log_dir=tmp_path, openai_api_key=None)
+@pytest.fixture
+def rag():
+    return StreamingLiveRAG()
 
 
-# G2: Semantic Stability / Early Retrieval
-class TestRetrievalController:
-    def setup_method(self):
-        from intelligence.retrieval_controller import RetrievalController, Decision
-        self.Decision = Decision
-        self.ctrl = RetrievalController(container=MagicMock())
-
-    def test_stable_query_triggers_early_retrieval(self):
-        decision = self.ctrl.decide("venue venue venue venue venue venue")
-        assert decision == self.Decision.RETRIEVE_EARLY
-
-    def test_presentation_request_suppressed(self):
-        decision = self.ctrl.decide("summarize that in bullet points")
-        assert decision == self.Decision.SUPPRESS
-
-    def test_empty_input_waits(self):
-        assert self.ctrl.decide("") == self.Decision.WAIT
-
-    def test_g2_latency_savings_exceed_800ms(self):
-        gain_ms = int((2.1 - 0.8) * 1000)
-        assert gain_ms >= 800
-        assert gain_ms == 1300  # spec: 1300ms gain
+def test_corpus_indexing_and_structure(rag):
+    assert len(rag.corpus) >= 6
+    for doc in rag.corpus:
+        assert doc.doc_id.startswith('Doc_')
+        assert doc.section.startswith('§')
+        assert len(doc.text) > 20
+        assert doc.citation_tag == f'{doc.doc_id} {doc.section}'
 
 
-# G3: Decomposer
-class TestDecomposer:
-    def test_compound_splits_into_3_parts(self):
-        def split(q):
-            separators = [",", ";", " and "]
-            parts = [q]
-            for sep in separators:
-                new_parts = []
-                for p in parts:
-                    new_parts.extend(p.split(sep))
-                parts = new_parts
-            return [p.strip() for p in parts if p.strip()]
-        result = split("venue capacity, cancellation policy and catering options")
-        assert len(result) >= 2
+def test_real_bm25_and_dense_retrieval():
+    retriever = HybridRetriever()
+    retriever.ingest_corpus(SAMPLE_CORPUS)
+    
+    # Exact keyword query on travel policy
+    results = retriever.retrieve('travel reimbursement rule for employee trip', top_k=2)
+    assert len(results) > 0
+    assert any('Doc_45' in r.doc_id for r in results)
 
 
-# G4 + G5: Synthesizer
-class TestSynthesizer:
-    def _container(self, tmp_path):
-        container = MagicMock()
-        container.settings = _make_settings(tmp_path)
-        published = []
-        container.event_bus.publish = AsyncMock(side_effect=lambda e: published.append(e))
-        container._published = published
-        return container
-
-    @pytest.mark.asyncio
-    async def test_citations_when_doc_id_present(self, tmp_path):
-        from intelligence.synthesizer import Synthesizer
-        from intelligence.retrieval_handler import RetrievalResultEvent
-        container = self._container(tmp_path)
-        synth = Synthesizer(container=container)
-        await synth.start()
-        docs = [{"title": "T", "url": "u", "snippet": "s", "doc_id": "12", "section": "2"}]
-        await synth._handler(RetrievalResultEvent(query="q", results=docs, decision="retrieve_early", session_id="s1", turn_id=1))
-        result = container._published[-1]
-        assert any("Doc_12" in c and "2" in c for c in result.citations)
-        assert result.uncertainty is None
-
-    @pytest.mark.asyncio
-    async def test_uncertainty_without_doc_id(self, tmp_path):
-        from intelligence.synthesizer import Synthesizer
-        from intelligence.retrieval_handler import RetrievalResultEvent
-        container = self._container(tmp_path)
-        synth = Synthesizer(container=container)
-        await synth.start()
-        docs = [{"title": "T", "url": "u", "snippet": "s"}]
-        await synth._handler(RetrievalResultEvent(query="q", results=docs, decision="retrieve_early", session_id="s2", turn_id=1))
-        result = container._published[-1]
-        assert result.uncertainty is not None
-
-    @pytest.mark.asyncio
-    async def test_delta_v1_to_v2(self, tmp_path):
-        from intelligence.synthesizer import Synthesizer
-        from intelligence.retrieval_handler import RetrievalResultEvent
-        container = self._container(tmp_path)
-        synth = Synthesizer(container=container)
-        await synth.start()
-        docs = [{"title": "T", "url": "u", "snippet": "s", "doc_id": "45", "section": "3"}]
-        await synth._handler(RetrievalResultEvent(query="q1", results=docs, decision="retrieve_early", session_id="s3", turn_id=1))
-        await synth._handler(RetrievalResultEvent(query="q2 with constraint", results=docs, decision="retrieve_early", session_id="s3", turn_id=2))
-        assert container._published[0].answer_version == 1
-        assert container._published[1].answer_version == 2
+def test_early_retrieval_triggering(rag):
+    # Stream from Theme 4 Guide Example 1
+    stream = [
+        StreamingChunk(timestamp_s=0.0, text='I need to plan a customer workshop in...'),
+        StreamingChunk(timestamp_s=0.8, text='...Pune for 30 people, and I need...'),
+        StreamingChunk(timestamp_s=1.6, text='...the cancellation policy and the catering options.'),
+        StreamingChunk(timestamp_s=2.1, text='I need to plan a customer workshop in Pune for 30 people, and I need the cancellation policy and the catering options.', is_final=True),
+    ]
+    record = rag.process_stream(stream, session_id='test_early_gain')
+    assert record.telemetry.retrieval_trigger_timestamp_s == 0.8
+    assert record.telemetry.early_retrieval_gain_ms == 1300.0
+    assert len(record.citations) > 0
+    assert any('Doc_12' in c for c in record.citations)
 
 
-# G6: Telemetry
-class TestTelemetry:
-    def test_writes_jsonl(self, tmp_path):
-        from intelligence.telemetry import TelemetryRecorder
-        r = TelemetryRecorder(_make_settings(tmp_path))
-        r.record_minimal("sess1", 1, "synthesized_answer", {"retrieval_count": 3})
-        f = tmp_path / "telemetry_sess1.jsonl"
-        assert f.exists()
-        parsed = json.loads(f.read_text().strip().splitlines()[0])
-        assert parsed["session_id"] == "sess1"
-        assert parsed["events"][0]["event_name"] == "synthesized_answer"
-
-    def test_trace_model_early_retrieval_gain(self):
-        from intelligence.models import TelemetryTrace, TelemetryEntry
-        from datetime import datetime
-        trace = TelemetryTrace(
-            session_id="s", trace_id="t1", created_at=datetime.utcnow(),
-            stream_duration_s=2.1, retrieval_trigger_timestamp_s=0.8,
-            early_retrieval_gain_ms=1300, total_latency_ms=2100,
-            prompt_tokens=512, completion_tokens=128,
-            events=[TelemetryEntry(session_id="s", turn_id=1, event_name="e", timestamp=datetime.utcnow(), payload={})]
+def test_multi_intent_decomposition(rag):
+    stream = [
+        StreamingChunk(
+            timestamp_s=2.1,
+            text='I need to plan a customer workshop in Pune for 30 people, and I need the cancellation policy and the catering options.',
+            is_final=True
         )
-        assert trace.early_retrieval_gain_ms == 1300
+    ]
+    record = rag.process_stream(stream, session_id='test_multi_intent')
+    assert len(record.sub_queries) >= 2
+    assert any('workshop' in sq or 'Pune' in sq for sq in record.sub_queries)
+
+
+def test_session_refinement_delta_query(rag):
+    # Turn 1: Base request
+    turn_1 = [
+        StreamingChunk(timestamp_s=1.0, text='Summarize the travel reimbursement rule for an employee trip.', is_final=True)
+    ]
+    rec_1 = rag.process_stream(turn_1, session_id='sess_refine')
+    assert rec_1.answer_version == 1
+    assert any('Doc_45' in c for c in rec_1.citations)
+
+    # Turn 2: Late-arriving constraint
+    turn_2 = [
+        StreamingChunk(timestamp_s=1.0, text='The trip was international and the booking was made after travel.', is_final=True)
+    ]
+    rec_2 = rag.process_stream(turn_2, session_id='sess_refine')
+    assert rec_2.answer_version == 2
+    # Preserves Turn 1 base citations and includes Turn 2 delta citation
+    assert 'Doc_45 §1' in rec_2.citations
+    assert 'Doc_45 §3' in rec_2.citations
+
+
+def test_presentation_query_suppression(rag):
+    # Step 1: Base turn
+    turn_1 = [
+        StreamingChunk(timestamp_s=1.0, text='Summarize the travel reimbursement rule for an employee trip.', is_final=True)
+    ]
+    rag.process_stream(turn_1, session_id='sess_pres')
+
+    # Step 2: Presentation-only turn
+    turn_2 = [
+        StreamingChunk(timestamp_s=0.5, text='Please repeat your last answer in two bullets.', is_final=True)
+    ]
+    record = rag.process_stream(turn_2, session_id='sess_pres')
+    assert '•' in record.answer
+    assert len(record.retrieval_events) == 0  # 0 vector searches executed
+    assert record.citations == ['Doc_45 §1']  # Citations preserved without fabrication
+
+
+def test_uncertainty_flagging_missing_evidence(rag):
+    stream = [
+        StreamingChunk(timestamp_s=1.0, text='What is the submarine maintenance protocol for naval fleets?', is_final=True)
+    ]
+    record = rag.process_stream(stream, session_id='sess_unknown')
+    # Since naval fleets are not in the corpus, uncertainty must be raised
+    assert record.uncertainty is not None
+
+
+def test_telemetry_trace_recording(rag):
+    stream = [
+        StreamingChunk(timestamp_s=0.0, text='I need to plan a customer workshop in...'),
+        StreamingChunk(timestamp_s=0.8, text='...Pune for 30 people, and I need...'),
+        StreamingChunk(timestamp_s=2.1, text='...the cancellation policy and the catering options.', is_final=True),
+    ]
+    record = rag.process_stream(stream, session_id='sess_telem')
+    assert record.telemetry.total_latency_ms > 0
+    assert record.session_id == 'sess_telem'
+    assert len(record.retrieval_events) > 0
