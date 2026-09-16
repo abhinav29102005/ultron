@@ -61,6 +61,7 @@ This document tracks all identified technical gaps, edge cases, improvements, te
 | **SB-04** | `intelligence/models.py` | `early_retrieval_gain_ms: Optional[int]` type rigidity | Floating point milliseconds caused validation friction | **FIXED**: Changed type to `Optional[float]` in Pydantic schema. |
 | **SB-05** | `intelligence/retrieval_handler.py` | `TypeError: RetrievalResultEvent.__init__() got unexpected keyword 'trigger_timestamp_s'` | Dataclass lacked explicit field definitions | **FIXED**: Added `trigger_timestamp_s: float \| None = None` and `start_timestamp_s: float \| None = None`. |
 | **SB-06** | `tests/test_api_key_manager.py` | `test_llm_switcher.py` assertion failure when run in full suite | `test_set_key_for_provider` set `os.environ["GROQ_API_KEY"]` without teardown, polluting downstream tests | **FIXED**: Wrapped in `try/finally` with `os.environ.pop` and made `test_llm_switcher._settings()` hermetic. |
+| **SB-07** | `deploy/installer/` | `npm run dev` failed (`'wrangler' is not recognized`) | Subfolder lacked installed node_modules and was pinned to outdated Wrangler v3 | **FIXED**: Upgraded to latest Wrangler v4 (`^4.132.0`), installed dependencies, and verified `http://127.0.0.1:8787/health` returns 200 OK. |
 
 ---
 
