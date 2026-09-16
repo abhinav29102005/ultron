@@ -172,11 +172,19 @@ def has_any_cloud_key() -> bool:
     return False
 
 
+_FIRST_RUN_PROMPTED = False
+
+
 async def prompt_first_run_if_needed(cli=None, container=None) -> None:
     """
     Prompt the user on CLI startup if no cloud LLM API keys are detected.
     Provides direct links and options to get free keys from cloud provider panels.
     """
+    global _FIRST_RUN_PROMPTED
+    if _FIRST_RUN_PROMPTED:
+        return
+    _FIRST_RUN_PROMPTED = True
+
     import asyncio
 
     if container and hasattr(container, "user_settings"):

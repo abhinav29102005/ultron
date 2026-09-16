@@ -103,9 +103,20 @@ async def run(args: argparse.Namespace) -> None:
     report(preflight)
 
     if not preflight.ok and not args.ignore_preflight:
-        logger.error("Preflight failed; refusing to start with a degraded LLM.")
-        print("  Start anyway with --ignore-preflight.\n")
-        sys.exit(1)
+        if args.mode == "text":
+            from utils.api_key_manager import prompt_first_run_if_needed
+            from rich.console import Console
+            Console().print("\n[yellow]Launching interactive key setup or offline configuration...[/yellow]\n")
+            await prompt_first_run_if_needed()
+            # Reload settings in case keys were saved to .env
+            settings = Settings.load(env_file=args.config)
+            preflight = check_llm(settings, autostart=not args.no_autostart)
+            if not preflight.ok:
+                Console().print("[dim]Starting CLI. Use [bold cyan]/setup[/bold cyan] to add keys or [bold cyan]/mode offline[/bold cyan] anytime.[/dim]\n")
+        else:
+            logger.error("Preflight failed; refusing to start with a degraded LLM.")
+            print("  Start anyway with --ignore-preflight.\n")
+            sys.exit(1)
 
     logger.info("Loading configuration...")
     logger.info("Initializing logger...")
@@ -355,7 +366,6 @@ def main() -> None:
         return
 
     if args.command in ("setup", "keys"):
-        import asyncio
         from utils.api_key_manager import interactive_setup_wizard
         asyncio.run(interactive_setup_wizard())
         return
