@@ -112,13 +112,27 @@ mkdir -p "$HOME/.local/bin"
 
 cat << 'LAUNCHER' > "$HOME/.local/bin/ultron"
 #!/usr/bin/env bash
-INSTALL_DIR="${ULTRON_HOME:-$HOME/.ultron}"
-if [ -f "$INSTALL_DIR/.venv/bin/python" ]; then
-    exec "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/run.py" "$@"
-elif [ -f "$INSTALL_DIR/run.py" ]; then
-    exec python3 "$INSTALL_DIR/run.py" "$@"
+if [ -f "./run.py" ] && [ -d "./core" ]; then
+    TARGET_DIR="$(pwd)"
+elif [ -n "$ULTRON_HOME" ] && [ -f "$ULTRON_HOME/run.py" ]; then
+    TARGET_DIR="$ULTRON_HOME"
+elif [ -f "$HOME/Projects/ultron/run.py" ]; then
+    TARGET_DIR="$HOME/Projects/ultron"
+elif [ -f "$HOME/.ultron/run.py" ]; then
+    TARGET_DIR="$HOME/.ultron"
 else
-    echo "[ERROR] Ultron installation not found at $INSTALL_DIR"
+    echo "[ERROR] Ultron installation not found."
+    exit 1
+fi
+
+cd "$TARGET_DIR" || exit 1
+
+if [ -f "$TARGET_DIR/.venv/bin/python" ]; then
+    exec "$TARGET_DIR/.venv/bin/python" "$TARGET_DIR/run.py" "$@"
+elif [ -f "$TARGET_DIR/run.py" ]; then
+    exec python3 "$TARGET_DIR/run.py" "$@"
+else
+    echo "[ERROR] Ultron entry point not found in $TARGET_DIR"
     exit 1
 fi
 LAUNCHER

@@ -212,6 +212,19 @@ def check_llm(settings: Settings, *, autostart: bool = True) -> PreflightResult:
     """
     provider = (settings.llm_provider or "").lower()
 
+    if provider == "groq":
+        import os
+        groq_key = os.getenv("GROQ_API_KEY") or getattr(settings, "groq_api_key", None)
+        if not groq_key:
+            return PreflightResult(
+                ok=False,
+                problems=[
+                    "LLM_PROVIDER is 'groq' but GROQ_API_KEY is not set. "
+                    "Set the key in .env or run /setup to configure."
+                ],
+            )
+        return PreflightResult(ok=True)
+
     if provider == "nvidia":
         key = settings.nvidia_api_key
         value = key.get_secret_value() if hasattr(key, "get_secret_value") else key
