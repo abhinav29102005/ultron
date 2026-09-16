@@ -26,59 +26,45 @@ dependencies = [
     "anyio>=4.3",
     "typer[all]>=0.12",
     "rich>=13.7",
-
     # ── Configuration ─────────────────────────────────────────────────────
     "pydantic>=2.7",
     "pydantic-settings>=2.2",
     "python-dotenv>=1.0",
-
     # ── Speech / Audio ────────────────────────────────────────────────────
     "SpeechRecognition>=3.10",
     "pyaudio>=0.2.14",
     "pyttsx3>=2.90",
     "sounddevice>=0.4.6",
     "numpy>=1.26",
-
     # ── Wake word ─────────────────────────────────────────────────────────
     "pvporcupine>=3.0",
     "openwakeword>=0.6.0",
     "onnxruntime>=1.18.0",
-
     # ── Push-to-talk hotkey ───────────────────────────────────────────────
     "pynput>=1.7",
-
     # ── Speech-to-Text / Voice Activity Detection ─────────────────────────
     "faster-whisper>=1.2.1",
     "silero-vad>=6.2.1",
-
     # ── Text-to-Speech ────────────────────────────────────────────────────
     "piper-tts>=1.4.2",
-
     # ── LLM / AI ──────────────────────────────────────────────────────────
     "openai>=1.30",
     "httpx>=0.27",
     "ollama>=0.6.2",
     "weaviate-client>=4.0",
-
     # ── Web search / scraping ─────────────────────────────────────────────
     "beautifulsoup4>=4.12",
-
     # ── Math / symbolic evaluation ────────────────────────────────────────
     "sympy>=1.13",
-
-
     # ── Machine Learning ──────────────────────────────────────────────────
     "torch>=2.0",
     "torchaudio>=2.0",
-
     # ── System / Windows ──────────────────────────────────────────────────
     "psutil>=7.0",
     "pycaw>=2025.0",
-
     # ── Logging / Observability ───────────────────────────────────────────
     "structlog>=24.1",
     "loguru>=0.7",
-
     # ── System / GUI ────────────────────────────────────────────────────────
     "psutil>=7.0",
     "pycaw>=2025.0",
@@ -87,7 +73,6 @@ dependencies = [
     "mss>=9.0",
     "PyQt6>=6.7",
     "qasync>=0.27.1",
-
     # ── Agent tools ───────────────────────────────────────────────────────
     # OCR for reading the screen exactly (skills/screen_text_skill.py).
     # RapidOCR rather than pytesseract: it ships its own ONNX models and needs
@@ -100,7 +85,6 @@ dependencies = [
     # Clipboard read/write (skills/clipboard_skill.py) -- often the cheapest
     # way to get at an error the user has already copied.
     "pyperclip>=1.9",
-
     # ── Browser and desktop control (W3) ──────────────────────────────────
     # Playwright rather than Selenium: it auto-waits (a voice assistant that
     # clicks before the button renders fails in a way the user cannot
@@ -114,13 +98,11 @@ dependencies = [
     "pywinauto>=0.6.9",
     # Keystroke delivery for the focused window.
     "pyautogui>=0.9.54",
-
     # ── Verified fix loop (W6) ────────────────────────────────────────────
     # No new packages: edit_file, copy_to_shadow and run_command are built on
     # the standard library (shlex, shutil, asyncio.create_subprocess_exec).
     # run_command is allowlisted rather than a shell -- see
     # AGENT_RUN_ALLOWLIST in config/settings.py.
-
     # ── Document creation (skills/document_skill.py) ──────────────────────
     # The model only ever emits markdown; these turn it into a file. Keeping
     # the model out of PDF/HTML structure removes a whole class of failure
@@ -134,7 +116,6 @@ dependencies = [
     # Verification only: a PDF that renders to zero pages must not be
     # reported as saved.
     "pypdf>=4.0",
-
     # ── Excel control (skills/excel_skill.py) ─────────────────────────────
     # openpyxl for a workbook sitting on disk; xlwings to reach the one the
     # user is looking at, over COM. Never UI automation -- a real API exists,
@@ -143,6 +124,9 @@ dependencies = [
     # Optional at runtime: needs Excel installed, so the skill degrades to a
     # sentence rather than a traceback when COM is unavailable.
     "xlwings>=0.31",
+    "aiosqlite>=0.20",
+    "asyncpg>=0.29",
+    "sqlalchemy>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -215,3 +199,10 @@ omit = ["tests/*", "docs/*", "main.py"]
 
 [tool.coverage.report]
 fail_under = 80
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+]

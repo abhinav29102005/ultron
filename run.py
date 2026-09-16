@@ -128,17 +128,70 @@ async def run(args: argparse.Namespace) -> None:
 
 
 async def run_text_mode(container) -> None:
-    """Run in text input mode (terminal)."""
+    """Run in interactive cybernetic text input mode (terminal)."""
     from core.state import AssistantState
+    from core.event_bus import UserInputEvent
+    from utils.cli_dashboard import CyberneticCLI
+    from rich.console import Console
+
+    # Initialize persistence and user settings
+    await container.db.initialize()
+    await container.user_settings.load_from_db(container.db)
+    await container.session_manager.initialize("Main Chat")
 
     assistant = container.assistant
-    await assistant.start(launch_listen_loop=True)
+    await assistant.start(launch_listen_loop=False)
+
+    cli = CyberneticCLI(container.session_manager, container.user_settings)
+    cli.render_header()
+    Console().print("[dim]Type your message or use slash commands ([bold cyan]/help, /chats, /mode, /settings, /tokens[/bold cyan]).[/dim]\n")
 
     try:
         while assistant.state != AssistantState.SHUTTING_DOWN:
-            await asyncio.sleep(3600)
+            sess = container.session_manager.active_session
+            sess_name = sess.title if sess else "ultron"
+            prompt_str = f"ultron [{sess_name}] > "
+            try:
+                line = await asyncio.to_thread(input, prompt_str)
+            except (EOFError, KeyboardInterrupt):
+                break
+
+            line = line.strip()
+            if not line:
+                continue
+
+            # Check slash command
+            if line.startswith("/"):
+                res = await cli.handle_command(line)
+                if res == "exit":
+                    break
+                if res:
+                    continue
+
+            # Guardrails validation
+            safe, reason = container.user_settings.check_guardrails(line)
+            if not safe:
+                Console().print(f"[bold red]🛡️ {reason}[/bold red]")
+                continue
+
+            # Execute turn through assistant
+            await assistant._set_state(AssistantState.THINKING)
+            await container.event_bus.publish(
+                UserInputEvent(
+                    text=line,
+                    source="text"
+                )
+            )
+
+            # Wait for turn completion
+            while assistant._current_turn is not None and not assistant._current_turn.done():
+                await asyncio.sleep(0.05)
+
     except asyncio.CancelledError:
+        pass
+    finally:
         await assistant.stop()
+        await container.db.close()
         await container.shutdown()
 
 

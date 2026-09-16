@@ -424,6 +424,30 @@ class ServiceContainer:
         return self._registry["permission_manager"]
 
     @property
+    def db(self):
+        """Get the unified DatabaseManager instance."""
+        if 'db' not in self._registry:
+            from core.database import DatabaseManager
+            self._registry['db'] = DatabaseManager()
+        return self._registry['db']
+
+    @property
+    def user_settings(self):
+        """Get the UserSettings instance."""
+        if 'user_settings' not in self._registry:
+            from config.user_settings import UserSettings
+            self._registry['user_settings'] = UserSettings()
+        return self._registry['user_settings']
+
+    @property
+    def session_manager(self):
+        """Get the SessionManager instance."""
+        if 'session_manager' not in self._registry:
+            from core.session_manager import SessionManager
+            self._registry['session_manager'] = SessionManager(db=self.db)
+        return self._registry['session_manager']
+
+    @property
     def executor(self):
         """Get the Executor instance, lazily initialized."""
         if "executor" not in self._registry:

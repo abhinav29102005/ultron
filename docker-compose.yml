@@ -4,13 +4,39 @@ services:
   ultron:
     build: .
     image: ultron:latest
-    container_name: ultron_rag
+    container_name: ultron_app
     environment:
+      - DATABASE_URL=postgresql+asyncpg://ultron:ultron_secret@postgres:5432/ultron
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - WEAVIATE_URL=${WEAVIATE_URL:-}
+      - WEAVIATE_URL=http://weaviate:8080
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
     volumes:
       - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      weaviate:
+        condition: service_started
     command: python scripts/run_benchmark.py
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ultron_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ultron
+      POSTGRES_USER: ultron
+      POSTGRES_PASSWORD: ultron_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ultron -d ultron"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   weaviate:
     image: semitechnologies/weaviate:1.24.1
@@ -28,4 +54,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  postgres_data:
   weaviate_data:

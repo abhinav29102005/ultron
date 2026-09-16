@@ -258,6 +258,19 @@ class Assistant:
             logger.info("Utterance consumed as an answer to a confirmation.")
             return
 
+        # Record user turn into session_manager
+        try:
+            sm = getattr(self._container, 'session_manager', None)
+            if sm and getattr(sm, 'active_session', None):
+                asyncio.create_task(sm.record_turn(
+                    role="user",
+                    content=event.text,
+                    prompt_tokens=max(1, len(event.text.split())),
+                    completion_tokens=0,
+                ))
+        except Exception as e:
+            logger.debug(f"Could not record user turn: {e}")
+
         # A new utterance supersedes the previous one rather than queueing.
         self.interrupt()
 
@@ -647,13 +660,18 @@ class Assistant:
         await self._container.event_bus.publish(ResponseReadyEvent(response=message))
 
     def _speak(self, message: str) -> None:
-        """
-        Fire-and-forget text-to-speech.
+        """Fire-and-forget text-to-speech.
 
         The voice stack (piper plus a downloaded voice model) is optional:
         without it ULTRON is still a fully usable text assistant, so a missing
         speaker is reported once and never fatal.
         """
+        try:
+            settings = getattr(self._container, 'user_settings', None)
+            if settings and not getattr(settings, 'voice_enabled', False):
+                return
+        except Exception:
+            pass
         if self._tts_available is False:
             return
 
