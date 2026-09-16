@@ -1,5 +1,5 @@
 # ULTRON Agent - One-line Installer for Windows
-# Run via: irm https://friday.mlsctiet.com/install | iex
+# Run via: irm https://ultron.mlsctiet.com/install | iex
 
 $ErrorActionPreference = 'Stop'
 
@@ -77,20 +77,20 @@ if (-not (Test-Path '.env')) {
 }
 
 # --- Add Alias ---
-Write-Host "[INFO] Setting up 'ultron' & 'friday' aliases in PowerShell Profile..." -ForegroundColor Cyan
+Write-Host "[INFO] Setting up 'ultron' & 'ultron' aliases in PowerShell Profile..." -ForegroundColor Cyan
 
 if (-not (Test-Path $PROFILE)) {
     New-Item -Type File -Path $PROFILE -Force | Out-Null
 }
 
 $alias_ultron = "function ultron { Set-Location '$INSTALL_DIR'; uv run python run.py }"
-$alias_friday = "function friday { Set-Location '$INSTALL_DIR'; uv run python run.py }"
+$alias_ultron = "function ultron { Set-Location '$INSTALL_DIR'; uv run python run.py }"
 $profile_content = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
 if ($profile_content -notmatch 'function ultron') {
     Add-Content $PROFILE "`n# ULTRON Agent Aliases"
     Add-Content $PROFILE $alias_ultron
-    Add-Content $PROFILE $alias_friday
-    Write-Host "[OK] Added ultron & friday aliases to $PROFILE" -ForegroundColor Green
+    Add-Content $PROFILE $alias_ultron
+    Write-Host "[OK] Added ultron & ultron aliases to $PROFILE" -ForegroundColor Green
 }
 
 Write-Host ''

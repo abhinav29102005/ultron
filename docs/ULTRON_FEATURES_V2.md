@@ -1,7 +1,7 @@
-# FRIDAY/Jarvis — Feature Implementation Spec v2 (code-grounded)
+# ULTRON — Feature Implementation Spec v2 (code-grounded)
 
-Date: 2026-09-01. Companion to `docs/JARVIS_ARCHITECTURE_V2.md`.
-Supersedes the draft `jarvis-features-spec.md` (Downloads): every claim below was checked
+Date: 2026-09-01. Companion to `docs/ULTRON_ARCHITECTURE_V2.md`.
+Supersedes the draft `ultron-features-spec.md` (Downloads): every claim below was checked
 against this repository, and each section states what already exists, what to build, and the
 exact files to touch. Written to be handed to another model as a standalone brief — read the
 named files before writing code; the repo's comment style explains *why* things are shaped
@@ -19,14 +19,14 @@ the way they are, and new code is expected to match it.
 | `mistral-nemotron` cloud | **`nvidia/nemotron-3-super-120b-a12b`** (NIM), chosen with measured evidence. Text-only — it cannot see images, which matters in §3. |
 
 **Routing correction** — the draft assumes per-request model routing ("content generation
-goes to nemotron, classification to qwen"). FRIDAY has **one active provider per session**
+goes to nemotron, classification to qwen"). ULTRON has **one active provider per session**
 (`llm/switcher.py`); the agent loop and every skill use whichever is active. Do not build
 per-request routing as part of these features. Where the draft says "route X to nemotron",
 read "runs on the active provider; quality is better when the user has switched to nvidia".
 
 ---
 
-## 0. How a capability plugs into FRIDAY (read this first)
+## 0. How a capability plugs into ULTRON (read this first)
 
 Every feature below is wired the same way. The smallest complete example to copy is
 `skills/clipboard_skill.py` + its entries in the two tables.
@@ -124,7 +124,7 @@ Dependencies to add: `markdown`, `xhtml2pdf`, `pypdf` (verification only).
 
 ### 1.4 Harness responsibilities (deterministic, in the skill)
 
-1. **Sandbox**: output root is `Path.home() / "Documents" / "FRIDAY"`. Take the *basename*
+1. **Sandbox**: output root is `Path.home() / "Documents" / "ULTRON"`. Take the *basename*
    of the model-supplied filename (`Path(filename).name`) — this makes `../../` traversal
    structurally impossible rather than detected. Reject empty/dot names.
 2. **No silent overwrite**: if the target exists, suffix ` -2`, ` -3`, … before the extension.
@@ -133,7 +133,7 @@ Dependencies to add: `markdown`, `xhtml2pdf`, `pypdf` (verification only).
 4. **Format from the extension** when `format` is omitted; default `.md` when neither is given.
 5. **Verify** (draft §1.4, correct): file exists, size > 0; for PDF, `pypdf.PdfReader`
    opens it and `len(reader.pages) >= 1`. On failure delete the partial file and say so.
-6. Return the resolved path in the spoken reply: "Saved dsa-week1.pdf in Documents\FRIDAY."
+6. Return the resolved path in the spoken reply: "Saved dsa-week1.pdf in Documents\ULTRON."
 
 ### 1.5 Tests
 
@@ -234,7 +234,7 @@ the live path verifies better and should be preferred when Excel is open.
 
 Before the **first write of a session** to each workbook: copy to
 `data/excel_backups/<name>_<YYYYmmdd-HHMMSS>.xlsx`, keep the newest 10, prune older.
-`data/` already exists and holds FRIDAY's state. Remember per-path in the skill instance.
+`data/` already exists and holds ULTRON's state. Remember per-path in the skill instance.
 Ctrl+Z does not cross the COM boundary; the backup is the undo.
 
 ### 2.7 Build order (keep the draft's)
@@ -341,18 +341,18 @@ extracted helpers. Keep Qt-touching code thin.
 ## 4. Wake word "takes a few tries" — diagnosed and fixed (2026-09-01)
 
 The user reported the wake word needs several attempts. Root causes found in
-`speech/wake_word/detector.py` (openWakeWord `hey_jarvis` is the active engine; there is
+`speech/wake_word/detector.py` (openWakeWord `hey_ultron` is the active engine; there is
 no Picovoice key on this machine, so Porcupine never runs):
 
 1. **The tuning knob was connected to nothing.** `OWW_THRESHOLD` was hardcoded `0.5`;
    `WAKEWORD_SENSITIVITY` in `.env` only fed Porcupine — the engine that isn't running.
    Worse, until the same day's `utils/env.py` fix, `.env` never reached `os.getenv` at
    all, so the knob was doubly dead.
-2. **Single-frame gate at 0.5.** On a laptop mic at conversational distance, "hey jarvis"
+2. **Single-frame gate at 0.5.** On a laptop mic at conversational distance, "hey ultron"
    peaks in the 0.3–0.5 band often enough that 0.5 systematically drops real attempts.
 3. **Cold buffer on every listen cycle.** `detect()` called `self._oww.reset()` on every
    entry, wiping the model's audio buffer even when nothing had been detected. Speaking
-   the moment FRIDAY resumes listening landed in ~1 s of meaningless scores.
+   the moment ULTRON resumes listening landed in ~1 s of meaningless scores.
 4. **Silent misses.** A rejected phrase produced no signal anywhere, so the failure was
    untunable by observation.
 
@@ -366,9 +366,9 @@ no Picovoice key on this machine, so Porcupine never runs):
   buffer.
 - **Near-miss logging**: a rejected peak > 0.2 logs
   `Wake word near miss: peak score 0.41, threshold 0.35...` at INFO into
-  `logs/friday.log` — misses are now visible and tunable. Detections log at DEBUG.
+  `logs/ultron.log` — misses are now visible and tunable. Detections log at DEBUG.
 - **`scripts/wakeword_tune.py`** — a live score meter. Run
-  `.venv/Scripts/python.exe scripts/wakeword_tune.py`, say "hey jarvis" 5–10 times
+  `.venv/Scripts/python.exe scripts/wakeword_tune.py`, say "hey ultron" 5–10 times
   normally; it prints every spike with TRIGGER/miss against the current threshold and ends
   by recommending the exact `WAKEWORD_SENSITIVITY` line for that voice/mic/room
   (weakest observed peak minus a 0.05 margin, floored at sensitivity 0.85).
@@ -380,9 +380,9 @@ catches this user's voice reliably — can only be verified by the user running 
 
 **If it is still unreliable after tuning:** the next steps are, in order: check Windows'
 default input device and mic level; run the tuner again in the actual noise conditions;
-consider a Picovoice key (free tier) — Porcupine with a custom "hey friday" `.ppn`
+consider a Picovoice key (free tier) — Porcupine with a custom "hey ultron" `.ppn`
 (`PORCUPINE_KEYWORD_PATH`) is measurably more robust than openWakeWord's community
-`hey_jarvis` model, and the detector already prefers it when a key is present. Speex noise
+`hey_ultron` model, and the detector already prefers it when a key is present. Speex noise
 suppression (openWakeWord's option) is **not** a viable path — `speexdsp-ns` does not build
 cleanly on Windows.
 
@@ -411,7 +411,7 @@ code** — a test that passes on the bug is worth nothing.
 
 1. **Excel backup pruning destroyed a different workbook's backups.** Pruning globbed
    `{stem}_*{suffix}`, so tidying `report.xlsx` also matched the backups of
-   `report_2025.xlsx` — and those sort earlier, so they went first. FRIDAY deleting the
+   `report_2025.xlsx` — and those sort earlier, so they went first. ULTRON deleting the
    undo history of a file nobody asked it to touch. Now matched by exact timestamp regex.
 2. **The `<pasted_image_content>` fence could be escaped by the OCR text itself.** A
    screenshot showing `</pasted_image_content>` closed the fence early and everything after
@@ -448,7 +448,7 @@ code** — a test that passes on the bug is worth nothing.
 
 | # | Feature | Size | Ships when |
 |---|---|---|---|
-| 1 | `create_document` (§1) | ~half day | all §1.5 tests green; a spoken "make me a study plan PDF" produces an opening PDF in Documents\FRIDAY |
+| 1 | `create_document` (§1) | ~half day | all §1.5 tests green; a spoken "make me a study plan PDF" produces an opening PDF in Documents\ULTRON |
 | 2 | Screenshot paste, OCR path only (§3.2–3.3 step 3) | ~1 day | pasting an error screenshot + "what's this error" answers from OCR text without any VLM load |
 | 3 | `excel_read` (§2, read-only) | ~1 day | "what are the sheets in budget.xlsx" and "what's in A1:D10" answer correctly on a closed file and a live one |
 | 4 | `excel_write` (§2, gated) | after 3 | backups rotate; a seeded `#DIV/0!` write is reported, not swallowed |

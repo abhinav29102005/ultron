@@ -112,14 +112,14 @@ echo -e "${BLUE}[INFO]${NC} Setting up 'ultron' & 'ultron' aliases..."
 add_alias_if_needed() {
     local rc_file="$1"
     local ultron_cmd="alias ultron='cd $INSTALL_DIR && uv run python run.py'"
-    local friday_cmd="alias ULTRON='cd $INSTALL_DIR && uv run python run.py'"
+    local ultron_cmd="alias ULTRON='cd $INSTALL_DIR && uv run python run.py'"
     
     if [ -f "$rc_file" ]; then
         if ! grep -q "alias ultron=" "$rc_file"; then
             echo -e "
 # ULTRON Agent Aliases" >> "$rc_file"
             echo "$ultron_cmd" >> "$rc_file"
-            echo "$friday_cmd" >> "$rc_file"
+            echo "$ultron_cmd" >> "$rc_file"
             echo -e "${GREEN}[OK]${NC} Added aliases (ultron, ULTRON) to $rc_file"
         fi
     fi

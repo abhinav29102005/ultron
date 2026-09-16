@@ -1,4 +1,4 @@
-﻿# ULTRON Streaming RAG Benchmark Report
+# ULTRON Streaming RAG Benchmark Report
 
 ## Evaluation Gates
 

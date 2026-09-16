@@ -69,7 +69,7 @@ Several changes were made to `pyproject.toml`:
 
 We added several new files that should not cause conflicts, but you should be aware of them:
 
-1. **`assets/friday-banner.jpg`**: The new project logo.
+1. **`assets/ultron-banner.jpg`**: The new project logo.
 2. **`README.md`**: Completely rewritten with comprehensive documentation.
 3. **`scripts/install.sh`**: The payload for the new one-line installer.
 4. **`deploy/installer/`**: The Cloudflare Worker project that serves the installer.

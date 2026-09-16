@@ -72,7 +72,7 @@ ResponseReadyEvent ─> ChatPanel.append()     ──> history bubble
 
 ### Position persistence
 
-Saved to `QSettings("FRIDAY", "orb")` on move. On restore, the position is clamped to the current `availableGeometry()` of the screens, so a monitor change or resolution change cannot strand the orb off-screen. Default on first run: bottom-right, inset 24 px.
+Saved to `QSettings("ULTRON", "orb")` on move. On restore, the position is clamped to the current `availableGeometry()` of the screens, so a monitor change or resolution change cannot strand the orb off-screen. Default on first run: bottom-right, inset 24 px.
 
 ## The STT startup fix
 

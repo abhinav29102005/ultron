@@ -1,6 +1,6 @@
 # Repository Analysis Report
 
-This document provides a detailed analysis of the JARVIS / FRIDAY AI Desktop Assistant repository, detailing the purpose of every folder and file, along with their architecture, dependency flows, and implementation status.
+This document provides a detailed analysis of the ULTRON AI Desktop Assistant repository, detailing the purpose of every folder and file, along with their architecture, dependency flows, and implementation status.
 
 ## 1. Directory Overview
 
@@ -478,7 +478,7 @@ This document provides a detailed analysis of the JARVIS / FRIDAY AI Desktop Ass
 1. **File path:** `utils/exceptions.py`
 2. **Primary purpose:** Standardized custom exception hierarchy.
 3. **Classes defined:**
-   - `FridayError` (Base), `AssistantNotInitialisedError`, `ConfigurationError`, `EventBusError`, `ValidationError`, `ServiceNotFoundError`.
+   - `UltronError` (Base), `AssistantNotInitialisedError`, `ConfigurationError`, `EventBusError`, `ValidationError`, `ServiceNotFoundError`.
    - Subsytem Stubs: `LLMError`, `SpeechError`, `WakeWordError`, `PlannerError`, `SkillError`, and inherited variations.
 4. **Functions/methods defined:** Exception initializers.
 5. **Implementation status:** Fully implemented.
@@ -548,7 +548,7 @@ This document provides a detailed analysis of the JARVIS / FRIDAY AI Desktop Ass
 
 ## Repository Architecture
 
-The JARVIS/FRIDAY system is designed as an event-driven, decoupled desktop assistant. The architecture revolves around a centralized **Service Container** (`core/container.py`) managing the lazy loading and lifecycle of key services. These services interact globally via a Publisher-Subscriber **Event Bus** (`core/event_bus.py`). 
+The ULTRON system is designed as an event-driven, decoupled desktop assistant. The architecture revolves around a centralized **Service Container** (`core/container.py`) managing the lazy loading and lifecycle of key services. These services interact globally via a Publisher-Subscriber **Event Bus** (`core/event_bus.py`). 
 
 The overall flow is expected to be:
 1. **Bootstrapping**: `main.py` loads `config`, injects settings into the Service Container, starts the EventBus and boots the `Assistant` lifecycle.

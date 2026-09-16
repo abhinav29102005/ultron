@@ -1,7 +1,7 @@
-# FRIDAY/Jarvis — Architecture v2 (audited)
+# ULTRON — Architecture v2 (audited)
 
 Date: 2026-09-01.
-Supersedes the draft rebuild plan (`jarvis-architecture.md` from Downloads). Every claim in
+Supersedes the draft rebuild plan (`ultron-architecture.md` from Downloads). Every claim in
 that draft was checked against this repository and this machine; this document keeps what
 survived, corrects what didn't, and records the model migration that was actually performed.
 
@@ -14,7 +14,7 @@ survived, corrects what didn't, and records the model migration that was actuall
 | Disk free | ~95 GB on C: before migration |
 | Ollama | 0.32.14 at `http://localhost:11434` |
 
-> The older `docs/JARVIS_PHASE2_SPEC.md` claims "Intel UHD (no CUDA)". That is stale — the
+> The older `docs/ULTRON_PHASE2_SPEC.md` claims "Intel UHD (no CUDA)". That is stale — the
 > RTX 3050 is present and the driver works. The Intel iGPU is the second adapter of a hybrid
 > laptop, not the only one.
 
@@ -27,7 +27,7 @@ survived, corrects what didn't, and records the model migration that was actuall
 | §0 Check 1: set `num_ctx` explicitly | **Correct, was a real gap** | `llm/qwen.py` sent only `temperature` + `num_predict`; Ollama's small default context silently truncated agent prompts from the front. **Fixed in this migration** — see §3. |
 | §0 Check 2: log raw model output | Already done | `LLMResponse.raw` is always populated (`llm/qwen.py`, `llm/response.py`). |
 | §0 Check 3: A/B the fine-tune | **Stale premise** | There is no fine-tune anywhere in this repo. The local model is a base model (now `qwen3:4b-instruct`). Nothing to A/B. |
-| §1 swap to `qwen3:4b` | **Half right — tested and corrected** (§3: the *instruct* variant, not plain `qwen3:4b`) | The repo's own live tests agree with the draft: `qwen2.5:3b` scored **0/2 on the agent fix loop** and parroted `"LOOKING"` from its own system prompt 3/3 (`docs/JARVIS_PHASE2_SPEC.md`). |
+| §1 swap to `qwen3:4b` | **Half right — tested and corrected** (§3: the *instruct* variant, not plain `qwen3:4b`) | The repo's own live tests agree with the draft: `qwen2.5:3b` scored **0/2 on the agent fix loop** and parroted `"LOOKING"` from its own system prompt 3/3 (`docs/ULTRON_PHASE2_SPEC.md`). |
 | §1 keep `qwen2.5vl:3b` | Correct | Installed, preloaded at startup, `keep_alive=30m`, used only by `skills/vision_skill.py`. |
 | §1 both models don't fit 4 GB together | Correct — see §6 | ~2.5 GB + ~3 GB > 4 GB. The repo currently preloads the **VLM** hot, which is the opposite of the draft's advice; §6 discusses the trade. |
 | §1 NIM `mistralai/mistral-nemotron` | **Exists, but repo's pick is better-evidenced** | Verified live on the endpoint (83-model listing). The repo instead uses `nvidia/nemotron-3-super-120b-a12b`, chosen after the draft was written, with measured ~1.9 s tool-calling round trips and correct tool choice on every probe (`config/settings.py` comment). Keep it; mistral-nemotron is the fallback candidate. |
@@ -55,7 +55,7 @@ survived, corrects what didn't, and records the model migration that was actuall
 | `nvidia/nemotron-3-nano-30b-a3b` | NVIDIA NIM | — | "fast" variant — **currently dead code**: no caller passes `use_fast_model=True` | `llm/nvidia.py:246` only |
 | faster-whisper `base` (int8, CPU) | local | — | speech → text | `speech/speechconfig.py` |
 | Piper `en_US-lessac-medium` | local | 63 MB | text → speech | `speech/text_to_speech/` |
-| openWakeWord `hey_jarvis` | local | — | wake word (Porcupine unused — no Picovoice key on this machine, see §7.3) | `speech/wake_word/detector.py` |
+| openWakeWord `hey_ultron` | local | — | wake word (Porcupine unused — no Picovoice key on this machine, see §7.3) | `speech/wake_word/detector.py` |
 
 Removed in this migration: **`qwen2.5:3b`** (1.9 GB) and plain **`qwen3:4b`** (2.5 GB).
 Rationale and evidence in §3.
@@ -68,7 +68,7 @@ Rationale and evidence in §3.
 
 - `qwen2.5:3b` could not drive the tool-calling agent loop: 0/2 on the verified fix loop,
   and 3/3 runs answered with the literal word `"LOOKING"` parroted from the system prompt
-  (`docs/JARVIS_PHASE2_SPEC.md`). It also invents file paths (`docs/JARVIS_UPGRADE_SPEC.md`).
+  (`docs/ULTRON_PHASE2_SPEC.md`). It also invents file paths (`docs/ULTRON_UPGRADE_SPEC.md`).
 - `qwen3:4b-instruct` is a generation newer, markedly better at instruction following and
   structured output, still GPU-resident at Q4 on a 4 GB card, and supports tool calling.
 - Plain `qwen3:4b` — what the draft actually recommended — was pulled, measured, and
@@ -77,7 +77,7 @@ Rationale and evidence in §3.
 ### Procedure used (and to reuse for any future model swap)
 
 The ordering is the point: **verify before deleting**. A model that is deleted before its
-replacement is proven leaves FRIDAY with no local model at all.
+replacement is proven leaves ULTRON with no local model at all.
 
 ```bash
 # 1. Install
@@ -87,7 +87,7 @@ ollama pull qwen3:4b-instruct
 ollama list                                # tag present
 curl -s http://localhost:11434/api/tags    # "capabilities" must include "tools"
 
-# 3. Point FRIDAY at it — one line in .env, everything else is already wired:
+# 3. Point ULTRON at it — one line in .env, everything else is already wired:
 #      QWEN_MODEL=qwen3:4b-instruct
 
 # 4. Prove the app path (from the repo root):
@@ -122,7 +122,7 @@ Applied in the same pass, from §7 (independent of the model swap):
 |---|---|
 | `utils/env.py` (new) | `load_env_file()` — copies `.env` into `os.environ` so the `os.getenv` readers finally see it (§7.1) |
 | `main.py`, `run.py`, `main_gui.py` | call `load_env_file()` beside `force_utf8_output()` |
-| `main_gui.py` | wake-word detector built on a worker thread *after* `window.show()`; `[FRIDAY] Starting…` banner (§7.2) |
+| `main_gui.py` | wake-word detector built on a worker thread *after* `window.show()`; `[ULTRON] Starting…` banner (§7.2) |
 | `ui/main_window.py` | new `set_wake_detector()`, mirroring `set_stt()`, starts the wake loop on arrival |
 | `run.py` | "Loading wake-word engine…" notice before the slow import in wakeword mode |
 
@@ -305,7 +305,7 @@ the DOM/accessibility side (§8).
 
 ### 7.1 `.env` never reached `os.getenv` — **FIXED**
 
-The root cause behind several symptoms below. FRIDAY reads config two ways, and they never
+The root cause behind several symptoms below. ULTRON reads config two ways, and they never
 met:
 
 - `config/settings.py` is a pydantic `BaseSettings` with `env_file=".env"`. **Pydantic parses
@@ -341,13 +341,13 @@ indistinguishable from a hang. This is the bug behind "running `main_gui.py` doe
 **Fix:** build it in `asyncio.to_thread` *after* first paint (the import happens inside the
 thread, since the import is the slow part), handed over by a new
 `MainWindow.set_wake_detector()` that mirrors `set_stt()` and starts the wake-word loop on
-arrival. Plus a `[FRIDAY] Starting…` line before anything slow, because `report()` stays
+arrival. Plus a `[ULTRON] Starting…` line before anything slow, because `report()` stays
 silent when preflight passes and everything else logs to file.
 
 **Measured after the fix** (instrumented boot, same machine):
 
 ```
-[FRIDAY] Starting…                      +0.0s
+[ULTRON] Starting…                      +0.0s
 WINDOW SHOWN                            +7.3s
 Wake word engine: openWakeWord          +10.7s   (loaded, not blocking)
 ```
@@ -363,12 +363,12 @@ An earlier draft of this document said `.env` sets `WAKEWORD_KEY` and that renam
 secret-redaction regex mangling the variable name while inspecting `.env`. There is no
 Picovoice key on this machine at all.
 
-The real state: `.env` has `WAKEWORD_KEYWORD=hey_jarvis`, `WAKEWORD_ENGINE=openwakeword`,
+The real state: `.env` has `WAKEWORD_KEYWORD=hey_ultron`, `WAKEWORD_ENGINE=openwakeword`,
 `WAKEWORD_SENSITIVITY=0.5`. Of those, `detector.py` reads only `WAKEWORD_SENSITIVITY` (and
 `WAKEWORD_KEYWORDS`, *plural* — a different key, for Porcupine's built-in keyword list).
 `WAKEWORD_KEYWORD` and `WAKEWORD_ENGINE` are read by nothing.
 
-So openWakeWord `hey_jarvis` is the engine, correctly, because no Porcupine key exists.
+So openWakeWord `hey_ultron` is the engine, correctly, because no Porcupine key exists.
 To switch: get a key from the Picovoice console and set `PICOVOICE_ACCESS_KEY` in `.env` —
 which now works, thanks to §7.1. That would also sidestep most of the import cost in §7.2,
 since `openwakeword` is what pulls in scipy.
@@ -390,8 +390,8 @@ choice, not a defect.
 ### 7.6 Unrelated pre-existing test failure
 
 `tests/test_autostart.py::TestRealKeyUntouched::test_real_registration_is_absent` fails on
-this machine because FRIDAY **is** registered in `HKCU\...\CurrentVersion\Run` (pointing at
-`scripts/friday_launcher.pyw`). The test asserts the suite never leaves a real registration
+this machine because ULTRON **is** registered in `HKCU\...\CurrentVersion\Run` (pointing at
+`scripts/ultron_launcher.pyw`). The test asserts the suite never leaves a real registration
 behind; it is tripping over a registration the user made deliberately. Environment state,
 not a code defect — but the test should probably skip when autostart was enabled outside the
 suite.
@@ -405,7 +405,7 @@ The draft's steps 1, 2, 4, 5 are done or moot. What remains, in the order that p
 1. **Eval harness** (draft §7 — unchanged, still the prerequisite for everything else).
    20–30 fixed tasks: `routing/` (utterance → expected intent), `code_edit/` (file +
    instruction → expected result), `browser/` (page + instruction → expected DOM state).
-   First use: re-run the `qwen2.5:3b` agent-loop cases from `docs/JARVIS_PHASE2_SPEC.md`
+   First use: re-run the `qwen2.5:3b` agent-loop cases from `docs/ULTRON_PHASE2_SPEC.md`
    against `qwen3:4b-instruct` — the fix loop scored 0/2 before and is the number that
    justified this whole migration.
 2. **Schema-enforced intent classification** — pass the intent JSON schema in `format=`,

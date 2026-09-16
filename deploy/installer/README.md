@@ -4,10 +4,10 @@ This directory contains the Cloudflare Worker that powers the one-line installat
 
 ```bash
 # Linux / macOS
-curl -fsSL https://friday.mlsctiet.com/install | bash
+curl -fsSL https://ultron.mlsctiet.com/install | bash
 
 # Windows (PowerShell)
-irm https://friday.mlsctiet.com/install | iex
+irm https://ultron.mlsctiet.com/install | iex
 ```
 
 Or via direct Workers endpoint:

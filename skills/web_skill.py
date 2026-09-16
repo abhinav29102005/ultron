@@ -375,7 +375,7 @@ class WebSkill(Skill):
     #: browser, which is why fetch_page keeps both and retries rather than
     #: picking a winner.
     FETCH_USER_AGENT = (
-        "FridayAgent/1.0 (+https://github.com/MicrosoftStudentChapter/ULTRON-agent) httpx"
+        "UltronAgent/1.0 (+https://github.com/MicrosoftStudentChapter/ULTRON-agent) httpx"
     )
 
     def __init__(self, container: "Any" = None) -> None:

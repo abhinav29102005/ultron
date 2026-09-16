@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     ollama_base_url: str = Field(default="http://localhost:11434")
     # qwen3:4b-instruct replaced qwen2.5:3b. The 2.5 model could not drive the
     # agent loop (0/2 on the fix loop, parroted "LOOKING" from its own system
-    # prompt — see docs/JARVIS_PHASE2_SPEC.md).
+    # prompt — see docs/ULTRON_PHASE2_SPEC.md).
     #
     # The "-instruct" is load-bearing, not a longer way of writing qwen3:4b.
     # Plain qwen3:4b is a hybrid reasoning model, and on Ollama 0.32.14 its

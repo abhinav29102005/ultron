@@ -34,7 +34,7 @@ load_env_file()
 
 SAMPLE_RATE = 16000
 BLOCK = 1280  # 80 ms — the frame size openWakeWord expects
-MODEL = "hey_jarvis"
+MODEL = "hey_ultron"
 
 #: Spikes below this are room noise; printing them would bury the signal.
 PRINT_FLOOR = 0.10

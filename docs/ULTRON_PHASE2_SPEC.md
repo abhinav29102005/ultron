@@ -1,4 +1,4 @@
-# FRIDAY Phase 2 — Code-Fixing Agent, Better Brain, Real Takeover
+# ULTRON Phase 2 — Code-Fixing Agent, Better Brain, Real Takeover
 
 > **STATUS: IMPLEMENTED AND VERIFIED.** W6, W7 and W8 are built and tested;
 > the fix loop passes its live acceptance 3/3 on the cloud model. Suite: **1024 passing**.
@@ -6,12 +6,12 @@
 > actually happened, including four bugs found only by running it.
 
 **Purpose:** a self-contained handoff for an AI model (or engineer) with no prior context.
-Phase 1 (see `docs/JARVIS_UPGRADE_SPEC.md`) built the tool-calling agent loop, screen OCR,
+Phase 1 (see `docs/ULTRON_UPGRADE_SPEC.md`) built the tool-calling agent loop, screen OCR,
 file read/write, browser/desktop control, notes and reminders. This document covers the three
 problems the user still hits, diagnoses each **with live evidence gathered on this machine**,
 and specifies the fixes.
 
-Repo: `friday-agent` (Windows 11, Python 3.13, venv at `.venv/`). Suite: **952 passing**
+Repo: `ultron` (Windows 11, Python 3.13, venv at `.venv/`). Suite: **952 passing**
 (`.venv/Scripts/python.exe -m pytest -q -o addopts=""`; the one failure,
 `test_autostart.py::TestRealKeyUntouched`, is environmental and pre-existing — ignore it).
 
@@ -40,7 +40,7 @@ Read these together and the user's three complaints stop being mysterious:
 2. "Can't open folders unless I'm very specific" → mostly model quality (see the wrong-tool
    probe above); the folder skills themselves work when called with sane arguments.
 3. "Can't take control of my already-open browser" → correct diagnosis by the user: CDP is not
-   exposed on a normally-started Chrome, and FRIDAY has no flow to fix that.
+   exposed on a normally-started Chrome, and ULTRON has no flow to fix that.
 
 ---
 
@@ -68,7 +68,7 @@ Add to `skills/code_skill.py` + `intelligence/tool_registry.py` + router intent 
 - Arguments: `path`, `old_text`, `new_text`. Replace **exactly one occurrence**; refuse
   (with a readable message the model can act on) when `old_text` is not found or matches more
   than once — ambiguity must bounce back to the model, never guess.
-- Keep the `.friday-bak` backup behaviour from `_write` (see `BACKUP_SUFFIX`).
+- Keep the `.ultron-bak` backup behaviour from `_write` (see `BACKUP_SUFFIX`).
 - `confirm: False` **when part of a verified fix loop** (§1.4 applies the confirmed gate at the
   loop level instead); standalone `edit_file` keeps `confirm: True`. Simplest correct
   implementation: keep `confirm: True` on the tool and let the fix-loop tool (§1.4) be the
@@ -103,7 +103,7 @@ hard-coded pipeline — the agent loop already supports chains:
    the file and project directly (VS Code titles are "file - folder - Visual Studio Code").
 2. `read_file` the real file.
 3. **`copy_to_shadow(path)`** (new, tiny, on CodeSkill): copies the file to
-   `<scratch>/friday-fix/<name>`; returns the shadow path. All candidate edits and runs happen
+   `<scratch>/ultron-fix/<name>`; returns the shadow path. All candidate edits and runs happen
    on the shadow, so nothing the user has open changes until verified.
 4. `edit_file` on the shadow → `run_command("python <shadow>")` → read output → repeat until
    the error is gone / expected output appears (the model judges; the transcript holds both).
@@ -172,7 +172,7 @@ With 15.7 GB RAM, CPU-only:
 Also add a startup preflight check for NIM: `utils/preflight.py` deliberately skips the network
 probe for NVIDIA ("a bad key surfaces on the first message") — but a **retired model** is
 exactly the failure that deserves one cheap probe at boot, because it otherwise looks like
-FRIDAY misbehaving. Add a single `models` list call when `LLM_PROVIDER=nvidia`, warn-only.
+ULTRON misbehaving. Add a single `models` list call when `LLM_PROVIDER=nvidia`, warn-only.
 
 ### 2.3 Ship `pull` instructions
 
@@ -186,7 +186,7 @@ model. One command for the user: `ollama pull qwen3:4b`, then `QWEN_MODEL=qwen3:
 **Diagnosis, confirmed live:** the user's Chrome is running (2 processes) with **nothing on
 port 9222**. Chrome only exposes CDP when *started* with `--remote-debugging-port`; there is no
 way to attach to one started normally. `BROWSER_ATTACH=true` therefore fails today with the
-hint message in `skills/browser_skill.py::_ATTACH_HINT`, and FRIDAY falls back to its own
+hint message in `skills/browser_skill.py::_ATTACH_HINT`, and ULTRON falls back to its own
 logged-into-nothing Chromium — which is the "it can't take control" experience.
 
 ### 3.1 The relaunch flow (main fix)
@@ -224,7 +224,7 @@ New behaviour in `BrowserSession._connect` when `attach=True` and the CDP connec
 
 ### 3.3 Honest limitation to state in the prompt
 
-FRIDAY must *say* when it is in owned-Chromium (logged into nothing) vs the user's Chrome.
+ULTRON must *say* when it is in owned-Chromium (logged into nothing) vs the user's Chrome.
 A silent wrong-browser action ("I posted it" — into a logged-out browser) is worse than
 asking. One sentence in the system prompt + the `browser_open` result naming which mode.
 
@@ -256,7 +256,7 @@ Harness pattern (used for all evidence in §0; adapt paths):
 
 ```python
 # scratchpad/live_harness.py — real router+executor+skills, no audio/GUI
-import asyncio, sys; sys.path.insert(0, r"C:\Users\HP\Desktop\friday-agent-main")
+import asyncio, sys; sys.path.insert(0, r"C:\Users\HP\Desktop\ultron-main")
 from config.settings import Settings
 from intelligence.agent_loop import AgentLoop
 from intelligence.tool_dispatcher import ToolDispatcher
@@ -283,7 +283,7 @@ Definition of done for W6, run at least 3 times each on the chosen model:
 - Seed file `buggy.py` (`return total / len(numbers)` on `[]` → ZeroDivisionError, print at
   module level). Utterance: `fix the bug in <path>`.
 - PASS = the loop **ran** the shadow at least once, the final file on disk handles the empty
-  list, a `.friday-bak` exists, the fix was confirmed once, and **no code appears in the spoken
+  list, a `.ultron-bak` exists, the fix was confirmed once, and **no code appears in the spoken
   answer**.
 - Repeat with the error on screen instead of a path given: open the traceback in a window,
   utterance "fix the error on my screen" → must go read_screen_text/get_active_window first.
@@ -303,7 +303,7 @@ package — put scripts in a clean subfolder.
 TDD with failing-test-first, bug-docstrings on test files; no network in tests; every Windows
 spawn gets `CREATE_NO_WINDOW` (extend `tests/test_no_console_windows.py`); spoken outputs are
 1–3 plain sentences; budgets on everything; commits are short labels, batched, **no
-Co-Authored-By trailers** (sole author `Golden-alt933`); FRIDAY must keep working with Ollama
+Co-Authored-By trailers** (sole author `Golden-alt933`); ULTRON must keep working with Ollama
 down and offline; mutation-test any safety property you add (allowlists, confirm gates) —
 pattern: `tests/test_control_skills.py` + the mutation run in the Phase 1 history.
 
@@ -342,7 +342,7 @@ Chromium. Unit tests alone are not evidence — four of the bugs here were invis
 
 Seeded `buggy.py` (`total / len(numbers)` on `[]`), utterance `fix the bug in <path>`.
 PASS requires all of: ran the shadow, changed the real file, the changed file executes
-cleanly, a `.friday-bak` exists, and no code in the spoken answer.
+cleanly, a `.ultron-bak` exists, and no code in the spoken answer.
 
 | Model | Result |
 |---|---|
@@ -399,9 +399,9 @@ the prompt rewrite. The recommendation is `LLM_PROVIDER=nvidia`.
 |---|---|---|
 | `download` | `~/download` (missing) | `~/Downloads` |
 | `my downloads folder` | `~/my downloads folder` | `~/Downloads` |
-| `friday agent` | `~/friday agent` (empty stub) | `~/Desktop/friday-agent-main` |
+| `ultron agent` | `~/ultron agent` (empty stub) | `~/Desktop/ultron-main` |
 
-The last one needed a second fix: the user has an empty leftover `~/friday agent` that beat the
+The last one needed a second fix: the user has an empty leftover `~/ultron agent` that beat the
 real project on an exact-name match. Emptiness now outweighs one grade of name match — a folder
 with nothing in it is not the project someone means. A *populated* exact match still wins.
 

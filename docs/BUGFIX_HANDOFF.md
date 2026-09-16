@@ -15,7 +15,7 @@ Run tests with `-o addopts=""` always:
 
 ## 1. "Can't reach the web" — ✅ FIXED AND VERIFIED
 
-**Root cause (proven from logs/friday.log):** every agent turn since agent mode shipped
+**Root cause (proven from logs/ultron.log):** every agent turn since agent mode shipped
 died with `'CachedLLM' object has no attribute 'complete_with_tools'`. The container wraps
 every LLM in `CachedLLM` (`core/container.py:131`), and the wrapper proxied
 `complete`/`stream` but not `complete_with_tools` — so agent mode **never ran once**, every
@@ -42,10 +42,10 @@ every wake word, opened its own tab, and spoke its own reply.
 
 **Remediated:** all duplicate processes were killed (PIDs 24540, 20144, 20432, 21756 —
 which §3.2 later established was *two* real instances plus their launcher stubs). Zero
-FRIDAY processes were left running.
+ULTRON processes were left running.
 
 **Fix (wired in §3.1, verified live in §3.2):** `utils/single_instance.py` — a named Windows
-kernel mutex (`Local\friday-agent-gui`). Kernel object, not a lockfile, on purpose: the
+kernel mutex (`Local\ultron-gui`). Kernel object, not a lockfile, on purpose: the
 duplicates were killed with Stop-Process, and a lockfile survives its holder's death and
 locks the user out; the OS releases a mutex however the holder dies. Fails open (guards
 nothing, logs a warning) if the mutex cannot even be created. Off-Windows it degrades to
@@ -61,7 +61,7 @@ dead-holder-does-not-wedge case via a subprocess that exits without releasing.
 `SingleInstance` is acquired in `main()` after `QApplication` exists (so the dialog can
 show) and held in a **module-level** `_instance_lock`. Both traps the handoff named are
 observed: a local would be collected on the way out of `main()` and end the guard while
-FRIDAY still ran, and nothing calls `release()` because `run()` ends in `os._exit(0)` —
+ULTRON still ran, and nothing calls `release()` because `run()` ends in `os._exit(0)` —
 the OS drops the mutex however the process dies.
 
 A refused launch prints to stdout *and* shows a `QMessageBox`, because the autostart
@@ -76,7 +76,7 @@ Driven as real subprocesses (`scratchpad/live_guard_test.py`):
 1. instance A started (1 real instance)
 2. instance B while A holds the mutex:
      exit code 0
-     "[FRIDAY] Already running - look for the orb or the tray icon."
+     "[ULTRON] Already running - look for the orb or the tray icon."
      still 1 real instance
 3. A killed -> instance C started normally (mutex not wedged)
    leftover processes: 0
@@ -142,7 +142,7 @@ terminal-mode duplicates turn out to bite in practice.
 
 Everything above is uncommitted working-tree state, ON TOP of the also-uncommitted
 three-feature batch (document/excel/screenshot skills + review fixes — see
-`docs/JARVIS_FEATURES_V2.md` §4b). The user's commit style: short label message, one
+`docs/ULTRON_FEATURES_V2.md` §4b). The user's commit style: short label message, one
 commit, no Co-Authored-By trailer, ask before naming. Suggested when everything is green:
 
 ```

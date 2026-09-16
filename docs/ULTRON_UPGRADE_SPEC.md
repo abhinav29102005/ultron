@@ -1,4 +1,4 @@
-# FRIDAY → JARVIS Upgrade Spec
+# ULTRON → ULTRON Upgrade Spec
 
 > **STATUS (updated after implementation): W1, W2, W3 and W5 are BUILT, TESTED, AND VERIFIED WORKING.**
 > Only W4 (authenticated connectors / Instagram) is not started — it needs a Meta app and OAuth
@@ -10,7 +10,7 @@ context on this repository. It explains the current architecture, diagnoses five
 down to specific files and lines, and specifies the fixes — including which libraries/tools to add
 and in what order to build. Read the whole thing before writing code.
 
-Repo: `friday-agent` (Windows 11, Python 3.13, venv at `.venv/`).
+Repo: `ultron` (Windows 11, Python 3.13, venv at `.venv/`).
 Test suite: `pytest` — **705 tests passing** at the time of writing; keep it that way.
 Run it with: `.venv/Scripts/python.exe -m pytest -q -o addopts=""`
 (the configured addopts require pytest-cov flags; `-o addopts=""` bypasses that).
@@ -109,7 +109,7 @@ Also verified live (real Playwright + real Chromium + real Ollama):
   cannot call tools, so it is safe to leave on. `AGENT_MODE=false` disables it.
 - **The browser is a fresh Chromium by default, logged into nothing.** To drive your *own* Chrome
   with your sessions, set `BROWSER_ATTACH=true` and start Chrome with
-  `--remote-debugging-port=9222` first. FRIDAY never closes a browser it only attached to.
+  `--remote-debugging-port=9222` first. ULTRON never closes a browser it only attached to.
 - **Headful falls back to headless.** A visible browser needs an interactive desktop session and
   fails with `spawn UNKNOWN` without one (a service, a scheduled task). Every browser tool still
   works headless; only the window is missing.
@@ -256,7 +256,7 @@ Half exists: `DeepResearchSkill` already does multi-round cited web research for
 What's missing is **authenticated, account-scoped data**: Instagram stats require the Instagram
 Graph API with an OAuth token — no connector framework exists.
 
-### P5. "Work like JARVIS — add missing skills"
+### P5. "Work like ULTRON — add missing skills"
 
 Addressed by the roadmap in §4, including the stub intents (clipboard/notes/reminder), proactive
 behaviors, and the agent loop that ties skills together.
@@ -366,7 +366,7 @@ Two separate tracks — do not conflate them:
   buttons instead of pixels; far more reliable). Start with: focus window, send keys, click
   element by name, read window text.
 - **Safety**: both are agent tools gated by the W1 confirmation policy + a global kill phrase
-  ("Friday, stop") that halts the loop; log every action.
+  ("Ultron, stop") that halts the loop; log every action.
 
 ### W4 — Connected accounts & cloud data  *(fixes P4)*
 
@@ -384,7 +384,7 @@ Two separate tracks — do not conflate them:
 4. Same pattern later: Google Calendar, Gmail, Spotify Web API (MediaSkill currently drives the
    desktop app only).
 
-### W5 — JARVIS polish  *(P5)*
+### W5 — ULTRON polish  *(P5)*
 
 - Implement the three stub intents: `clipboard` (pyperclip / `win32clipboard`), `notes`
   (append to a local markdown store; reuse `memory/store.py` patterns), `reminder`
@@ -433,7 +433,7 @@ Two separate tracks — do not conflate them:
    Co-Authored-By trailers** — sole author `Golden-alt933`.
 8. The app must keep working with **Ollama down** (degraded regex fallback) and **offline**
    (local provider). Never make cloud a hard dependency.
-9. Entry points: `run.py` (terminal), `main_gui.py` (PyQt), `scripts/friday_launcher.pyw`
+9. Entry points: `run.py` (terminal), `main_gui.py` (PyQt), `scripts/ultron_launcher.pyw`
    (autostart under `pythonw.exe` — no console exists; see convention 3).
 
 ---

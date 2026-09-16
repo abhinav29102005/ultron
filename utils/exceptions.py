@@ -24,8 +24,8 @@ class UltronError(Exception):
 
 
 # Deprecated aliases – kept for backward compatibility
-FridayError = UltronError
-FridayBaseError = UltronError
+UltronError = UltronError
+UltronBaseError = UltronError
 
 
 class AssistantNotInitialisedError(UltronError):

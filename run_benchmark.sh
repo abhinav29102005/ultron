@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # run_benchmark.sh – Single-command gate verification for ULTRON Streaming RAG
 set -euo pipefail
 cd "$(dirname "$0")"

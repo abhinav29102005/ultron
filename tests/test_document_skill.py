@@ -286,7 +286,7 @@ class TestSpokenReply:
         assert "#" not in out and "*" not in out and "\n" not in out
 
     @pytest.mark.asyncio
-    async def test_the_real_location_is_spoken_as_documents_friday(self, tmp_path):
+    async def test_the_real_location_is_spoken_as_documents_ultron(self, tmp_path):
         """Under the real home, the spoken form is the folder the user knows."""
         skill = DocumentSkill(output_root=Path.home() / "Documents" / "ULTRON")
         assert skill._spoken_location(skill.output_root) == str(

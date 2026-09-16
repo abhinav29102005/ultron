@@ -3,11 +3,11 @@
 Date: 2026-08-23
 Status: approved
 
-Three independent changes to FRIDAY, sharing one release.
+Three independent changes to ULTRON, sharing one release.
 
 1. Interrupting speech must not crash or lag the assistant.
-2. FRIDAY can look at the screen on request, and its own window is invisible to screen sharing.
-3. FRIDAY can open applications, files and folders, and find files by name.
+2. ULTRON can look at the screen on request, and its own window is invisible to screen sharing.
+3. ULTRON can open applications, files and folders, and find files by name.
 
 ---
 
@@ -15,7 +15,7 @@ Three independent changes to FRIDAY, sharing one release.
 
 ### Symptom
 
-Interrupting FRIDAY mid-sentence prints a PortAudio *input overflow*, the app
+Interrupting ULTRON mid-sentence prints a PortAudio *input overflow*, the app
 lags for several seconds, and then dies.
 
 ### Root causes
@@ -34,7 +34,7 @@ reference to the old `Player` and keeps writing into a stream that nothing owns.
 
 **C3 — unbounded capture queue.** `Recorder.audio_queue` is an unbounded
 `queue.Queue` filled by the PortAudio callback. Only `Recorder.listen()` drains
-it. While FRIDAY is thinking or speaking nobody drains it, so it grows at
+it. While ULTRON is thinking or speaking nobody drains it, so it grows at
 roughly sixteen blocks a second. The next `listen()` then runs the Silero VAD
 once per stale block before reaching live audio. That is the lag.
 
@@ -126,7 +126,7 @@ from Windows 10 2004 onwards.
 
 The window stays fully visible on the physical display and is removed from
 every capture path: Google Meet, Zoom, Teams, OBS, BitBlt, and DWM duplication.
-This also means FRIDAY's own capture never contains FRIDAY.
+This also means ULTRON's own capture never contains ULTRON.
 
 Applied to the orb window and each child popup. Re-applied from `showEvent`
 because Qt can recreate a native handle when window flags change. On any
@@ -239,7 +239,7 @@ of its own changes were regressions.
   that actually appears, since the orb's own fallback menu is only wired up
   when there is no tray at all.
 - Tooltips render in their own native windows and do not inherit the
-  exclusion, so "FRIDAY — Listening" hovered over an invisible orb. The orb's
+  exclusion, so "ULTRON — Listening" hovered over an invisible orb. The orb's
   tooltip is now blank while hidden; the tray's is stateless, because a tray
   tooltip is drawn by the shell and cannot be excluded at all.
 - `QCursor.pos()` is in logical pixels and `mss` reports monitors in physical

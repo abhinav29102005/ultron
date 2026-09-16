@@ -50,7 +50,7 @@ PORCUPINE_KEYWORD_PATH = os.getenv("PORCUPINE_KEYWORD_PATH", "")
 PORCUPINE_SENSITIVITY = float(os.getenv("WAKEWORD_SENSITIVITY", "0.5"))
 
 # openWakeWord fallback
-OWW_MODEL = "hey_jarvis"
+OWW_MODEL = "hey_ultron"
 
 
 def _oww_threshold(sensitivity: float) -> float:

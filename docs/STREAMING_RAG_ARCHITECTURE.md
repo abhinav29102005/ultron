@@ -1,4 +1,4 @@
-﻿# ULTRON Streaming RAG Architecture
+# ULTRON Streaming RAG Architecture
 
 ## Overview
 

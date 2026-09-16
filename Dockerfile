@@ -1,4 +1,4 @@
-﻿FROM python:3.11-slim
+FROM python:3.11-slim
 
 LABEL maintainer="ULTRON Dev Team"
 LABEL description="ULTRON Streaming Live RAG Pipeline"

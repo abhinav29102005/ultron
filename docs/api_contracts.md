@@ -13,7 +13,7 @@
 - `skill_manager` -> skills.manager.SkillManager
 
 ## Exception Hierarchy
-- FridayBaseError
+- UltronBaseError
   - AssistantNotInitialisedError
   - ConfigurationError
   - LLMError

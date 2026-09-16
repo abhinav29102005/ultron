@@ -2,7 +2,7 @@
 tests/test_autostart.py – Tests for Windows login autostart registration
 =========================================================================
 Every test that writes to the registry is redirected onto a throwaway key,
-``HKCU\\Software\\FridayAgentTest\\Run``, by the ``sandbox_key`` fixture. The
+``HKCU\\Software\\UltronAgentTest\\Run``, by the ``sandbox_key`` fixture. The
 user's real Run key is never opened for writing by this test module.
 """
 
@@ -20,8 +20,8 @@ pytestmark = pytest.mark.skipif(
     os.name != "nt", reason="autostart registration is Windows-only"
 )
 
-TEST_KEY_PATH = r"Software\FridayAgentTest\Run"
-TEST_KEY_PARENT = r"Software\FridayAgentTest"
+TEST_KEY_PATH = r"Software\UltronAgentTest\Run"
+TEST_KEY_PARENT = r"Software\UltronAgentTest"
 TEST_VALUE_NAME = "UltronAssistantTest"
 
 

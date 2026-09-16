@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import (
 )
 
 USER_BUBBLE = "#2f6feb"
-FRIDAY_BUBBLE = "#2b2c33"
+ULTRON_BUBBLE = "#2b2c33"
 NOTE_COLOR = "#c9a227"
 
 #: Shown when an image paste is swallowed. A QLineEdit cannot display the
@@ -119,7 +119,7 @@ class _Bubble(QLabel):
         elif role == "note":
             bg, fg = "transparent", NOTE_COLOR
         else:
-            bg, fg = FRIDAY_BUBBLE, "#e8e8ea"
+            bg, fg = ULTRON_BUBBLE, "#e8e8ea"
         self.setStyleSheet(
             f"background-color: {bg}; color: {fg}; border-radius: 10px;"
             f" padding: {'2px 4px' if role == 'note' else '6px 9px'};"

@@ -1,7 +1,7 @@
-# Autostart — launching FRIDAY when you log in
+# Autostart — launching ULTRON when you log in
 
 By default you have to open the project folder and run a command every time you
-boot. Autostart removes that step: FRIDAY launches itself when you log into
+boot. Autostart removes that step: ULTRON launches itself when you log into
 Windows, with no console window and no manual command.
 
 This document covers only the **boot-time registration**. Waking on a spoken
@@ -52,15 +52,15 @@ anywhere.
 | | |
 |---|---|
 | **Key** | `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run` |
-| **Value name** | `FridayAssistant` |
+| **Value name** | `UltronAssistant` |
 | **Value type** | `REG_SZ` |
-| **Value data** | `"<repo>\.venv\Scripts\pythonw.exe" "<repo>\scripts\friday_launcher.pyw"` |
+| **Value data** | `"<repo>\.venv\Scripts\pythonw.exe" "<repo>\scripts\ultron_launcher.pyw"` |
 
-On this machine `<repo>` is `C:\Users\HP\Desktop\friday-agent-main`, so the data
+On this machine `<repo>` is `C:\Users\HP\Desktop\ultron-main`, so the data
 reads:
 
 ```
-"C:\Users\HP\Desktop\friday-agent-main\.venv\Scripts\pythonw.exe" "C:\Users\HP\Desktop\friday-agent-main\scripts\friday_launcher.pyw"
+"C:\Users\HP\Desktop\ultron-main\.venv\Scripts\pythonw.exe" "C:\Users\HP\Desktop\ultron-main\scripts\ultron_launcher.pyw"
 ```
 
 ### Why this mechanism
@@ -76,7 +76,7 @@ reads:
   keyed by name, so re-registering overwrites the single entry instead of
   littering the folder with duplicate shortcuts.
 - **`pythonw.exe`, not `python.exe`.** `python.exe` is a console-subsystem
-  binary, so Windows would open a black terminal window on every boot. FRIDAY is
+  binary, so Windows would open a black terminal window on every boot. ULTRON is
   a PyQt GUI app; `pythonw.exe` is the same interpreter built for the GUI
   subsystem and creates no console.
 - **Absolute paths.** At login the working directory is `C:\Windows\system32`,
@@ -85,7 +85,7 @@ reads:
 
 ### Why the launcher script
 
-`scripts/friday_launcher.pyw` is a thin shim in front of `main_gui.py`. It:
+`scripts/ultron_launcher.pyw` is a thin shim in front of `main_gui.py`. It:
 
 1. `chdir`s to the repository root, so relative paths inside the codebase resolve
    the way they do when you launch from a shell in the project. (The project has
@@ -93,18 +93,18 @@ reads:
 2. Puts the repository on `sys.path` so the app's top-level packages import.
 3. Writes any startup traceback to `logs/autostart_launcher.log` — because
    `pythonw.exe` has no console, an unhandled error would otherwise vanish and
-   FRIDAY would simply appear not to start.
+   ULTRON would simply appear not to start.
 
 ---
 
 ## If something goes wrong
 
-**FRIDAY does not appear after login.** Check `logs/autostart_launcher.log`
+**ULTRON does not appear after login.** Check `logs/autostart_launcher.log`
 first. To reproduce the boot path with output visible, run the launcher under the
 console interpreter:
 
 ```powershell
-.venv\Scripts\python.exe scripts\friday_launcher.pyw
+.venv\Scripts\python.exe scripts\ultron_launcher.pyw
 ```
 
 **You moved the folder or rebuilt the venv.** The stored command still points at
@@ -116,14 +116,14 @@ instance — any one of these removes the entry:
 
 - **Registry Editor:** press `Win+R`, run `regedit`, navigate to
   `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`, right-click
-  the `FridayAssistant` value and choose *Delete*.
+  the `UltronAssistant` value and choose *Delete*.
 - **PowerShell** (no admin rights required):
 
   ```powershell
-  Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'FridayAssistant'
+  Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'UltronAssistant'
   ```
 
-- **Task Manager:** open the *Startup apps* tab, find the FRIDAY entry and click
+- **Task Manager:** open the *Startup apps* tab, find the ULTRON entry and click
   *Disable*. This leaves the registry value in place but stops it running, and
   note that Windows remembers the disabled state — after doing this, re-running
   `--enable` will not necessarily make it start again until you re-enable it here
@@ -131,16 +131,16 @@ instance — any one of these removes the entry:
 
 Deleting the value affects nothing else; every other program's entry under that
 key is independent, and `disable()` likewise only ever touches the
-`FridayAssistant` value.
+`UltronAssistant` value.
 
 ---
 
 ## Testing
 
 `tests/test_autostart.py` exercises enable/disable/idempotency against a
-throwaway key, `HKCU\Software\FridayAgentTest\Run`, which is created and deleted
+throwaway key, `HKCU\Software\UltronAgentTest\Run`, which is created and deleted
 by a fixture. The real Run key is never opened for writing by the test suite, and
-one test asserts that no `FridayAssistant` value is left behind on the developer's
+one test asserts that no `UltronAssistant` value is left behind on the developer's
 machine.
 
 ```powershell

@@ -1,4 +1,4 @@
-﻿"""
+"""
 tests/test_streaming_rag.py
 ===========================
 Unit tests for the Streaming Live RAG pipeline components.

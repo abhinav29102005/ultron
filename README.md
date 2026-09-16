@@ -2,7 +2,7 @@
   <img src="assets/ultron-banner.jpg" alt="ULTRON Agent" width="200" />
 </p>
 
-<h1 align="center">FRIDAY Agent</h1>
+<h1 align="center">ULTRON Agent</h1>
 
 <p align="center">
   <strong>Your AI-Powered Desktop Assistant — Voice, Text & GUI</strong>
@@ -27,11 +27,11 @@
 
 ---
 
-## 🧠 What is FRIDAY?
+## 🧠 What is ULTRON?
 
-**FRIDAY** is a modular, open-source AI desktop assistant that combines voice interaction, LLM-powered intelligence, and an extensible skill system. Think of it as your personal J.A.R.V.I.S. — it listens, understands, and acts.
+**ULTRON** is a modular, open-source AI desktop assistant that combines voice interaction, LLM-powered intelligence, and an extensible skill system. Think of it as your personal J.A.R.V.I.S. — it listens, understands, and acts.
 
-Built with a clean, layered architecture, FRIDAY supports multiple interaction modes and can be extended with custom skills for any task you need.
+Built with a clean, layered architecture, ULTRON supports multiple interaction modes and can be extended with custom skills for any task you need.
 
 ---
 
@@ -105,7 +105,7 @@ Built with a clean, layered architecture, FRIDAY supports multiple interaction m
 :: Run setup — installs Python 3.13, uv, and all dependencies
 setup.bat
 
-:: Launch FRIDAY
+:: Launch ULTRON
 run_ultron.bat
 ```
 
@@ -113,8 +113,8 @@ run_ultron.bat
 
 ```bash
 # Clone the repository
-git clone https://github.com/MicrosoftStudentChapter/friday-agent.git
-cd friday-agent
+git clone https://github.com/MicrosoftStudentChapter/ultron.git
+cd ultron
 
 # Install with uv (recommended)
 uv sync
@@ -126,7 +126,7 @@ pip install -e .
 cp .env.example .env
 # Edit .env with your API keys
 
-# Run FRIDAY
+# Run ULTRON
 python main.py
 ```
 
@@ -144,7 +144,7 @@ python scripts/bootstrap.py --yes
 
 ## ⌨️ Usage
 
-FRIDAY supports three interaction modes:
+ULTRON supports three interaction modes:
 
 ### Text Mode (default)
 
@@ -169,7 +169,7 @@ Hold the configured key (default: `Right Shift`) to talk, release to process.
 python run.py --mode wakeword
 ```
 
-Say **"Hey Friday"** (or your configured wake word) to activate, then speak your command.
+Say **"Hey Ultron"** (or your configured wake word) to activate, then speak your command.
 
 ### GUI Mode
 
@@ -213,7 +213,7 @@ See [`.env.example`](.env.example) for the full list.
 
 ## 🧩 Skills
 
-FRIDAY comes with a growing set of built-in skills:
+ULTRON comes with a growing set of built-in skills:
 
 | Skill | Description |
 |-------|-------------|
@@ -257,7 +257,7 @@ Register it in the `SkillRegistry` and the intent router will dispatch to it aut
 ## 📁 Project Structure
 
 ```
-friday-agent/
+ultron/
 ├── main.py                  # CLI entry point
 ├── main_gui.py              # GUI entry point (PyQt6)
 ├── run.py                   # Unified launcher (text / voice / wakeword)
