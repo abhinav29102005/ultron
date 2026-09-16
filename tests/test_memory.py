@@ -11,6 +11,7 @@ Phase: 3 (Context Memory)
 from __future__ import annotations
 
 import json
+import time
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -228,6 +229,7 @@ class TestMemoryStore:
 
         for index in range(5):
             store.upsert(f"key_{index}", f"value_{index}", f"utterance {index}")
+            time.sleep(0.005)
 
         keys = [fact.key for fact in store.all()]
         assert len(keys) == 3
