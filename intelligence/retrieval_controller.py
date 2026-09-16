@@ -132,13 +132,18 @@ class RetrievalController:
                 if decision == Decision.WAIT:
                     return
 
+                now = time.time()
+                start_ts = getattr(event, "start_timestamp_s", None) or getattr(event, "timestamp", None) or now
+
                 # Publish a lightweight RetrievalEvent for listeners.
                 retrieval = RetrievalEvent(
                     decision=decision.value,
                     text=event.text,
                     session_id=getattr(event, "session_id", None),
                     turn_id=getattr(event, "turn_id", None),
-                    timestamp_s=time.time(),
+                    timestamp_s=now,
+                    trigger_timestamp_s=now,
+                    start_timestamp_s=start_ts,
                 )
                 await self.container.event_bus.publish(retrieval)
                 logger.debug("Published retrieval event: {} for '{}'", decision.value, event.text)
@@ -176,9 +181,13 @@ class RetrievalEvent(BaseEvent):
         session_id: optional session identifier
         turn_id: optional turn sequence number
         timestamp_s: epoch timestamp when early retrieval was triggered
+        trigger_timestamp_s: timestamp when early retrieval was triggered
+        start_timestamp_s: timestamp when utterance / turn began
     """
     decision: str
     text: str
     session_id: str | None = None
     turn_id: int | None = None
     timestamp_s: float | None = None
+    trigger_timestamp_s: float | None = None
+    start_timestamp_s: float | None = None

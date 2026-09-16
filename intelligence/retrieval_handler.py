@@ -35,6 +35,8 @@ class RetrievalResultEvent(BaseEvent):
     session_id: str | None = None
     turn_id: int | None = None
     timestamp_s: float | None = None
+    trigger_timestamp_s: float | None = None
+    start_timestamp_s: float | None = None
 
 
 class RetrievalHandler:

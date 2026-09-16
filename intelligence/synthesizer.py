@@ -70,7 +70,9 @@ class Synthesizer:
                     snippet = d.get("snippet") if isinstance(d, dict) else None
 
                     if doc_id and section:
-                        cite = f"Doc_{doc_id} §{section}"
+                        clean_doc_id = doc_id if str(doc_id).startswith("Doc_") else f"Doc_{doc_id}"
+                        clean_sec = section if str(section).startswith("§") else f"§{section}"
+                        cite = f"{clean_doc_id} {clean_sec}"
                         citations.append(cite)
                         lines.append(f"{title or d.get('url', '')} [{cite}]: {snippet or ''}")
                     else:
@@ -81,7 +83,7 @@ class Synthesizer:
 
                 uncertainty = None
                 if not citations:
-                    uncertainty = "The retrieved corpus did not contain explicit document id/section metadata to support strict citations."
+                    uncertainty = "Insufficient corpus evidence: claims could not be verified from the retrieved documents."
 
                 # Publish SynthesizerResultEvent
                 synth_event = SynthesizerResultEvent(
@@ -98,14 +100,18 @@ class Synthesizer:
                 # Also write minimal telemetry
                 try:
                     if self.telemetry:
-                        trigger_ts = getattr(event, "timestamp_s", None)
+                        trigger_ts = getattr(event, "trigger_timestamp_s", None) or getattr(event, "timestamp_s", None)
+                        start_ts = getattr(event, "start_timestamp_s", None)
                         now_ts = datetime.now().timestamp()
                         gain_ms = max(0.0, (now_ts - trigger_ts) * 1000.0) if trigger_ts else 0.0
+                        total_lat_ms = max(0.0, (now_ts - start_ts) * 1000.0) if start_ts else gain_ms
                         tm_payload = {
                             "retrieval_count": len(event.results),
                             "answer_version": version,
                             "uncertainty": bool(uncertainty),
+                            "retrieval_trigger_timestamp_s": trigger_ts,
                             "early_retrieval_gain_ms": round(gain_ms, 2),
+                            "total_latency_ms": round(total_lat_ms, 2),
                         }
                         self.telemetry.record_minimal(session_id, turn_id, "synthesized_answer", tm_payload)
                 except Exception:

@@ -26,6 +26,8 @@ class DecomposedQueryEvent(BaseEvent):
     subqueries: List[str] = field(default_factory=list)
     session_id: str | None = None
     turn_id: int | None = None
+    trigger_timestamp_s: float | None = None
+    start_timestamp_s: float | None = None
 
 
 class Decomposer:
@@ -61,9 +63,11 @@ class Decomposer:
                     subqueries=subqueries,
                     session_id=getattr(event, "session_id", None),
                     turn_id=getattr(event, "turn_id", None),
+                    trigger_timestamp_s=getattr(event, "trigger_timestamp_s", None) or getattr(event, "timestamp_s", None),
+                    start_timestamp_s=getattr(event, "start_timestamp_s", None),
                 )
                 await self.container.event_bus.publish(decomposed)
-                logger.info(f"Published DecomposedQueryEvent with {len(subqueries)} subqueries")
+                logger.info("Published DecomposedQueryEvent with {} subqueries", len(subqueries))
             except Exception:
                 logger.exception("Decomposer failed handling RetrievalResultEvent")
 

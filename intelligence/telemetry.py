@@ -21,8 +21,8 @@ logger = logging.getLogger("telemetry")
 
 class TelemetryRecorder:
     def __init__(self, settings) -> None:
-        self.settings = settings
-        self.log_dir = Path(getattr(settings, "log_dir", Path("logs")))
+        raw_log_dir = getattr(settings, "log_dir", None) or Path("logs")
+        self.log_dir = Path(raw_log_dir)
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
     def write_trace(self, trace: TelemetryTrace) -> None:

@@ -20,7 +20,7 @@ def _get_speaker():
         try:
             _cached_speaker = Speaker()
         except Exception as e:
-            logger.debug("Could not instantiate Speaker: %s", e)
+            logger.debug("Could not instantiate Speaker: {}", e)
             return None
     return _cached_speaker
 
@@ -47,7 +47,7 @@ def play_audio(text):
         chunks = speaker.generate(text)
         _player.play(chunks, expect_epoch=epoch)
     except Exception as e:
-        logger.debug("play_audio skipped or failed: %s", e)
+        logger.debug("play_audio skipped or failed: {}", e)
 
 
 def stop_audio():

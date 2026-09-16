@@ -28,13 +28,16 @@ def _rrf_fuse(ranked_lists: list[list[dict]], k: int = 60) -> list[dict]:
     """Reciprocal Rank Fusion across multiple ranked result lists.
 
     RRF score = sum(1 / (k + rank_i)) for each list that contains the doc.
-    Deduplication key is the url field; first occurrence wins for metadata.
+    Deduplication key prioritizes doc_id §section; falls back to url or title.
     """
     scores: dict[str, float] = {}
     docs_by_key: dict[str, dict] = {}
     for ranked in ranked_lists:
         for rank, doc in enumerate(ranked, start=1):
-            doc_key = doc.get("url") or doc.get("title") or str(rank)
+            if doc.get("doc_id") and doc.get("section"):
+                doc_key = f"{doc['doc_id']} {doc['section']}"
+            else:
+                doc_key = doc.get("url") or doc.get("title") or str(rank)
             scores[doc_key] = scores.get(doc_key, 0.0) + 1.0 / (k + rank)
             if doc_key not in docs_by_key:
                 docs_by_key[doc_key] = doc
@@ -208,6 +211,9 @@ class HybridRetriever:
                 decision="hybrid",
                 session_id=session_id,
                 turn_id=turn_id,
+                trigger_timestamp_s=getattr(event, "trigger_timestamp_s", None),
+                start_timestamp_s=getattr(event, "start_timestamp_s", None),
+                timestamp_s=getattr(event, "trigger_timestamp_s", None),
             )
 
             # Before publishing, check cancellation: if turn is no longer current, abort.

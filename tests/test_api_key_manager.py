@@ -54,10 +54,13 @@ def test_set_key_for_provider(tmp_path, monkeypatch):
                         lambda k, v: update_env_file(k, v, str(env_file)))
 
     # Valid provider
-    ok, msg = set_key_for_provider("groq", "gsk_test_key_123")
-    assert ok
-    assert "Successfully saved" in msg
-    assert os.getenv("GROQ_API_KEY") == "gsk_test_key_123"
+    try:
+        ok, msg = set_key_for_provider("groq", "gsk_test_key_123")
+        assert ok
+        assert "Successfully saved" in msg
+        assert os.getenv("GROQ_API_KEY") == "gsk_test_key_123"
+    finally:
+        os.environ.pop("GROQ_API_KEY", None)
 
     # Empty key error
     ok, msg = set_key_for_provider("groq", "   ")

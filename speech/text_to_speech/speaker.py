@@ -20,7 +20,7 @@ class Speaker:
         Load the Piper voice model with Ultron cadence tuning.
         """
         if not os.path.exists(TTS_MODEL_PATH):
-            logger.info("Piper voice model not found at %s. Spoken audio output disabled.", TTS_MODEL_PATH)
+            logger.info("Piper voice model not found at {}. Spoken audio output disabled.", TTS_MODEL_PATH)
             return None
         try:
             from piper import PiperVoice
@@ -33,7 +33,7 @@ class Speaker:
                 voice.config.length_scale = 1.12
             return voice
         except Exception as e:
-            logger.warning("Failed to initialize Piper voice engine: %s", e)
+            logger.warning("Failed to initialize Piper voice engine: {}", e)
             return None
 
     def generate(self, text: str):
@@ -57,4 +57,4 @@ class Speaker:
                 else:
                     yield chunk
         except Exception as e:
-            logger.warning("Synthesis error during audio generation: %s", e)
+            logger.warning("Synthesis error during audio generation: {}", e)

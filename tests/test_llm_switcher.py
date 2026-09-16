@@ -16,8 +16,9 @@ from config.settings import Settings
 from llm.switcher import LLMSwitcher
 
 
-def _settings(nvidia_key: str = "", provider: str = "qwen") -> Settings:
+def _settings(nvidia_key: str = "", provider: str = "qwen", groq_key: str = "") -> Settings:
     s = Settings()
+    s.groq_api_key = SecretStr(groq_key)
     s.nvidia_api_key = SecretStr(nvidia_key)
     s.llm_provider = provider
     return s

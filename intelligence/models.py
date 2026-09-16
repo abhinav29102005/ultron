@@ -54,10 +54,10 @@ class TelemetryTrace(BaseModel):
     session_id: Optional[str]
     trace_id: Optional[str]
     created_at: datetime
-    stream_duration_s: Optional[float]
-    retrieval_trigger_timestamp_s: Optional[float]
-    early_retrieval_gain_ms: Optional[int]
-    total_latency_ms: Optional[int]
-    prompt_tokens: Optional[int]
-    completion_tokens: Optional[int]
+    stream_duration_s: Optional[float] = None
+    retrieval_trigger_timestamp_s: Optional[float] = None
+    early_retrieval_gain_ms: Optional[float] = None
+    total_latency_ms: Optional[float] = None
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
     events: List[TelemetryEntry] = Field(default_factory=list)
