@@ -138,6 +138,18 @@ class Assistant:
         except Exception as exc:
             logger.debug(f"Browser shutdown was untidy: {exc}")
 
+        # Stop any active audio and await speech tasks
+        try:
+            from speech.text_to_speech.tts_pipeline import stop_audio
+            stop_audio()
+            for t in list(self._speech_tasks):
+                t.cancel()
+            if self._speech_tasks:
+                await asyncio.gather(*self._speech_tasks, return_exceptions=True)
+            self._speech_tasks.clear()
+        except Exception:
+            pass
+
         if self._lifecycle:
             await self._lifecycle.shutdown()
 
@@ -642,7 +654,8 @@ class Assistant:
         shortening those would lose the citations that make a researched
         answer checkable.
         """
-        print(f"ULTRON: {message}\n")
+        if self._container.event_bus.handler_count(ResponseReadyEvent) == 0:
+            print(f"ULTRON: {message}\n")
 
         self._container.state.last_response = message
         self._container.state.conversation_history.append(

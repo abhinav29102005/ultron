@@ -147,8 +147,12 @@ async def run(args: argparse.Namespace) -> None:
 
 async def run_text_mode(container) -> None:
     """Run in interactive cybernetic text input mode (terminal)."""
+    import os
+    import sys
+    import time
+    import asyncio
     from core.state import AssistantState
-    from core.event_bus import UserInputEvent
+    from core.event_bus import UserInputEvent, ResponseReadyEvent
     from utils.cli_dashboard import CyberneticCLI
     from rich.console import Console
 
@@ -160,21 +164,88 @@ async def run_text_mode(container) -> None:
     assistant = container.assistant
     await assistant.start(launch_listen_loop=False)
 
-    cli = CyberneticCLI(container.session_manager, container.user_settings)
+    cli = CyberneticCLI(container.session_manager, container.user_settings, container=container)
     cli.render_header()
+
+    turn_meta = {"start": 0.0, "text": "", "received": False}
+
+    async def _on_response_ready(event: ResponseReadyEvent) -> None:
+        latency = (time.perf_counter() - turn_meta["start"]) * 1000 if turn_meta["start"] > 0 else 0.0
+        p_tok = max(1, len(turn_meta["text"].split()))
+        c_tok = max(1, len(event.response.split()))
+        cli.render_response(event.response, latency_ms=latency, tokens=p_tok + c_tok)
+        turn_meta["received"] = True
+
+    container.event_bus.subscribe(ResponseReadyEvent, _on_response_ready)
 
     from utils.api_key_manager import prompt_first_run_if_needed
     await prompt_first_run_if_needed(cli=cli, container=container)
-    Console().print("[dim]Type your message or use slash commands ([bold cyan]/help, /chats, /mode, /settings, /tokens[/bold cyan]).[/dim]\n")
+    Console().print("[dim]Type your message or use slash commands ([bold cyan]/help, /model, /rag, /chats, /mode, /settings, /tokens[/bold cyan]).[/dim]\n")
+
+    # Configure prompt_toolkit for rich interactive terminal sessions
+    is_interactive = sys.stdin.isatty()
+    prompt_session = None
+    if is_interactive:
+        try:
+            from prompt_toolkit import PromptSession
+            from prompt_toolkit.history import FileHistory
+            from prompt_toolkit.completion import NestedCompleter
+
+            history_file = os.path.expanduser("~/.ultron_history")
+            completer = NestedCompleter.from_nested_dict({
+                "/help": None,
+                "/model": {"groq": None, "nvidia": None, "qwen": None},
+                "/rag": None,
+                "/chats": None,
+                "/switch": None,
+                "/new": None,
+                "/delete": None,
+                "/rename": None,
+                "/mode": {"hybrid": None, "online": None, "offline": None},
+                "/settings": None,
+                "/set": None,
+                "/tokens": None,
+                "/voice": {"on": None, "off": None},
+                "/guardrails": {"on": None, "off": None},
+                "/clear": None,
+                "/setup": None,
+                "/keys": None,
+                "/hub": None,
+                "/providers": None,
+                "/key": {"groq": None, "nvidia": None},
+                "/upgrade": None,
+                "/exit": None,
+                "/quit": None,
+            })
+            prompt_session = PromptSession(
+                history=FileHistory(history_file),
+                completer=completer,
+                complete_while_typing=False,
+            )
+        except Exception:
+            prompt_session = None
 
     try:
         while assistant.state != AssistantState.SHUTTING_DOWN:
             sess = container.session_manager.active_session
             sess_name = sess.title if sess else "ultron"
-            prompt_str = f"ultron [{sess_name}] > "
+
             try:
-                line = await asyncio.to_thread(input, prompt_str)
-            except (EOFError, KeyboardInterrupt):
+                if prompt_session is not None:
+                    from prompt_toolkit.formatted_text import HTML
+                    prompt_html = HTML(
+                        f"<b><ansicyan>ultron</ansicyan></b> "
+                        f"<ansigray>[</ansigray><ansiyellow>{sess_name}</ansiyellow><ansigray>]</ansigray> "
+                        f"<ansigreen>❯</ansigreen> "
+                    )
+                    line = await prompt_session.prompt_async(prompt_html)
+                else:
+                    prompt_str = f"ultron [{sess_name}] > "
+                    line = await asyncio.to_thread(input, prompt_str)
+            except KeyboardInterrupt:
+                Console().print("[dim](Input cleared. Type /exit or Ctrl+D to quit)[/dim]")
+                continue
+            except EOFError:
                 break
 
             line = line.strip()
@@ -195,22 +266,27 @@ async def run_text_mode(container) -> None:
                 Console().print(f"[bold red]🛡️ {reason}[/bold red]")
                 continue
 
-            # Execute turn through assistant
-            await assistant._set_state(AssistantState.THINKING)
-            await container.event_bus.publish(
-                UserInputEvent(
-                    text=line,
-                    source="text"
-                )
-            )
+            # Track and execute turn through assistant
+            turn_meta["start"] = time.perf_counter()
+            turn_meta["text"] = line
+            turn_meta["received"] = False
 
-            # Wait for turn completion
-            while assistant._current_turn is not None and not assistant._current_turn.done():
-                await asyncio.sleep(0.05)
+            await assistant._set_state(AssistantState.THINKING)
+            with Console().status("[bold cyan]ULTRON thinking...[/bold cyan]", spinner="dots"):
+                await container.event_bus.publish(
+                    UserInputEvent(
+                        text=line,
+                        source="text"
+                    )
+                )
 
     except asyncio.CancelledError:
         pass
     finally:
+        try:
+            container.event_bus.unsubscribe(ResponseReadyEvent, _on_response_ready)
+        except Exception:
+            pass
         await assistant.stop()
         await container.db.close()
         await container.shutdown()

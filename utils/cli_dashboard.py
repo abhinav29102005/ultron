@@ -11,6 +11,7 @@ Inspired by Claude Code, Hermes Agent, and Antigravity:
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 import time
 from typing import Any, List, Optional, Tuple
@@ -31,9 +32,10 @@ console = Console()
 class CyberneticCLI:
     """Renders cybernetic CLI UI panels, status banners, and intercepts commands."""
 
-    def __init__(self, session_manager: SessionManager, settings: UserSettings):
+    def __init__(self, session_manager: SessionManager, settings: UserSettings, container: Optional[Any] = None):
         self.sm = session_manager
         self.settings = settings
+        self.container = container
 
     def render_header(self) -> None:
         """Render the top status bar displaying mode, session, tokens, and safety."""
@@ -54,8 +56,17 @@ class CyberneticCLI:
         voice_badge = "[bold green]ON[/bold green]" if self.settings.voice_enabled else "[dim]OFF[/dim]"
         guard_badge = "[bold green]ON[/bold green]" if self.settings.guardrails_enabled else "[bold red]OFF[/bold red]"
 
+        provider_name = os.getenv("LLM_PROVIDER", "groq").upper()
+        if provider_name == "GROQ":
+            prov_badge = "[bold green]GROQ ⚡[/bold green]"
+        elif provider_name == "NVIDIA":
+            prov_badge = "[bold cyan]NVIDIA 🌐[/bold cyan]"
+        else:
+            prov_badge = "[bold yellow]QWEN 🔒[/bold yellow]"
+
         status_text = (
             f"[bold red]ULTRON[/bold red] [dim]v0.2.0[/dim] │ "
+            f"LLM: {prov_badge} │ "
             f"Mode: {mode_badge} │ "
             f"Chat: [bold white]{sess_title}[/bold white] [dim]({sess_id})[/dim] │ "
             f"Tokens: [bold magenta]{tokens:,}[/bold magenta] [dim](${cost:.4f})[/dim] │ "
@@ -70,6 +81,8 @@ class CyberneticCLI:
         table.add_column("Command", style="bold yellow", width=22)
         table.add_column("Description", style="white")
 
+        table.add_row("/model [groq|nvidia|qwen]", "Switch active LLM engine (Groq ~250ms, NVIDIA 120B, Qwen local)")
+        table.add_row("/rag <question>", "Query Theme 4 Streaming Live RAG over verified enterprise policy corpus")
         table.add_row("/setup, /keys", "Interactive API key setup wizard with cloud panel links")
         table.add_row("/hub, /providers", "View cloud LLM portal links and free tier quotas")
         table.add_row("/key <prov> <val>", "Save an API key (e.g. /key nvidia nvapi-xxxx)")
@@ -291,6 +304,45 @@ class CyberneticCLI:
                     self.render_header()
                 else:
                     console.print(f"[bold red]✗ {msg}[/bold red]")
+
+        elif cmd in ("model", "llm"):
+            from utils.api_key_manager import update_env_file
+            if not arg:
+                curr = os.getenv("LLM_PROVIDER", "groq")
+                console.print(f"[cyan]Current LLM Provider:[/cyan] [bold green]{curr.upper()}[/bold green] (Options: groq, nvidia, qwen)")
+            else:
+                target_prov = arg.lower().strip()
+                if target_prov in ("groq", "nvidia", "qwen"):
+                    update_env_file("LLM_PROVIDER", target_prov)
+                    os.environ["LLM_PROVIDER"] = target_prov
+                    if self.container and hasattr(self.container, "llm") and hasattr(self.container.llm, "switch"):
+                        try:
+                            self.container.llm.switch(target_prov)
+                        except Exception as e:
+                            console.print(f"[yellow]Warning: {e}[/yellow]")
+                    console.print(f"[bold green]✓ Switched LLM provider to: {target_prov.upper()}[/bold green]")
+                    self.render_header()
+                else:
+                    console.print("[red]Invalid provider. Available: 'groq' (~250ms), 'nvidia' (120B cloud), 'qwen' (local)[/red]")
+
+        elif cmd in ("rag", "search"):
+            if not arg:
+                console.print("[red]Usage: /rag <question> (e.g. /rag Pune workshop for 30 people)[/red]")
+            else:
+                from streaming_rag.pipeline import StreamingLiveRAG
+                from streaming_rag.models import StreamingChunk
+                console.print(f"[dim]Executing Streaming Live RAG over enterprise corpus...[/dim]")
+                rag = StreamingLiveRAG()
+                stream = [StreamingChunk(timestamp_s=0.5, text=arg, is_final=True)]
+                rec = rag.process_stream(stream, session_id=self.sm.active_session.id if self.sm.active_session else "rag_cli")
+                self.render_response(
+                    rec.answer,
+                    citations=rec.citations,
+                    latency_ms=rec.telemetry.total_latency_ms,
+                    tokens=rec.telemetry.prompt_tokens + rec.telemetry.completion_tokens,
+                )
+                if rec.uncertainty:
+                    console.print(f"[bold yellow]⚠️ Uncertainty:[/bold yellow] [dim]{rec.uncertainty}[/dim]")
 
         elif cmd == "mode":
             if not arg:
