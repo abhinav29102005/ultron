@@ -115,6 +115,7 @@ site/
 # Brainstorming session scratch
 .superpowers/
 
-# Node dependencies
+# Node dependencies & Wrangler cache
 **/node_modules/
+.wrangler/
 
