@@ -56,13 +56,29 @@ class LLMSwitcher(BaseLLM):
 
     def _active(self) -> BaseLLM:
         provider = self._provider
+        # If the requested provider is configured and available, use it directly
+        if self.is_available(provider):
+            if provider == "groq":
+                return self._get_groq()
+            if provider == "qwen":
+                return self._get_qwen()
+            if provider == "nvidia":
+                return self._get_nvidia()
+
+        # Resilient auto-fallback: if the requested provider is NOT configured/available,
+        # seamlessly route to the first provider that IS configured and available!
+        if self.is_available("groq"):
+            return self._get_groq()
+        if self.is_available("nvidia"):
+            return self._get_nvidia()
+        if self.is_available("qwen"):
+            return self._get_qwen()
+
         if provider == "groq":
             return self._get_groq()
         if provider == "qwen":
             return self._get_qwen()
-        if provider == "nvidia":
-            return self._get_nvidia()
-        return self._get_groq() if self.is_available("groq") else self._get_nvidia()
+        return self._get_nvidia()
 
     def is_available(self, provider: str) -> bool:
         provider = (provider or "").lower()

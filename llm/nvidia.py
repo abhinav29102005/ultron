@@ -33,8 +33,17 @@ class NvidiaLLM(BaseLLM):
         """
         Initialise the NVIDIA NIM provider.
         """
+        # Guard against retired models from older/stale .env files (returns HTTP 410 Gone)
+        resolved_model = settings.nvidia_model
+        if resolved_model in ("meta/llama-3.1-8b-instruct", "meta/llama3-8b-instruct"):
+            resolved_model = "nvidia/nemotron-3-super-120b-a12b"
+
+        resolved_fast_model = settings.nvidia_fast_model
+        if resolved_fast_model in ("meta/llama-3.1-8b-instruct", "meta/llama3-8b-instruct"):
+            resolved_fast_model = "nvidia/nemotron-3-nano-30b-a3b"
+
         super().__init__(
-            model=settings.nvidia_model,
+            model=resolved_model,
             temperature=settings.llm_temperature,
             max_tokens=settings.llm_max_tokens,
         )
@@ -49,7 +58,7 @@ class NvidiaLLM(BaseLLM):
         )
 
         self._timeout = settings.llm_timeout_seconds
-        self._fast_model = settings.nvidia_fast_model
+        self._fast_model = resolved_fast_model
         self._fast_max_tokens = 128  # Very short for quick responses
         # Tool-calling turns need their own, much larger budget; see the note
         # on agent_max_tokens in config/settings.py.

@@ -244,6 +244,15 @@ class CyberneticCLI:
                 ok, msg = set_key_for_provider(prov, val)
                 if ok:
                     console.print(f"[bold green]✓ {msg}[/bold green]")
+                    if prov.lower() in ("groq", "nvidia", "qwen"):
+                        console.print(f"[bold green]✓ Switched active LLM engine to {prov.upper()}[/bold green]")
+                        if hasattr(self, "settings"):
+                            self.settings.llm_provider = prov.lower()
+                        if hasattr(self, "container") and hasattr(self.container, "llm_switcher"):
+                            try:
+                                self.container.llm_switcher.switch(prov.lower())
+                            except Exception:
+                                pass
                     self.render_header()
                 else:
                     console.print(f"[bold red]✗ {msg}[/bold red]")

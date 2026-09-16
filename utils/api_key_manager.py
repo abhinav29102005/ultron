@@ -146,8 +146,8 @@ def render_provider_hub() -> None:
     )
 
 
-def set_key_for_provider(provider_id: str, key_value: str) -> Tuple[bool, str]:
-    """Validate and set key for a provider."""
+def set_key_for_provider(provider_id: str, key_value: str, auto_switch: bool = True) -> Tuple[bool, str]:
+    """Validate and set key for a provider, and auto-activate it if it is an LLM provider."""
     provider_id = provider_id.lower().strip()
     if provider_id not in PROVIDERS:
         avail = ", ".join(PROVIDERS.keys())
@@ -160,6 +160,12 @@ def set_key_for_provider(provider_id: str, key_value: str) -> Tuple[bool, str]:
         return False, "Key value cannot be empty."
 
     update_env_file(info.env_var, key_value)
+
+    # Automatically set LLM_PROVIDER when configuring an LLM engine
+    if auto_switch and provider_id in ("groq", "nvidia", "qwen"):
+        update_env_file("LLM_PROVIDER", provider_id)
+        os.environ["LLM_PROVIDER"] = provider_id
+
     return True, f"Successfully saved {info.name} API key to .env ({info.env_var})"
 
 
@@ -276,6 +282,15 @@ async def interactive_setup_wizard(cli=None) -> None:
                 ok, msg = set_key_for_provider(p_id, val)
                 if ok:
                     console.print(f"[bold green]✓ {msg}[/bold green]\n")
+                    if p_id in ("groq", "nvidia", "qwen"):
+                        console.print(f"[bold green]✓ Switched active LLM engine to {info.name}.[/bold green]\n")
+                        if cli and hasattr(cli, "settings"):
+                            cli.settings.llm_provider = p_id
+                        if container and hasattr(container, "llm_switcher"):
+                            try:
+                                container.llm_switcher.switch(p_id)
+                            except Exception:
+                                pass
                     if cli and hasattr(cli, "render_header"):
                         cli.render_header()
                 else:

@@ -59,8 +59,10 @@ def test_set_key_for_provider(tmp_path, monkeypatch):
         assert ok
         assert "Successfully saved" in msg
         assert os.getenv("GROQ_API_KEY") == "gsk_test_key_123"
+        assert os.getenv("LLM_PROVIDER") == "groq"
     finally:
         os.environ.pop("GROQ_API_KEY", None)
+        os.environ.pop("LLM_PROVIDER", None)
 
     # Empty key error
     ok, msg = set_key_for_provider("groq", "   ")
