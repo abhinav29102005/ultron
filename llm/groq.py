@@ -25,6 +25,38 @@ T = TypeVar("T")
 
 
 class GroqLLM(BaseLLM):
+    @staticmethod
+    def _serialise_tool_arguments(messages: list[dict]) -> list[dict]:
+        """Convert echoed tool-call arguments from dict to a JSON string for OpenAI/Groq API compatibility."""
+        import json
+        converted: list[dict] = []
+        for message in messages:
+            calls = message.get("tool_calls") if isinstance(message, dict) else None
+            if not calls:
+                converted.append(message)
+                continue
+            converted.append(
+                {
+                    **message,
+                    "tool_calls": [
+                        {
+                            **call,
+                            "function": {
+                                **call["function"],
+                                "arguments": (
+                                    arguments
+                                    if isinstance(arguments := call["function"].get("arguments"), str)
+                                    else json.dumps(arguments or {})
+                                ),
+                            },
+                        }
+                        for call in calls
+                    ],
+                }
+            )
+        return converted
+
+
     """
     Groq Cloud LLM provider using OpenAI-compatible API.
     """
@@ -53,6 +85,15 @@ class GroqLLM(BaseLLM):
     @property
     def provider_name(self) -> str:
         return "groq"
+
+    def build_system_message(self, content: str) -> dict[str, str]:
+        return {"role": "system", "content": content}
+
+    def build_user_message(self, content: str) -> dict[str, str]:
+        return {"role": "user", "content": content}
+
+    def build_assistant_message(self, content: str) -> dict[str, str]:
+        return {"role": "assistant", "content": content}
 
     async def _with_retry(self, call: Callable[[], T], max_attempts: int = 2) -> T:
         for attempt in range(max_attempts):
@@ -115,10 +156,11 @@ class GroqLLM(BaseLLM):
         started_at = datetime.utcnow()
         temperature = kwargs.get("temperature", self.temperature)
 
+        serialised = self._serialise_tool_arguments(messages)
         response = await self._with_retry(
             lambda: self._client.chat.completions.create(
                 model=self.model,
-                messages=messages,
+                messages=serialised,
                 tools=tools,
                 tool_choice="auto",
                 temperature=temperature,

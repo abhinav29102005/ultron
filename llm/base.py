@@ -80,25 +80,16 @@ class BaseLLM(ABC):
         )
 
     def build_system_message(self, content: str) -> dict[str, str]:
-        """
-        Format a system message dictionary.
-        TODO: Implement system message formatter.
-        """
-        raise NotImplementedError
+        """Format a system message dictionary."""
+        return {"role": "system", "content": content}
 
     def build_user_message(self, content: str) -> dict[str, str]:
-        """
-        Format a user message dictionary.
-        TODO: Implement user message formatter.
-        """
-        raise NotImplementedError
+        """Format a user message dictionary."""
+        return {"role": "user", "content": content}
 
     def build_assistant_message(self, content: str) -> dict[str, str]:
-        """
-        Format an assistant message dictionary.
-        TODO: Implement assistant message formatter.
-        """
-        raise NotImplementedError
+        """Format an assistant message dictionary."""
+        return {"role": "assistant", "content": content}
 
     @property
     def provider_name(self) -> str:

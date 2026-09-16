@@ -312,6 +312,18 @@ ALL_TOOLS: tuple[ToolDef, ...] = (
         properties={"location": _str("City name. Defaults to the user's location.")},
     ),
     ToolDef(
+        name="weather",
+        description="Current weather and forecast for a place.",
+        intent="weather",
+        properties={"location": _str("City name. Defaults to the user's location.")},
+    ),
+    ToolDef(
+        name="system_weather",
+        description="Current weather and forecast for a place.",
+        intent="weather",
+        properties={"location": _str("City name. Defaults to the user's location.")},
+    ),
+    ToolDef(
         name="end_session",
         description=(
             "Say goodbye and shut ULTRON down. Use this whenever the user "

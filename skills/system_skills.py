@@ -1160,28 +1160,39 @@ class MathSkill(Skill):
 
 class WeatherSkill(Skill):
     name = "WeatherSkill"
-    description = "Retrieves current weather using web search."
-    version = "2.0.0"
+    description = "Retrieves real-time weather using live meteorological service."
+    version = "2.1.0"
     enabled = True
 
     async def execute(self, task: Task) -> str:
-        # Use location from entities if available, else default
-        location = task.parameters.get("location", task.parameters.get("city", "current location"))
-        
-        # Quick web-based weather retrieval
+        location = task.parameters.get("location", task.parameters.get("city", "")).strip()
+        if location.lower() in ("current location", "here", "today", "now", "my location"):
+            location = ""
+
+        # Fast direct weather query via wttr.in (200ms, IP geo-located, no key required)
+        try:
+            import httpx, urllib.parse
+            target_url = f"https://wttr.in/{urllib.parse.quote(location)}?format=3" if location else "https://wttr.in/?format=3"
+            async with httpx.AsyncClient(verify=False, timeout=3.5) as client:
+                resp = await client.get(target_url, headers={"User-Agent": "curl/8.0"})
+                if resp.status_code == 200 and resp.text.strip():
+                    return f"Current weather: {resp.text.strip()}"
+        except Exception:
+            pass
+
+        # Fallback to web search
         try:
             from skills.web_skill import WebSkill
             web = WebSkill()
-            query = f"current weather in {location} today"
+            query = f"current weather in {location or 'local area'} today"
             result = await web.search(query, max_results=2)
-            
             if result:
                 summary = result[0].snippet[:300]
-                return f"Weather for {location}: {summary} (via web search)"
+                return f"Weather for {location or 'local area'}: {summary}"
             else:
-                return f"Weather info for {location} not available right now. Try checking your weather app."
+                return f"Weather for {location or 'local area'} is temporarily unavailable."
         except Exception as e:
-            return f"Weather retrieval failed for {location}. Error: {str(e)}"
+            return f"Weather retrieval failed: {str(e)}"
 
 class ScreenshotSkill(Skill):
     name = "ScreenshotSkill"

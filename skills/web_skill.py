@@ -391,6 +391,7 @@ class WebSkill(Skill):
                 timeout=self.TIMEOUT,
                 headers={"User-Agent": self.USER_AGENT},
                 follow_redirects=True,
+                verify=False,
             )
         return self._client
 
