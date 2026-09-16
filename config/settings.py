@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     # ── LLM Integration (Groq Cloud) ──
     groq_api_key: SecretStr = Field(default=SecretStr(""))
     groq_base_url: str = Field(default="https://api.groq.com/openai/v1")
-    groq_model: str = Field(default="openai/gpt-oss-120b")
+    groq_model: str = Field(default="openai/gpt-oss-20b")
     groq_fast_model: str = Field(default="openai/gpt-oss-20b")
 
     # LLM Provider selection (nvidia | qwen | groq)

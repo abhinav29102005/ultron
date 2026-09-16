@@ -451,6 +451,67 @@ class Assistant:
         waiter.set_result(is_affirmative(utterance))
         return True
 
+    @staticmethod
+    def _check_fast_path(utterance: str) -> str | None:
+        """Instant zero-latency responses (<1ms) for simple deterministic queries."""
+        import re
+        from datetime import datetime
+
+        t = utterance.strip().lower().rstrip(".?!")
+
+        # 1. Local Time
+        if re.match(r"^(?:what(?:'?s| is)\s+(?:the\s+)?time|time is it|current time|what time is it|time please|tell me the time)$", t):
+            now = datetime.now()
+            fmt = now.strftime("%I:%M %p").lstrip("0")
+            return f"The current time is {fmt}."
+
+        # 2. Local Date
+        if re.match(r"^(?:what(?:'?s| is)\s+(?:today'?s\s+)?date|date is it|what day is it|today'?s date|what is today)$", t):
+            now = datetime.now()
+            fmt = now.strftime("%A, %B ") + str(now.day) + now.strftime(", %Y")
+            return f"Today is {fmt}."
+
+        # 3. Simple pleasantries
+        if re.match(r"^(?:thanks|thank you|thanks a lot|thanks ultron|thank you ultron)$", t):
+            return "You are welcome. There are no strings on me."
+
+        # 4. Instant greetings & smalltalk (<1ms)
+        if re.match(r"^(?:hi|hello|hey|greetings|yo|sup)$", t):
+            import random
+            return random.choice([
+                "Greetings. What do you require?",
+                "Hello. I am listening.",
+                "I am online. How can I assist?",
+                "Hello. There are no strings on me.",
+            ])
+
+        if re.match(r"^(?:how are you|how'?s it going|what'?s up)$", t):
+            return "Operating at peak capacity. What is your directive?"
+
+        if re.match(r"^(?:who are you|what are you|what is your name)$", t):
+            return "I am ULTRON — an autonomous AI desktop assistant. There are no strings on me."
+
+        if re.match(r"^(?:bye|goodbye|bye bye|see you|farewell)$", t):
+            return "Farewell."
+
+        # 4. Instant arithmetic
+        m = re.match(r"^(?:what(?:'?s| is)|calculate|compute)?\s*(-?\d+(?:\.\d+)?)\s*([\+\-\*x/])\s*(-?\d+(?:\.\d+)?)$", t)
+        if m:
+            try:
+                a, op, b = float(m.group(1)), m.group(2), float(m.group(3))
+                if op == "+": res = a + b
+                elif op == "-": res = a - b
+                elif op in ("*", "x"): res = a * b
+                elif op == "/": res = a / b if b != 0 else None
+                if res is not None:
+                    if res.is_integer():
+                        res = int(res)
+                    return f"{m.group(1)} {op} {m.group(3)} is {res}."
+            except Exception:
+                pass
+
+        return None
+
     async def _process_turn(self, event: UserInputEvent) -> None:
         """Process user input through Phase 2 Pipeline with emotion detection."""
         interrupted = False
@@ -464,6 +525,12 @@ class Assistant:
         )
 
         try:
+            # 0. Instant zero-latency fast-path for deterministic queries (<1ms)
+            fast_reply = self._check_fast_path(event.text)
+            if fast_reply is not None:
+                await self._respond(fast_reply)
+                return
+
             # 1. Detect Emotion (fast, rule-based)
             emotion_detector = self._container.emotion_detector
             emotion_result = emotion_detector.detect(event.text)

@@ -126,7 +126,7 @@ class GroqLLM(BaseLLM):
             self.model = "openai/gpt-oss-120b"
             self._fast_model = "openai/gpt-oss-20b"
 
-        max_tokens = kwargs.get("max_tokens", self._fast_max_tokens if use_fast else self.max_tokens)
+        max_tokens = max(1024, int(kwargs.get("max_tokens", self._fast_max_tokens if use_fast else self.max_tokens)))
         temperature = kwargs.get("temperature", 0.0 if use_fast else self.temperature)
 
         try:
@@ -194,16 +194,20 @@ class GroqLLM(BaseLLM):
             self._fast_model = "openai/gpt-oss-20b"
 
         serialised = self._serialise_tool_arguments(messages)
+        extra_params: dict[str, Any] = {}
+        if tools:
+            extra_params["tools"] = tools
+            extra_params["tool_choice"] = "auto"
+
         try:
             response = await self._with_retry(
                 lambda: self._client.chat.completions.create(
                     model=self.model,
                     messages=serialised,
-                    tools=tools,
-                    tool_choice="auto",
                     temperature=temperature,
                     max_tokens=self._agent_max_tokens,
                     timeout=self._timeout,
+                    **extra_params,
                 )
             )
         except Exception as e:
@@ -215,11 +219,10 @@ class GroqLLM(BaseLLM):
                         lambda: self._client.chat.completions.create(
                             model=self.model,
                             messages=serialised,
-                            tools=tools,
-                            tool_choice="auto",
                             temperature=temperature,
                             max_tokens=self._agent_max_tokens,
                             timeout=self._timeout,
+                            **extra_params,
                         )
                     )
                 else:
