@@ -219,7 +219,8 @@ export default {
             portalHub: "/hub",
             setKey: "/key <provider> <api_key>",
             toggleOffline: "/mode offline",
-            listSessions: "/chats"
+            listSessions: "/chats",
+            selfUpgrade: "ultron upgrade (or /upgrade)"
           }
         }, null, 2),
         {

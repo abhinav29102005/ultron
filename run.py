@@ -48,6 +48,13 @@ def parse_args() -> argparse.Namespace:
         description="ULTRON – Autonomous AI Desktop Assistant & Streaming Live RAG",
     )
     parser.add_argument(
+        "command",
+        nargs="?",
+        default=None,
+        choices=["upgrade", "update", "setup", "keys", "hub", None],
+        help="Subcommand to execute: 'upgrade' (update Ultron to latest release), 'setup', or 'hub'",
+    )
+    parser.add_argument(
         "--mode",
         choices=["text", "no-wake", "wakeword"],
         default="text",
@@ -340,6 +347,24 @@ async def run_wakeword_mode(container) -> None:
 
 def main() -> None:
     args = parse_args()
+
+    # Direct CLI subcommands
+    if args.command in ("upgrade", "update"):
+        from utils.updater import upgrade_cli
+        upgrade_cli()
+        return
+
+    if args.command in ("setup", "keys"):
+        import asyncio
+        from utils.api_key_manager import interactive_setup_wizard
+        asyncio.run(interactive_setup_wizard())
+        return
+
+    if args.command in ("hub", "providers"):
+        from utils.api_key_manager import render_provider_hub
+        render_provider_hub()
+        return
+
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 

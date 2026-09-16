@@ -149,8 +149,9 @@ docs = [
 ]
 
 [project.scripts]
-ultron = "main_gui:main"
+ultron = "run:main"
 ultron-cli = "run:main"
+ultron-gui = "main_gui:main"
 
 [tool.hatch.build.targets.wheel]
 packages = [

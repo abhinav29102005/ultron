@@ -29,7 +29,7 @@
 
 ## 🧠 What is ULTRON?
 
-**ULTRON** is a modular, open-source AI desktop assistant that combines voice interaction, LLM-powered intelligence, and an extensible skill system. Think of it as your personal J.A.R.V.I.S. — it listens, understands, and acts.
+**ULTRON** is a modular, open-source AI desktop assistant that combines voice interaction, LLM-powered intelligence, and an extensible skill system. Designed for high performance, local privacy, and speculative streaming RAG.
 
 Built with a clean, layered architecture, ULTRON supports multiple interaction modes and can be extended with custom skills for any task you need.
 
@@ -141,6 +141,18 @@ python scripts/bootstrap.py --yes
 ```
 
 ---
+
+## 🔄 Upgrading ULTRON
+
+Keep your ULTRON agent up to date with upstream improvements, dependencies, and database migrations:
+
+```bash
+# Update repository, dependencies, and migrations from terminal
+ultron upgrade
+
+# Or run the upgrade command inside the interactive CLI session:
+/upgrade
+```
 
 ## ⌨️ Usage
 

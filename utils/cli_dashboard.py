@@ -73,6 +73,7 @@ class CyberneticCLI:
         table.add_row("/setup, /keys", "Interactive API key setup wizard with cloud panel links")
         table.add_row("/hub, /providers", "View cloud LLM portal links and free tier quotas")
         table.add_row("/key <prov> <val>", "Save an API key (e.g. /key nvidia nvapi-xxxx)")
+        table.add_row("/upgrade, /update", "Self-update Ultron repo, dependencies, and database migrations")
         table.add_row("/chats, /sessions", "List all persistent chat sessions with token counts")
         table.add_row("/switch <id>", "Switch context window to another chat session")
         table.add_row("/new [title]", "Create a fresh session and switch to it")
@@ -216,6 +217,10 @@ class CyberneticCLI:
         elif cmd in ("hub", "providers", "portals"):
             from utils.api_key_manager import render_provider_hub
             render_provider_hub()
+
+        elif cmd in ("upgrade", "update"):
+            from utils.updater import run_upgrade
+            await run_upgrade()
 
         elif cmd == "key":
             from utils.api_key_manager import set_key_for_provider
