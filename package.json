@@ -1,0 +1,13 @@
+{
+  "name": "ultron-workspace",
+  "version": "0.2.0",
+  "private": true,
+  "description": "ULTRON – Autonomous AI Desktop Assistant & Streaming Live RAG",
+  "scripts": {
+    "dev": "node ./deploy/installer/node_modules/wrangler/bin/wrangler.js dev --config deploy/installer/wrangler.toml",
+    "deploy": "node ./deploy/installer/node_modules/wrangler/bin/wrangler.js deploy --config deploy/installer/wrangler.toml",
+    "installer:dev": "node ./deploy/installer/node_modules/wrangler/bin/wrangler.js dev --config deploy/installer/wrangler.toml",
+    "installer:deploy": "node ./deploy/installer/node_modules/wrangler/bin/wrangler.js deploy --config deploy/installer/wrangler.toml",
+    "installer:dry-run": "node ./deploy/installer/node_modules/wrangler/bin/wrangler.js deploy --dry-run --config deploy/installer/wrangler.toml"
+  }
+}

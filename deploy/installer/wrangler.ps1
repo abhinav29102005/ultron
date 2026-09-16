@@ -1,0 +1,1 @@
+& node "$PSScriptRoot\node_modules\wrangler\bin\wrangler.js" @args

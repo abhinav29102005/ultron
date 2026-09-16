@@ -4,8 +4,8 @@
   "description": "Cloudflare Worker serving the ULTRON Agent installer script and landing portal",
   "main": "src/index.ts",
   "scripts": {
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "deploy": "node ./node_modules/wrangler/bin/wrangler.js deploy",
+    "dev": "node ./node_modules/wrangler/bin/wrangler.js dev"
   },
   "devDependencies": {
     "wrangler": "^4.132.0"
