@@ -62,8 +62,14 @@ class GroqLLM(BaseLLM):
     """
 
     def __init__(self, settings: Settings) -> None:
+        model = settings.groq_model
+        # Auto-migrate deprecated models that Groq removed:
+        # (llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral, etc. -> openai/gpt-oss-120b)
+        if any(dep in model.lower() for dep in ("llama", "mixtral")):
+            model = "openai/gpt-oss-120b"
+
         super().__init__(
-            model=settings.groq_model,
+            model=model,
             temperature=settings.llm_temperature,
             max_tokens=settings.llm_max_tokens,
         )
@@ -78,7 +84,10 @@ class GroqLLM(BaseLLM):
         )
 
         self._timeout = settings.llm_timeout_seconds
-        self._fast_model = settings.groq_fast_model
+        fast_model = settings.groq_fast_model
+        if any(dep in fast_model.lower() for dep in ("llama", "mixtral")):
+            fast_model = "openai/gpt-oss-20b"
+        self._fast_model = fast_model
         self._fast_max_tokens = 128
         self._agent_max_tokens = int(getattr(settings, "agent_max_tokens", 2048))
 
@@ -112,16 +121,40 @@ class GroqLLM(BaseLLM):
         started_at = datetime.utcnow()
         use_fast = kwargs.pop("use_fast_model", False)
         model = self._fast_model if use_fast else self.model
+        if any(dep in model.lower() for dep in ("llama", "mixtral")):
+            model = "openai/gpt-oss-20b" if use_fast else "openai/gpt-oss-120b"
+            self.model = "openai/gpt-oss-120b"
+            self._fast_model = "openai/gpt-oss-20b"
+
         max_tokens = kwargs.get("max_tokens", self._fast_max_tokens if use_fast else self.max_tokens)
         temperature = kwargs.get("temperature", 0.0 if use_fast else self.temperature)
 
-        response = await self._client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout=self._timeout,
-        )
+        try:
+            response = await self._client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=self._timeout,
+            )
+        except Exception as e:
+            if "model_not_found" in str(e).lower() or "404" in str(e) or "does not exist" in str(e).lower():
+                fallback_model = "openai/gpt-oss-20b" if use_fast else "openai/gpt-oss-120b"
+                if model != fallback_model:
+                    self.model = "openai/gpt-oss-120b"
+                    self._fast_model = "openai/gpt-oss-20b"
+                    model = fallback_model
+                    response = await self._client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        timeout=self._timeout,
+                    )
+                else:
+                    raise
+            else:
+                raise
 
         finished_at = datetime.utcnow()
         latency_ms = (finished_at - started_at).total_seconds() * 1000
@@ -156,18 +189,43 @@ class GroqLLM(BaseLLM):
         started_at = datetime.utcnow()
         temperature = kwargs.get("temperature", self.temperature)
 
+        if any(dep in self.model.lower() for dep in ("llama", "mixtral")):
+            self.model = "openai/gpt-oss-120b"
+            self._fast_model = "openai/gpt-oss-20b"
+
         serialised = self._serialise_tool_arguments(messages)
-        response = await self._with_retry(
-            lambda: self._client.chat.completions.create(
-                model=self.model,
-                messages=serialised,
-                tools=tools,
-                tool_choice="auto",
-                temperature=temperature,
-                max_tokens=self._agent_max_tokens,
-                timeout=self._timeout,
+        try:
+            response = await self._with_retry(
+                lambda: self._client.chat.completions.create(
+                    model=self.model,
+                    messages=serialised,
+                    tools=tools,
+                    tool_choice="auto",
+                    temperature=temperature,
+                    max_tokens=self._agent_max_tokens,
+                    timeout=self._timeout,
+                )
             )
-        )
+        except Exception as e:
+            if "model_not_found" in str(e).lower() or "404" in str(e) or "does not exist" in str(e).lower():
+                if self.model != "openai/gpt-oss-120b":
+                    self.model = "openai/gpt-oss-120b"
+                    self._fast_model = "openai/gpt-oss-20b"
+                    response = await self._with_retry(
+                        lambda: self._client.chat.completions.create(
+                            model=self.model,
+                            messages=serialised,
+                            tools=tools,
+                            tool_choice="auto",
+                            temperature=temperature,
+                            max_tokens=self._agent_max_tokens,
+                            timeout=self._timeout,
+                        )
+                    )
+                else:
+                    raise
+            else:
+                raise
 
         finished_at = datetime.utcnow()
         latency_ms = (finished_at - started_at).total_seconds() * 1000
@@ -209,14 +267,36 @@ class GroqLLM(BaseLLM):
         messages: list[dict[str, str]],
         **kwargs: object,
     ) -> AsyncIterator[str]:
-        response_stream = await self._client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-            stream=True,
-            timeout=self._timeout,
-        )
+        if any(dep in self.model.lower() for dep in ("llama", "mixtral")):
+            self.model = "openai/gpt-oss-120b"
+            self._fast_model = "openai/gpt-oss-20b"
+
+        try:
+            response_stream = await self._client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                stream=True,
+                timeout=self._timeout,
+            )
+        except Exception as e:
+            if "model_not_found" in str(e).lower() or "404" in str(e) or "does not exist" in str(e).lower():
+                if self.model != "openai/gpt-oss-120b":
+                    self.model = "openai/gpt-oss-120b"
+                    self._fast_model = "openai/gpt-oss-20b"
+                    response_stream = await self._client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        temperature=self.temperature,
+                        max_tokens=self.max_tokens,
+                        stream=True,
+                        timeout=self._timeout,
+                    )
+                else:
+                    raise
+            else:
+                raise
 
         async for chunk in response_stream:
             if chunk.choices and chunk.choices[0].delta.content:

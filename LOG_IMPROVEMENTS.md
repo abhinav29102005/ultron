@@ -63,6 +63,7 @@ This document tracks all identified technical gaps, edge cases, improvements, te
 | **SB-06** | `tests/test_api_key_manager.py` | `test_llm_switcher.py` assertion failure when run in full suite | `test_set_key_for_provider` set `os.environ["GROQ_API_KEY"]` without teardown, polluting downstream tests | **FIXED**: Wrapped in `try/finally` with `os.environ.pop` and made `test_llm_switcher._settings()` hermetic. |
 | **SB-07** | `deploy/installer/` | `npm run dev` failed (`'wrangler' is not recognized`) | Subfolder lacked installed node_modules and was pinned to outdated Wrangler v3 | **FIXED**: Upgraded to latest Wrangler v4 (`^4.132.0`), installed dependencies, and verified `http://127.0.0.1:8787/health` returns 200 OK. |
 | **SB-08** | `pyproject.toml` | Targeted tests failed with `FAIL Required test coverage of 80.0% not reached` | `addopts` enforced mandatory global coverage with `fail_under = 80` on single-file runs | **FIXED**: Removed `--cov` from default `addopts` so targeted test files run instantly without whole-repo coverage gating. |
+| **SB-09** | `llm/groq.py` | `Error code: 404 - {'error': {'message': 'The model llama-3.3-70b-versatile does not exist...'}}` | Groq deprecated/removed all Llama 3.1 & 3.3 models on August 16, 2026, standardizing on `openai/gpt-oss-120b` (flagship) and `openai/gpt-oss-20b` (fast) | **FIXED**: Auto-sanitized model identifiers in `GroqLLM.__init__`, added transparent 404 error interception with fallback retry to `openai/gpt-oss-120b`, updated `config/settings.py`, `.env.example`, and CLI `/model` auto-migration. |
 
 ---
 
@@ -78,7 +79,7 @@ This document tracks all identified technical gaps, edge cases, improvements, te
 | `scripts/run_benchmark.py` | Evaluation Gates G1 to G6 | Target thresholds met | **G1–G6 100% PASSED** |
 | `scripts/demo_streaming_rag.py` | Live zero-mocks demonstration | All 6 flows executed cleanly | **ALL 6 FLOWS PASSED** |
 | Cloudflare Worker Build | `deploy/installer/src/index.ts` | Wrangler bundle validation | **PASSED (0 errors)** |
-| Full Repository Pytest | 56 test files across codebase | Entire system regression check | **1,127 PASSED (1 skipped)** |
+| Full Repository Pytest | 57 test files across codebase | Entire system regression check | **1,130 PASSED (1 skipped)** |
 
 ---
 

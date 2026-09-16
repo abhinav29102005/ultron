@@ -324,6 +324,21 @@ class CyberneticCLI:
                 if target_prov in ("groq", "nvidia", "qwen"):
                     update_env_file("LLM_PROVIDER", target_prov)
                     os.environ["LLM_PROVIDER"] = target_prov
+
+                    if target_prov == "groq":
+                        curr_gm = os.getenv("GROQ_MODEL", "")
+                        if not curr_gm or any(d in curr_gm.lower() for d in ("llama", "mixtral")):
+                            update_env_file("GROQ_MODEL", "openai/gpt-oss-120b")
+                            os.environ["GROQ_MODEL"] = "openai/gpt-oss-120b"
+                            update_env_file("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
+                            os.environ["GROQ_FAST_MODEL"] = "openai/gpt-oss-20b"
+
+                    if target_prov == "nvidia":
+                        curr_nm = os.getenv("NVIDIA_MODEL", "")
+                        if not curr_nm or any(d in curr_nm.lower() for d in ("llama-3.1-8b", "llama3.1-8b")):
+                            update_env_file("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b")
+                            os.environ["NVIDIA_MODEL"] = "nvidia/nemotron-3-super-120b-a12b"
+
                     if self.container and hasattr(self.container, "llm") and hasattr(self.container.llm, "switch"):
                         try:
                             self.container.llm.switch(target_prov)

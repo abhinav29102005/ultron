@@ -36,7 +36,7 @@ const CLOUD_PROVIDERS: LLMProvider[] = [
     badgeColor: "#06b6d4",
     portalUrl: "https://console.groq.com/keys",
     freeTier: "Fastest LPU inference with generous free rate limits",
-    recommendedModels: "llama-3.3-70b-versatile, mixtral-8x7b-32768",
+    recommendedModels: "openai/gpt-oss-120b, openai/gpt-oss-20b",
     cliCommand: "ultron /key groq gsk_..."
   },
   {

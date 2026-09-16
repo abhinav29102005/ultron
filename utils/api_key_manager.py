@@ -55,7 +55,7 @@ PROVIDERS: Dict[str, ProviderInfo] = {
         env_var="GROQ_API_KEY",
         portal_url="https://console.groq.com/keys",
         free_tier_info="Free high-speed inference tier (~500+ tok/s)",
-        recommended_models="llama-3.3-70b-versatile, mixtral-8x7b-32768",
+        recommended_models="openai/gpt-oss-120b, openai/gpt-oss-20b",
         prefix_hint="gsk_",
     ),
     "openrouter": ProviderInfo(
@@ -165,6 +165,14 @@ def set_key_for_provider(provider_id: str, key_value: str, auto_switch: bool = T
     if auto_switch and provider_id in ("groq", "nvidia", "qwen"):
         update_env_file("LLM_PROVIDER", provider_id)
         os.environ["LLM_PROVIDER"] = provider_id
+
+    if provider_id == "groq":
+        gm = os.getenv("GROQ_MODEL", "")
+        if not gm or any(d in gm.lower() for d in ("llama", "mixtral")):
+            update_env_file("GROQ_MODEL", "openai/gpt-oss-120b")
+            os.environ["GROQ_MODEL"] = "openai/gpt-oss-120b"
+            update_env_file("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
+            os.environ["GROQ_FAST_MODEL"] = "openai/gpt-oss-20b"
 
     return True, f"Successfully saved {info.name} API key to .env ({info.env_var})"
 
