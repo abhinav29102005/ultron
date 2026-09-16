@@ -106,27 +106,36 @@ if [ ! -f ".env" ]; then
     cp .env.example .env
 fi
 
-# --- Add Alias ---
-echo -e "${BLUE}[INFO]${NC} Setting up 'ultron' & 'ultron' aliases..."
+# --- Install Executable Launcher ---
+echo -e "${BLUE}[INFO]${NC} Installing 'ultron' launcher to $HOME/.local/bin..."
+mkdir -p "$HOME/.local/bin"
 
-add_alias_if_needed() {
+cat << 'LAUNCHER' > "$HOME/.local/bin/ultron"
+#!/usr/bin/env bash
+INSTALL_DIR="${ULTRON_HOME:-$HOME/.ultron}"
+if [ -f "$INSTALL_DIR/.venv/bin/python" ]; then
+    exec "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/run.py" "$@"
+elif [ -f "$INSTALL_DIR/run.py" ]; then
+    exec python3 "$INSTALL_DIR/run.py" "$@"
+else
+    echo "[ERROR] Ultron installation not found at $INSTALL_DIR"
+    exit 1
+fi
+LAUNCHER
+chmod +x "$HOME/.local/bin/ultron"
+ln -sf "$HOME/.local/bin/ultron" /usr/local/bin/ultron 2>/dev/null || true
+
+ensure_path_in_rc() {
     local rc_file="$1"
-    local ultron_cmd="alias ultron='cd $INSTALL_DIR && uv run python run.py'"
-    local ultron_cmd="alias ULTRON='cd $INSTALL_DIR && uv run python run.py'"
-    
     if [ -f "$rc_file" ]; then
-        if ! grep -q "alias ultron=" "$rc_file"; then
-            echo -e "
-# ULTRON Agent Aliases" >> "$rc_file"
-            echo "$ultron_cmd" >> "$rc_file"
-            echo "$ultron_cmd" >> "$rc_file"
-            echo -e "${GREEN}[OK]${NC} Added aliases (ultron, ULTRON) to $rc_file"
+        if ! grep -q '\.local/bin' "$rc_file"; then
+            echo -e '
+export PATH="$HOME/.local/bin:$PATH"' >> "$rc_file"
         fi
     fi
 }
-
-add_alias_if_needed "$HOME/.bashrc"
-add_alias_if_needed "$HOME/.zshrc"
+ensure_path_in_rc "$HOME/.bashrc"
+ensure_path_in_rc "$HOME/.zshrc"
 
 echo -e "${GREEN}============================================================${NC}"
 echo -e "${GREEN}               ULTRON AGENT SUCCESSFULLY INSTALLED!         ${NC}"

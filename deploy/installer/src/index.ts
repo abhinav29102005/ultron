@@ -109,7 +109,24 @@ fi
 uv sync
 [ -f .env ] || cp .env.example .env
 
-echo "============================================================"
+# Install executable launcher to ~/.local/bin
+mkdir -p "$HOME/.local/bin"
+cat << 'LAUNCHER' > "$HOME/.local/bin/ultron"
+#!/usr/bin/env bash
+INSTALL_DIR="\${ULTRON_HOME:-\$HOME/.ultron}"
+if [ -f "$INSTALL_DIR/.venv/bin/python" ]; then
+    exec "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/run.py" "$@"
+elif [ -f "$INSTALL_DIR/run.py" ]; then
+    exec python3 "$INSTALL_DIR/run.py" "$@"
+else
+    echo "[ERROR] Ultron installation not found at $INSTALL_DIR"
+    exit 1
+fi
+LAUNCHER
+chmod +x "$HOME/.local/bin/ultron"
+ln -sf "$HOME/.local/bin/ultron" /usr/local/bin/ultron 2>/dev/null || true
+
+echo "============================================================" 
 echo "               ULTRON AGENT SUCCESSFULLY INSTALLED!         "
 echo "============================================================"
 echo ""
