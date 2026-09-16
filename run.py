@@ -180,7 +180,7 @@ async def run_text_mode(container) -> None:
 
     from utils.api_key_manager import prompt_first_run_if_needed
     await prompt_first_run_if_needed(cli=cli, container=container)
-    Console().print("[dim]Type your message or use slash commands ([bold cyan]/help, /model, /rag, /chats, /mode, /settings, /tokens[/bold cyan]).[/dim]\n")
+    Console().print("[dim]Type your message or use slash commands ([bold cyan]/help, /model, /rag, /chats, /mode, /voice, /text, /settings, /tokens[/bold cyan]).[/dim]\n")
 
     # Configure prompt_toolkit for rich interactive terminal sessions
     is_interactive = sys.stdin.isatty()
@@ -206,6 +206,7 @@ async def run_text_mode(container) -> None:
                 "/set": None,
                 "/tokens": None,
                 "/voice": {"on": None, "off": None},
+                "/text": None,
                 "/guardrails": {"on": None, "off": None},
                 "/clear": None,
                 "/setup": None,

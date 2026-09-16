@@ -147,6 +147,14 @@ async def test_cybernetic_cli_commands(tmp_path):
         assert res is True
         assert settings.voice_enabled is True
 
+        res = await cli.handle_command("/text")
+        assert res is True
+        assert settings.voice_enabled is False
+
+        res = await cli.handle_command("/voice")
+        assert res is True
+        assert settings.voice_enabled is True
+
         res = await cli.handle_command("/tokens")
         assert res is True
 

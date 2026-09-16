@@ -96,7 +96,8 @@ class CyberneticCLI:
         table.add_row("/settings, /config", "View all dynamic user configuration settings")
         table.add_row("/set <key> <val>", "Change a user setting on-the-fly (e.g., /set voice_enabled true)")
         table.add_row("/tokens", "Display session token usage, latency, and estimated cost")
-        table.add_row("/voice <on|off>", "Toggle voice assistant listening and spoken audio")
+        table.add_row("/voice [on|off]", "Switch to voice-based responses (spoken audio ON)")
+        table.add_row("/text", "Switch to text-only responses (spoken audio OFF)")
         table.add_row("/guardrails <on|off>", "Toggle safety execution guardrails")
         table.add_row("/clear", "Clear message history of the current chat")
         table.add_row("/help", "Show this command manual")
@@ -381,12 +382,18 @@ class CyberneticCLI:
 
         elif cmd == "voice":
             if not arg:
-                new_val = not self.settings.voice_enabled
+                new_val = True
             else:
                 new_val = arg.lower() in ("on", "true", "1", "enable")
             await self.settings.update_setting(self.sm.db, "voice_enabled", str(new_val))
-            status = "ENABLED 🎤" if new_val else "DISABLED 🔇"
-            console.print(f"[bold green]✓ Voice assistant {status}[/bold green]")
+            status = "ENABLED 🎤 (Spoken voice replies ON)" if new_val else "DISABLED 🔇 (Text replies only)"
+            console.print(f"[bold green]✓ Voice responses {status}[/bold green]")
+            self.render_header()
+
+        elif cmd == "text":
+            new_val = False
+            await self.settings.update_setting(self.sm.db, "voice_enabled", str(new_val))
+            console.print("[bold green]✓ Text-only responses ENABLED 📝 (Spoken audio OFF)[/bold green]")
             self.render_header()
 
         elif cmd == "guardrails":
