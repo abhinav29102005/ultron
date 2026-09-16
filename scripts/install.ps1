@@ -100,8 +100,12 @@ Write-Host '============================================================' -Foreg
 Write-Host ''
 Write-Host 'Next Steps:'
 Write-Host '1. Restart your terminal, or run: . $PROFILE'
-Write-Host '2. Edit your configuration file to add API keys:'
-Write-Host "   $INSTALL_DIR\.env"
+Write-Host '2. Get free cloud LLM keys from developer panels:'
+Write-Host '   - NVIDIA NIM (1,000 Free Credits): https://build.nvidia.com/'
+Write-Host '   - Groq Cloud (Free High-Speed):   https://console.groq.com/keys'
+Write-Host '   - OpenRouter (100+ Models):       https://openrouter.ai/keys'
+Write-Host '   - Or run 100% offline with local Ollama (zero keys needed)'
 Write-Host '3. Start the agent by typing:'
 Write-Host '   ultron' -ForegroundColor Cyan
+Write-Host '   (Ultron will interactively guide you to paste keys or configure settings)'
 Write-Host ''

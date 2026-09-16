@@ -144,6 +144,9 @@ async def run_text_mode(container) -> None:
 
     cli = CyberneticCLI(container.session_manager, container.user_settings)
     cli.render_header()
+
+    from utils.api_key_manager import prompt_first_run_if_needed
+    await prompt_first_run_if_needed(cli=cli, container=container)
     Console().print("[dim]Type your message or use slash commands ([bold cyan]/help, /chats, /mode, /settings, /tokens[/bold cyan]).[/dim]\n")
 
     try:

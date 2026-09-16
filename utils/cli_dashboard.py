@@ -70,6 +70,9 @@ class CyberneticCLI:
         table.add_column("Command", style="bold yellow", width=22)
         table.add_column("Description", style="white")
 
+        table.add_row("/setup, /keys", "Interactive API key setup wizard with cloud panel links")
+        table.add_row("/hub, /providers", "View cloud LLM portal links and free tier quotas")
+        table.add_row("/key <prov> <val>", "Save an API key (e.g. /key nvidia nvapi-xxxx)")
         table.add_row("/chats, /sessions", "List all persistent chat sessions with token counts")
         table.add_row("/switch <id>", "Switch context window to another chat session")
         table.add_row("/new [title]", "Create a fresh session and switch to it")
@@ -205,6 +208,27 @@ class CyberneticCLI:
 
         if cmd in ("help", "?"):
             self.render_help()
+
+        elif cmd in ("setup", "keys", "wizard"):
+            from utils.api_key_manager import interactive_setup_wizard
+            await interactive_setup_wizard(cli=self)
+
+        elif cmd in ("hub", "providers", "portals"):
+            from utils.api_key_manager import render_provider_hub
+            render_provider_hub()
+
+        elif cmd == "key":
+            from utils.api_key_manager import set_key_for_provider
+            if not arg or " " not in arg:
+                console.print("[red]Usage: /key <provider> <api_key> (e.g., /key nvidia nvapi-xxxx)[/red]")
+            else:
+                prov, val = arg.split(" ", 1)
+                ok, msg = set_key_for_provider(prov, val)
+                if ok:
+                    console.print(f"[bold green]✓ {msg}[/bold green]")
+                    self.render_header()
+                else:
+                    console.print(f"[bold red]✗ {msg}[/bold red]")
 
         elif cmd in ("chats", "sessions", "list"):
             await self.render_chats()
