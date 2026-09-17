@@ -384,9 +384,11 @@ class CyberneticCLI:
             return True
 
         elif cmd in ("nowake", "no-wake", "ptt"):
+            await self.settings.update_setting(self.sm.db, "voice_enabled", "true")
             return "switch_mode:no-wake"
 
         elif cmd in ("wakeword", "wake"):
+            await self.settings.update_setting(self.sm.db, "voice_enabled", "true")
             return "switch_mode:wakeword"
 
         elif cmd == "mode":
@@ -396,11 +398,14 @@ class CyberneticCLI:
                 console.print(f"[dim]Available interaction modes: [bold cyan]/mode no-wake[/bold cyan] (push-to-talk), [bold cyan]/mode wakeword[/bold cyan], [bold cyan]/mode text[/bold cyan][/dim]")
                 console.print(f"[dim]Available engine modes: [bold cyan]/mode online[/bold cyan], [bold cyan]/mode offline[/bold cyan], [bold cyan]/mode hybrid[/bold cyan][/dim]")
             elif mode_arg in ("no-wake", "nowake", "voice", "ptt", "push-to-talk"):
+                await self.settings.update_setting(self.sm.db, "voice_enabled", "true")
                 return "switch_mode:no-wake"
             elif mode_arg in ("wakeword", "wake", "wake-word"):
+                await self.settings.update_setting(self.sm.db, "voice_enabled", "true")
                 return "switch_mode:wakeword"
             elif mode_arg in ("text", "chat"):
                 console.print("[bold green]✓ Interaction Mode: TEXT (Interactive terminal prompt)[/bold green]")
+                console.print("[dim]Tip: Type [bold cyan]/voice on[/bold cyan] anytime to hear spoken audio replies in text mode.[/dim]")
             elif mode_arg in ("online", "offline", "hybrid"):
                 ok, msg = await self.settings.update_setting(self.sm.db, "execution_mode", mode_arg)
                 if ok:

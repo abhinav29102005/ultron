@@ -842,6 +842,7 @@ class Assistant:
         # Record the turn before planning: ChatSkill reads this history to hold
         # a conversation rather than answering each utterance from scratch.
         self._container.state.last_user_input = event.text
+        self._container.state.last_user_input_source = getattr(event, "source", "text")
         self._container.state.conversation_history.append(
             ConversationTurn(role="user", content=event.text)
         )
@@ -1091,7 +1092,10 @@ class Assistant:
         """
         try:
             settings = getattr(self._container, 'user_settings', None)
-            if settings and not getattr(settings, 'voice_enabled', False):
+            voice_enabled = getattr(settings, 'voice_enabled', False)
+            last_source = getattr(getattr(self._container, 'state', None), 'last_user_input_source', None)
+            # If voice is NOT explicitly enabled AND this turn did not originate from voice, remain text-only
+            if not voice_enabled and last_source not in ("voice", "voice_partial"):
                 return
         except Exception:
             pass

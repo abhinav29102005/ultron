@@ -167,7 +167,8 @@ async def run_in_session_no_wake_loop(container, cli, turn_meta: dict) -> None:
 
     Console().print(f"\n[bold bright_magenta]🎙️  PUSH-TO-TALK MODE ACTIVATED[/bold bright_magenta]")
     Console().print(f"[dim]Hold [bold bright_white]{hold_key}[/bold bright_white] to talk, release to send.[/dim]")
-    Console().print(f"[dim]Press [bold cyan]Ctrl+C[/bold cyan] anytime to return to interactive text prompt.\n[/dim]")
+    if hasattr(container, "user_settings") and container.user_settings:
+        container.user_settings.voice_enabled = True
 
     sess = container.session_manager.active_session
     sess_id = sess.id if sess else "main"
@@ -223,7 +224,8 @@ async def run_in_session_wakeword_loop(container, cli, turn_meta: dict) -> None:
 
     Console().print("\n[bold bright_cyan]🔍 WAKE-WORD MODE ACTIVATED[/bold bright_cyan]")
     Console().print("[dim]Listening for wake word ('Computer' / 'Hey Jarvis'). Speak after detection.[/dim]")
-    Console().print("[dim]Press [bold cyan]Ctrl+C[/bold cyan] anytime to return to interactive text prompt.\n[/dim]")
+    if hasattr(container, "user_settings") and container.user_settings:
+        container.user_settings.voice_enabled = True
 
     wake_detector = WakeWordDetector()
     pipeline = SpeechPipeline()
@@ -401,6 +403,7 @@ async def run_text_mode(container) -> None:
             if not line:
                 continue
 
+            is_voice_turn = False
             # Check slash command or shell ! command
             if line.startswith("/") or line.startswith("!"):
                 res = await cli.handle_command(line)
@@ -410,6 +413,7 @@ async def run_text_mode(container) -> None:
                     line = res[len("voice_prompt:"):].strip()
                     if not line:
                         continue
+                    is_voice_turn = True
                 elif res == "switch_mode:no-wake":
                     await run_in_session_no_wake_loop(container, cli, turn_meta)
                     continue
@@ -435,7 +439,7 @@ async def run_text_mode(container) -> None:
                 await container.event_bus.publish(
                     UserInputEvent(
                         text=line,
-                        source="text"
+                        source="voice" if is_voice_turn else "text"
                     )
                 )
 
@@ -458,6 +462,11 @@ async def run_no_wake_mode(container) -> None:
     from speech.speech_to_text.stt_pipeline import SpeechPipeline
     from speech.text_to_speech.tts_pipeline import stop_audio
     from utils.cli import CLI
+
+    # Initialize persistence and user settings so voice responses are active
+    await container.db.initialize()
+    await container.user_settings.load_from_db(container.db)
+    container.user_settings.voice_enabled = True
 
     assistant = container.assistant
     await assistant.start(launch_listen_loop=False)
@@ -546,6 +555,11 @@ async def run_wakeword_mode(container) -> None:
     from speech.wake_word.detector import WakeWordDetector
     from speech.speech_to_text.stt_pipeline import SpeechPipeline
     from utils.cli import CLI
+
+    # Initialize persistence and user settings so voice responses are active
+    await container.db.initialize()
+    await container.user_settings.load_from_db(container.db)
+    container.user_settings.voice_enabled = True
 
     assistant = container.assistant
     await assistant.start(launch_listen_loop=False)
