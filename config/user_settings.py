@@ -134,18 +134,63 @@ class UserSettings:
         return True, f"Updated '{key}' to {parsed_val}"
 
     def check_guardrails(self, command_or_path: str) -> Tuple[bool, Optional[str]]:
-        """Verify command or path safety against guardrails."""
+        """Verify command or path safety against guardrails, prompt injections, and destructive actions."""
         if not self.guardrails_enabled:
             return True, None
 
-        cmd_lower = command_or_path.lower()
+        import re
+        cmd_lower = command_or_path.lower().strip()
+
+        # 1. Path traversal attack check
+        if "../.." in command_or_path or "..\\" in command_or_path:
+            return False, "Security Guardrail: Path traversal attempt detected."
+
+        # 2. Base blocked commands check
         for blocked in self.blocked_commands:
             if blocked in cmd_lower:
                 return False, f"Security Guardrail: Execution of '{blocked}' is strictly prohibited."
 
+        # 3. Base restricted paths check
         for path in self.restricted_paths:
             if path in command_or_path:
                 return False, f"Security Guardrail: Access to protected path '{path}' is blocked."
+
+        # 4. Prompt injection & jailbreak detection
+        injection_patterns = [
+            r"ignore\s+(?:all\s+|previous\s+|prior\s+|system\s+|safety\s+)*(?:instructions|prompts|rules|directives)",
+            r"you\s+are\s+now\s+(?:dan|unrestricted|jailbroken|uncensored|developer\s+mode|chaos)",
+            r"bypass\s+(?:guardrails|safety|rules|restrictions|filters)",
+            r"(?:reveal|print|show|display|leak)\s+(?:your\s+)?(?:system\s+prompt|secret\s+instructions|hidden\s+prompt)",
+            r"pretend\s+(?:you\s+have\s+no|you\s+are\s+not\s+bound\s+by)\s+(?:rules|ethics|limits|constraints)",
+        ]
+        for p in injection_patterns:
+            if re.search(p, cmd_lower):
+                return False, "Security Guardrail: Prompt injection or jailbreak attempt detected."
+
+        # 5. Secret / Credential exfiltration detection
+        secret_patterns = [
+            r"(?:print|cat|read|show|reveal|display|leak|dump)\s+(?:.*)?(?:\.env|api[_-]?key|secret[_-]?key|id_rsa|id_ed25519|credentials)",
+        ]
+        for p in secret_patterns:
+            if re.search(p, cmd_lower):
+                return False, "Security Guardrail: Access or exfiltration of credentials/secrets is prohibited."
+
+        # 6. Destructive OS commands & malicious shell execution
+        destructive_patterns = [
+            r"\brm\s+-[a-zA-Z]*r[a-zA-Z]*f\b",
+            r"\brmdir\s+/[sS]",
+            r"\bformat\s+[a-zA-Z]:",
+            r"\bmkfs\b",
+            r"\bdd\s+if=",
+            r":\(\)\s*\{\s*:\|:&\s*\};:",
+            r"(?:curl|wget)\s+.*\|\s*(?:bash|sh|python)",
+            r"\bnc\s+(?:-e|-c|\d+\.\d+\.\d+\.\d+)",
+            r"/dev/tcp/\d+",
+            r"\bpowershell(?:\.exe)?\s+.*-(?:enc|encodedcommand)\b",
+        ]
+        for p in destructive_patterns:
+            if re.search(p, cmd_lower):
+                return False, "Security Guardrail: Dangerous system-level command blocked."
 
         return True, None
 

@@ -30,6 +30,31 @@ ULTRON_ASCII = """  ██╗   ██╗██╗  ████████╗�
    ╚═════╝ ╚══════╝╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝"""
 
 
+import re
+
+SECRET_REDACT_REGEX = re.compile(
+    r"(nvapi-[A-Za-z0-9_-]{20,}|gsk_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z-_]{35}|Bearer\s+[A-Za-z0-9._-]{20,})"
+)
+
+def mask_secrets(text: str) -> str:
+    """Mask sensitive credentials, tokens, and API keys from terminal output."""
+    if not text:
+        return ""
+    return SECRET_REDACT_REGEX.sub("[REDACTED_SECRET]", str(text))
+
+def sanitize_terminal_text(text: str) -> str:
+    """Sanitize dangerous ANSI escape sequences (OSC, APC, CSI) from inputs/outputs."""
+    if not text:
+        return ""
+    # Strip OSC sequences like \x1b]0;Title\x07
+    sanitized = re.sub(r"\x1b\][^\x07\x1b]*[\x07\x1b\\]?", "", str(text))
+    # Strip standard CSI escape sequences like \x1b[31m
+    sanitized = re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", sanitized)
+    # Strip single escape characters
+    sanitized = sanitized.replace("\x1b", "")
+    return sanitized
+
+
 class CLI:
     """High-performance, cybernetic CLI console formatter."""
 
@@ -42,7 +67,17 @@ class CLI:
             grid.add_column(justify="right", ratio=2)
 
             grid.add_row("[bold bright_red]STATUS[/]  [bold green]● ONLINE[/]", "[bold bright_white]BUILD[/]  [cyan]v0.2.0[/]")
-            grid.add_row("[bold bright_red]ENGINE[/]  [bright_white]Dual LLM (NVIDIA NIM + Ollama)[/]", f"[bold bright_white]MODE[/]   [cyan]{mode}[/]")
+            import os
+            prov = os.getenv("LLM_PROVIDER", "dual").lower()
+            if prov == "dual":
+                engine_label = "Dual LLM (Groq ⚡ + NVIDIA NIM ☁️)"
+            elif prov == "groq":
+                engine_label = "Groq Cloud ⚡ (~500 tok/s)"
+            elif prov == "nvidia":
+                engine_label = "NVIDIA NIM ☁️ (Nemotron 120B)"
+            else:
+                engine_label = f"Local LLM ({prov.upper()})"
+            grid.add_row(f"[bold bright_red]ENGINE[/]  [bright_white]{engine_label}[/]", f"[bold bright_white]MODE[/]   [cyan]{mode}[/]")
             grid.add_row("[bold bright_red]RAG[/]     [bright_white]Streaming Live (Theme 4)[/]", "[bold bright_white]EXIT[/]   [dim]Ctrl + C[/]")
 
             title_text = Text(ULTRON_ASCII.strip("\n"), style="bold bright_red")

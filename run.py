@@ -173,7 +173,9 @@ async def run_text_mode(container) -> None:
         latency = (time.perf_counter() - turn_meta["start"]) * 1000 if turn_meta["start"] > 0 else 0.0
         p_tok = max(1, len(turn_meta["text"].split()))
         c_tok = max(1, len(event.response.split()))
-        cli.render_response(event.response, latency_ms=latency, tokens=p_tok + c_tok)
+        from utils.cli import mask_secrets, sanitize_terminal_text
+        safe_resp = mask_secrets(sanitize_terminal_text(event.response))
+        cli.render_response(safe_resp, latency_ms=latency, tokens=p_tok + c_tok)
         turn_meta["received"] = True
 
     container.event_bus.subscribe(ResponseReadyEvent, _on_response_ready)
@@ -194,7 +196,7 @@ async def run_text_mode(container) -> None:
             history_file = os.path.expanduser("~/.ultron_history")
             completer = NestedCompleter.from_nested_dict({
                 "/help": None,
-                "/model": {"groq": None, "nvidia": None, "qwen": None},
+                "/model": {"dual": None, "groq": None, "nvidia": None, "qwen": None},
                 "/rag": None,
                 "/chats": None,
                 "/switch": None,
@@ -249,7 +251,8 @@ async def run_text_mode(container) -> None:
             except EOFError:
                 break
 
-            line = line.strip()
+            from utils.cli import sanitize_terminal_text
+            line = sanitize_terminal_text(line.strip())
             if not line:
                 continue
 

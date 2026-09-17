@@ -35,6 +35,7 @@ class LLMSwitcher(BaseLLM):
         self._nvidia: BaseLLM | None = None
         self._qwen: BaseLLM | None = None
         self._groq: BaseLLM | None = None
+        self._dual: BaseLLM | None = None
 
     def _get_groq(self) -> BaseLLM:
         if self._groq is None:
@@ -48,6 +49,30 @@ class LLMSwitcher(BaseLLM):
             self._nvidia = NvidiaLLM(self._settings)
         return self._nvidia
 
+    def _get_by_name(self, name: str) -> BaseLLM:
+        name = (name or "").lower()
+        if name == "groq":
+            return self._get_groq()
+        elif name == "nvidia":
+            return self._get_nvidia()
+        elif name == "qwen":
+            return self._get_qwen()
+        # Fallback to groq if available, else nvidia
+        return self._get_groq() if self.is_available("groq") else self._get_nvidia()
+
+    def _get_dual(self) -> BaseLLM:
+        if self._dual is None:
+            from llm.dual import DualLLM
+            primary_name = getattr(self._settings, "dual_llm_primary", "groq")
+            secondary_name = getattr(self._settings, "dual_llm_secondary", "nvidia")
+            if primary_name == secondary_name:
+                secondary_name = "nvidia" if primary_name == "groq" else "groq"
+            primary = self._get_by_name(primary_name)
+            secondary = self._get_by_name(secondary_name)
+            strategy = getattr(self._settings, "dual_llm_strategy", "speculative_race")
+            self._dual = DualLLM(primary, secondary, strategy=strategy)
+        return self._dual
+
     def _get_qwen(self) -> BaseLLM:
         if self._qwen is None:
             from llm.qwen import QwenLLM
@@ -58,6 +83,8 @@ class LLMSwitcher(BaseLLM):
         provider = self._provider
         # If the requested provider is configured and available, use it directly
         if self.is_available(provider):
+            if provider == "dual":
+                return self._get_dual()
             if provider == "groq":
                 return self._get_groq()
             if provider == "qwen":
@@ -82,6 +109,11 @@ class LLMSwitcher(BaseLLM):
 
     def is_available(self, provider: str) -> bool:
         provider = (provider or "").lower()
+        if provider == "dual":
+            # Dual LLM is available if at least one configured sub-provider is available
+            prim = getattr(self._settings, "dual_llm_primary", "groq")
+            sec = getattr(self._settings, "dual_llm_secondary", "nvidia")
+            return self.is_available(prim) or self.is_available(sec)
         if provider == "groq":
             key = getattr(self._settings, "groq_api_key", None)
             value = key.get_secret_value() if hasattr(key, "get_secret_value") else str(key or "")
@@ -96,12 +128,12 @@ class LLMSwitcher(BaseLLM):
         return False
 
     def available_providers(self) -> list[str]:
-        return [p for p in ("groq", "qwen", "nvidia") if self.is_available(p)]
+        return [p for p in ("dual", "groq", "qwen", "nvidia") if self.is_available(p)]
 
     def switch(self, provider: str) -> None:
         provider = provider.lower()
-        if provider not in ("groq", "nvidia", "qwen"):
-            raise ValueError(f"Unknown LLM provider: {provider}. Use 'groq', 'nvidia' or 'qwen'.")
+        if provider not in ("dual", "groq", "nvidia", "qwen"):
+            raise ValueError(f"Unknown LLM provider: {provider}. Use 'dual', 'groq', 'nvidia' or 'qwen'.")
         if not self.is_available(provider):
             # Refuse here, where the caller can report it, rather than letting
             # every later request blow up.

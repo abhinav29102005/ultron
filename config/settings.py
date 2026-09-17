@@ -60,8 +60,11 @@ class Settings(BaseSettings):
     groq_model: str = Field(default="openai/gpt-oss-20b")
     groq_fast_model: str = Field(default="openai/gpt-oss-20b")
 
-    # LLM Provider selection (nvidia | qwen | groq)
+    # LLM Provider selection (nvidia | qwen | groq | dual)
     llm_provider: str = Field(default="groq")
+    dual_llm_primary: str = Field(default="groq")
+    dual_llm_secondary: str = Field(default="nvidia")
+    dual_llm_strategy: str = Field(default="speculative_race")
 
     # Local Qwen / Ollama settings
     ollama_base_url: str = Field(default="http://localhost:11434")
