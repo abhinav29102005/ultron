@@ -148,6 +148,132 @@ async def run(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+async def run_in_session_no_wake_loop(container, cli, turn_meta: dict) -> None:
+    """Run interactive push-to-talk loop directly within the active session."""
+    import asyncio
+    import time
+    from rich.console import Console
+    from core.state import AssistantState
+    from core.event_bus import UserInputEvent
+    from speech.hold_to_talk import HoldToTalkController
+    from speech.speech_to_text.transcriber import Transcriber
+    from speech.text_to_speech.tts_pipeline import stop_audio
+    from utils.cli import CLI
+
+    hold_key = container.settings.hold_to_talk_key if container.settings else "right_shift"
+    controller = HoldToTalkController(key_name=hold_key)
+    controller.start_listening()
+    transcriber = Transcriber()
+
+    Console().print(f"\n[bold bright_magenta]🎙️  PUSH-TO-TALK MODE ACTIVATED[/bold bright_magenta]")
+    Console().print(f"[dim]Hold [bold bright_white]{hold_key}[/bold bright_white] to talk, release to send.[/dim]")
+    Console().print(f"[dim]Press [bold cyan]Ctrl+C[/bold cyan] anytime to return to interactive text prompt.\n[/dim]")
+
+    sess = container.session_manager.active_session
+    sess_id = sess.id if sess else "main"
+    turn_id = 0
+
+    try:
+        while container.assistant.state != AssistantState.SHUTTING_DOWN:
+            audio = await asyncio.to_thread(controller.collect_while_held)
+            if audio is not None:
+                stop_audio()
+                CLI.print_processing()
+                text = await asyncio.to_thread(transcriber.transcribe, audio)
+                text = (text or "").strip()
+                if text:
+                    turn_id += 1
+                    turn_meta["start"] = time.perf_counter()
+                    turn_meta["text"] = text
+                    turn_meta["received"] = False
+
+                    container.cancellation_manager.set_active_turn(sess_id, turn_id)
+                    CLI.print_user_input(text)
+
+                    await container.assistant._set_state(AssistantState.THINKING)
+                    with Console().status("[bold cyan]ULTRON thinking...[/bold cyan]", spinner="dots"):
+                        await container.event_bus.publish(
+                            UserInputEvent(
+                                text=text,
+                                source="voice",
+                                session_id=sess_id,
+                                turn_id=turn_id,
+                            )
+                        )
+                    while not turn_meta["received"] and container.assistant.state == AssistantState.THINKING:
+                        await asyncio.sleep(0.05)
+                    Console().print(f"[dim]Ready. Hold [bold]{hold_key}[/bold] to speak, or press Ctrl+C to return to text.[/dim]\n")
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        pass
+    finally:
+        controller.stop_listening()
+        Console().print("\n[bold green]✓ Returned to interactive text prompt.[/bold green]\n")
+
+
+async def run_in_session_wakeword_loop(container, cli, turn_meta: dict) -> None:
+    """Run interactive wake-word detection loop directly within the active session."""
+    import asyncio
+    import time
+    from rich.console import Console
+    from core.state import AssistantState
+    from core.event_bus import UserInputEvent
+    from speech.wake_word.detector import WakeWordDetector
+    from speech.speech_to_text.stt_pipeline import SpeechPipeline
+    from utils.cli import CLI
+
+    Console().print("\n[bold bright_cyan]🔍 WAKE-WORD MODE ACTIVATED[/bold bright_cyan]")
+    Console().print("[dim]Listening for wake word ('Computer' / 'Hey Jarvis'). Speak after detection.[/dim]")
+    Console().print("[dim]Press [bold cyan]Ctrl+C[/bold cyan] anytime to return to interactive text prompt.\n[/dim]")
+
+    wake_detector = WakeWordDetector()
+    pipeline = SpeechPipeline()
+
+    sess = container.session_manager.active_session
+    sess_id = sess.id if sess else "main"
+    turn_id = 0
+
+    try:
+        while container.assistant.state != AssistantState.SHUTTING_DOWN:
+            Console().print("[dim]🔍 Waiting for wake word... (Ctrl+C to return to text)[/dim]")
+            heard = await asyncio.to_thread(wake_detector.detect)
+            if not heard:
+                continue
+
+            Console().print("\n[bold green]✅ Wake word detected![/bold green]")
+            CLI.print_listening()
+
+            text = await asyncio.to_thread(pipeline.listen)
+            text = (text or "").strip()
+            if text:
+                turn_id += 1
+                turn_meta["start"] = time.perf_counter()
+                turn_meta["text"] = text
+                turn_meta["received"] = False
+
+                container.cancellation_manager.set_active_turn(sess_id, turn_id)
+                CLI.print_user_input(text)
+
+                await container.assistant._set_state(AssistantState.THINKING)
+                with Console().status("[bold cyan]ULTRON thinking...[/bold cyan]", spinner="dots"):
+                    await container.event_bus.publish(
+                        UserInputEvent(
+                            text=text,
+                            source="voice",
+                            session_id=sess_id,
+                            turn_id=turn_id,
+                        )
+                    )
+                while not turn_meta["received"] and container.assistant.state == AssistantState.THINKING:
+                    await asyncio.sleep(0.05)
+                Console().print("[dim]Listening for next wake word...[/dim]\n")
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        pass
+    finally:
+        wake_detector.stop()
+        pipeline.stop()
+        Console().print("\n[bold green]✓ Returned to interactive text prompt.[/bold green]\n")
+
+
 async def run_text_mode(container) -> None:
     """Run in interactive cybernetic text input mode (terminal)."""
     import os
@@ -185,7 +311,7 @@ async def run_text_mode(container) -> None:
 
     from utils.api_key_manager import prompt_first_run_if_needed
     await prompt_first_run_if_needed(cli=cli, container=container)
-    Console().print("[dim]Type your message or use slash commands ([bold cyan]/help, /model, /rag, /chats, /mode, /voice, /text, /settings, /tokens[/bold cyan]).[/dim]\n")
+    Console().print("[dim]Type your message or use slash commands ([bold cyan]/help, /model, /listen, /mode, /rag, /chats, /voice, /text, /settings[/bold cyan]).[/dim]\n")
 
     # Configure prompt_toolkit for rich interactive terminal sessions
     is_interactive = sys.stdin.isatty()
@@ -200,13 +326,27 @@ async def run_text_mode(container) -> None:
             completer = NestedCompleter.from_nested_dict({
                 "/help": None,
                 "/model": {"dual": None, "groq": None, "nvidia": None, "qwen": None},
+                "/listen": None,
+                "/talk": None,
+                "/mic": None,
+                "/nowake": None,
+                "/wakeword": None,
                 "/rag": None,
                 "/chats": None,
                 "/switch": None,
                 "/new": None,
                 "/delete": None,
                 "/rename": None,
-                "/mode": {"hybrid": None, "online": None, "offline": None},
+                "/mode": {
+                    "text": None,
+                    "no-wake": None,
+                    "wakeword": None,
+                    "voice": None,
+                    "ptt": None,
+                    "hybrid": None,
+                    "online": None,
+                    "offline": None,
+                },
                 "/settings": None,
                 "/set": None,
                 "/tokens": None,
@@ -266,7 +406,17 @@ async def run_text_mode(container) -> None:
                 res = await cli.handle_command(line)
                 if res == "exit":
                     break
-                if res:
+                if isinstance(res, str) and res.startswith("voice_prompt:"):
+                    line = res[len("voice_prompt:"):].strip()
+                    if not line:
+                        continue
+                elif res == "switch_mode:no-wake":
+                    await run_in_session_no_wake_loop(container, cli, turn_meta)
+                    continue
+                elif res == "switch_mode:wakeword":
+                    await run_in_session_wakeword_loop(container, cli, turn_meta)
+                    continue
+                elif res:
                     continue
 
             # Guardrails validation

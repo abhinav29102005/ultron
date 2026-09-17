@@ -83,3 +83,48 @@ async def test_live_powershell_execution():
         await cli.execute_powershell_command("Write-Output 'ULTRON_PS_OK'")
         printed = " ".join(str(call) for call in mock_print.call_args_list)
         assert "ULTRON_PS_OK" in printed
+
+
+@pytest.mark.asyncio
+async def test_cybernetic_cli_in_session_mode_switching():
+    sm = MagicMock()
+    settings = UserSettings()
+    cli = CyberneticCLI(sm, settings)
+
+    # 1. /mode no-wake
+    res = await cli.handle_command("/mode no-wake")
+    assert res == "switch_mode:no-wake"
+
+    # 2. /mode wakeword
+    res = await cli.handle_command("/mode wakeword")
+    assert res == "switch_mode:wakeword"
+
+    # 3. Shorthand /nowake and /wakeword
+    res_nowake = await cli.handle_command("/nowake")
+    assert res_nowake == "switch_mode:no-wake"
+    res_wake = await cli.handle_command("/wakeword")
+    assert res_wake == "switch_mode:wakeword"
+
+    # 4. /mode text
+    with patch("rich.console.Console.print") as mock_print:
+        res_text = await cli.handle_command("/mode text")
+        assert res_text is True
+        printed = " ".join(str(c) for c in mock_print.call_args_list)
+        assert "TEXT" in printed
+
+
+@pytest.mark.asyncio
+async def test_cybernetic_cli_listen_command():
+    sm = MagicMock()
+    settings = UserSettings()
+    cli = CyberneticCLI(sm, settings)
+
+    with patch.object(cli, "capture_voice_turn", new_callable=AsyncMock) as mock_voice:
+        mock_voice.return_value = "system status check"
+        res = await cli.handle_command("/listen")
+        assert res == "voice_prompt:system status check"
+
+    with patch.object(cli, "capture_voice_turn", new_callable=AsyncMock) as mock_voice:
+        mock_voice.return_value = "weather query"
+        res = await cli.handle_command("/talk")
+        assert res == "voice_prompt:weather query"

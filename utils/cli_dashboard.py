@@ -94,6 +94,8 @@ class CyberneticCLI:
         table.add_row("/new [title]", "Create a fresh session and switch to it")
         table.add_row("/delete <id>", "Delete a chat session and its history")
         table.add_row("/rename <title>", "Rename the active chat session")
+        table.add_row("/listen, /talk", "Speak a voice command now (real-time microphone visualizer)")
+        table.add_row("/mode [no-wake|wakeword|text]", "Switch interaction mode dynamically within this session")
         table.add_row("/mode <online|offline|hybrid>", "Switch model execution mode (Cloud vs Local)")
         table.add_row("/settings, /config", "View all dynamic user configuration settings")
         table.add_row("/set <key> <val>", "Change a user setting on-the-fly (e.g., /set voice_enabled true)")
@@ -375,16 +377,39 @@ class CyberneticCLI:
                 if rec.uncertainty:
                     console.print(f"[bold yellow]⚠️ Uncertainty:[/bold yellow] [dim]{rec.uncertainty}[/dim]")
 
+        elif cmd in ("listen", "talk", "mic", "speak", "record"):
+            spoken = await self.capture_voice_turn()
+            if spoken:
+                return f"voice_prompt:{spoken}"
+            return True
+
+        elif cmd in ("nowake", "no-wake", "ptt"):
+            return "switch_mode:no-wake"
+
+        elif cmd in ("wakeword", "wake"):
+            return "switch_mode:wakeword"
+
         elif cmd == "mode":
-            if not arg:
-                console.print(f"[cyan]Current mode:[/cyan] {self.settings.execution_mode}. Usage: /mode <online|offline|hybrid>")
-            else:
-                ok, msg = await self.settings.update_setting(self.sm.db, "execution_mode", arg)
+            mode_arg = arg.lower().strip()
+            if not mode_arg:
+                console.print(f"[cyan]Current interaction mode:[/cyan] [bold green]text[/bold green]")
+                console.print(f"[dim]Available interaction modes: [bold cyan]/mode no-wake[/bold cyan] (push-to-talk), [bold cyan]/mode wakeword[/bold cyan], [bold cyan]/mode text[/bold cyan][/dim]")
+                console.print(f"[dim]Available engine modes: [bold cyan]/mode online[/bold cyan], [bold cyan]/mode offline[/bold cyan], [bold cyan]/mode hybrid[/bold cyan][/dim]")
+            elif mode_arg in ("no-wake", "nowake", "voice", "ptt", "push-to-talk"):
+                return "switch_mode:no-wake"
+            elif mode_arg in ("wakeword", "wake", "wake-word"):
+                return "switch_mode:wakeword"
+            elif mode_arg in ("text", "chat"):
+                console.print("[bold green]✓ Interaction Mode: TEXT (Interactive terminal prompt)[/bold green]")
+            elif mode_arg in ("online", "offline", "hybrid"):
+                ok, msg = await self.settings.update_setting(self.sm.db, "execution_mode", mode_arg)
                 if ok:
-                    console.print(f"[bold green]✓ Mode updated:[/bold green] {self.settings.execution_mode.upper()}")
+                    console.print(f"[bold green]✓ Engine mode updated:[/bold green] {self.settings.execution_mode.upper()}")
                     self.render_header()
                 else:
                     console.print(f"[bold red]✗ {msg}[/bold red]")
+            else:
+                console.print(f"[red]Unknown mode '{arg}'. Available: no-wake, wakeword, text, online, offline, hybrid[/red]")
 
         elif cmd == "voice":
             if not arg:
@@ -502,4 +527,25 @@ class CyberneticCLI:
             ))
         except Exception as exc:
             console.print(f"[bold red]✗ Failed to run PowerShell command: {exc}[/bold red]")
+
+    async def capture_voice_turn(self) -> str:
+        """Capture a single voice command from the microphone with live volume bar."""
+        import asyncio
+        from speech.speech_to_text.stt_pipeline import SpeechPipeline
+
+        console.print("[bold bright_cyan]● LISTENING[/] [dim]Speak command into microphone now...[/]")
+        pipeline = SpeechPipeline()
+        try:
+            text = await asyncio.to_thread(pipeline.listen)
+            text = (text or "").strip()
+            if text:
+                console.print(f"[bold bright_white]USER (Spoken)[/] [bright_cyan]›[/] [white]{text}[/]")
+            else:
+                console.print("[dim](No speech detected)[/dim]")
+            return text
+        except Exception as exc:
+            console.print(f"[bold red]✗ Microphone capture error: {exc}[/bold red]")
+            return ""
+        finally:
+            pipeline.stop()
 
