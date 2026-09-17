@@ -199,3 +199,23 @@ class TestRecorderAudioBarIntegration:
         assert res is not None
         assert len(render_calls) > 0
         assert all(kwargs.get("is_held") is True for _, kwargs in render_calls)
+
+
+class TestWhisperAntiHallucination:
+    """Test protection against runaway Whisper hallucinations on silence / noise."""
+
+    def test_filter_repetitions_discards_runaway_loops(self):
+        from speech.speech_to_text.transcriber import _filter_repetitions
+
+        # The Finnish hallucination observed when microphone hears quiet room noise
+        assert _filter_repetitions("Täällä muissa on tullut tullut tullut.") == ""
+        # Repetitive English loops
+        assert _filter_repetitions("thank you thank you thank you thank you") == ""
+        assert _filter_repetitions("word word word") == ""
+
+    def test_filter_repetitions_preserves_valid_speech(self):
+        from speech.speech_to_text.transcriber import _filter_repetitions
+
+        assert _filter_repetitions("What is the current system status?") == "What is the current system status?"
+        assert _filter_repetitions("Open Chrome and search for Python") == "Open Chrome and search for Python"
+        assert _filter_repetitions("") == ""

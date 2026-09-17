@@ -9,6 +9,8 @@ MODEL_NAME = os.getenv("STT_MODEL", "base")
 DEVICE = os.getenv("STT_DEVICE", "cpu")
 COMPUTE_TYPE = os.getenv("STT_COMPUTE_TYPE", "int8")
 BEAM_SIZE = int(os.getenv("STT_BEAM_SIZE", "3"))
+_stt_lang = os.getenv("STT_LANGUAGE", "en").strip()
+STT_LANGUAGE = None if _stt_lang.lower() in ("auto", "none", "") else _stt_lang
 
 # Recorder
 SAMPLE_RATE = int(os.getenv("AUDIO_SAMPLE_RATE", "16000"))
