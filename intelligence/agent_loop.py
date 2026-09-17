@@ -230,7 +230,7 @@ class AgentLoop:
         ))
 
         while True:
-            active_tools = [] if (is_pure_smalltalk and steps == 0) else self.tools
+            active_tools = self.tools
             response = await self.llm.complete_with_tools(messages, active_tools)
 
             if not isinstance(response, ToolCallResponse):

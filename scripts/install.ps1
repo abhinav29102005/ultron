@@ -76,21 +76,23 @@ if (-not (Test-Path '.env')) {
     Copy-Item '.env.example' -Destination '.env'
 }
 
-# --- Add Alias ---
-Write-Host "[INFO] Setting up 'ultron' & 'ultron' aliases in PowerShell Profile..." -ForegroundColor Cyan
+# --- Add Function to Profile ---
+Write-Host "[INFO] Setting up 'ultron' command in PowerShell Profile..." -ForegroundColor Cyan
 
+$ProfileDir = Split-Path $PROFILE -Parent
+if ($ProfileDir -and -not (Test-Path $ProfileDir)) {
+    New-Item -ItemType Directory -Path $ProfileDir -Force | Out-Null
+}
 if (-not (Test-Path $PROFILE)) {
-    New-Item -Type File -Path $PROFILE -Force | Out-Null
+    New-Item -ItemType File -Path $PROFILE -Force | Out-Null
 }
 
-$alias_ultron = "function ultron { Set-Location '$INSTALL_DIR'; uv run python run.py }"
-$alias_ultron = "function ultron { Set-Location '$INSTALL_DIR'; uv run python run.py }"
+$ultron_cmd = "function ultron { Set-Location '$INSTALL_DIR'; if (Test-Path '.\ultron.ps1') { .\ultron.ps1 @args } else { uv run python run.py @args } }"
 $profile_content = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
 if ($profile_content -notmatch 'function ultron') {
-    Add-Content $PROFILE "`n# ULTRON Agent Aliases"
-    Add-Content $PROFILE $alias_ultron
-    Add-Content $PROFILE $alias_ultron
-    Write-Host "[OK] Added ultron & ultron aliases to $PROFILE" -ForegroundColor Green
+    Add-Content $PROFILE "`n# ULTRON Agent Function"
+    Add-Content $PROFILE $ultron_cmd
+    Write-Host "[OK] Added 'ultron' command to $PROFILE" -ForegroundColor Green
 }
 
 Write-Host ''

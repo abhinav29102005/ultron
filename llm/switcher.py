@@ -110,10 +110,10 @@ class LLMSwitcher(BaseLLM):
     def is_available(self, provider: str) -> bool:
         provider = (provider or "").lower()
         if provider == "dual":
-            # Dual LLM is available if at least one configured sub-provider is available
+            # Dual LLM is available if both configured sub-providers are available
             prim = getattr(self._settings, "dual_llm_primary", "groq")
             sec = getattr(self._settings, "dual_llm_secondary", "nvidia")
-            return self.is_available(prim) or self.is_available(sec)
+            return self.is_available(prim) and self.is_available(sec)
         if provider == "groq":
             key = getattr(self._settings, "groq_api_key", None)
             value = key.get_secret_value() if hasattr(key, "get_secret_value") else str(key or "")
@@ -128,7 +128,7 @@ class LLMSwitcher(BaseLLM):
         return False
 
     def available_providers(self) -> list[str]:
-        return [p for p in ("dual", "groq", "qwen", "nvidia") if self.is_available(p)]
+        return [p for p in ("qwen", "nvidia", "groq", "dual") if self.is_available(p)]
 
     def switch(self, provider: str) -> None:
         provider = provider.lower()

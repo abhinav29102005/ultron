@@ -326,7 +326,9 @@ class ApplicationSkill(Skill):
         "terminal": "terminal",
         "command prompt": "terminal",
         "cmd": "terminal",
+        "cli": "powershell",
         "powershell": "powershell",
+        "pwsh": "powershell",
         "file explorer": "explorer",
         "explorer": "explorer",
         "settings": "settings",
@@ -437,8 +439,8 @@ class ApplicationSkill(Skill):
         },
 
         "terminal": {
-            "open": "cmd.exe",
-            "close": "cmd.exe",
+            "open": "powershell.exe",
+            "close": "powershell.exe",
             "type": "exe",
         },
 

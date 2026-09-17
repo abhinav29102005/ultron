@@ -209,6 +209,8 @@ async def run_text_mode(container) -> None:
                 "/tokens": None,
                 "/voice": {"on": None, "off": None},
                 "/text": None,
+                "/ps": None,
+                "/powershell": None,
                 "/guardrails": {"on": None, "off": None},
                 "/clear": None,
                 "/setup": None,
@@ -256,8 +258,8 @@ async def run_text_mode(container) -> None:
             if not line:
                 continue
 
-            # Check slash command
-            if line.startswith("/"):
+            # Check slash command or shell ! command
+            if line.startswith("/") or line.startswith("!"):
                 res = await cli.handle_command(line)
                 if res == "exit":
                     break
@@ -397,6 +399,10 @@ async def run_wakeword_mode(container) -> None:
 
     wake_detector = WakeWordDetector()
     pipeline = SpeechPipeline()
+
+    import uuid as _uuid
+    session_id = str(_uuid.uuid4())
+    turn_id = 0
 
     try:
         while assistant.state != AssistantState.SHUTTING_DOWN:

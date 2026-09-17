@@ -29,6 +29,7 @@ import os
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -395,9 +396,16 @@ class CodeSkill(Skill):
         parts = [part.strip('"') for part in parts]
         directory = self._resolve(cwd) if cwd else None
 
+        # On Windows, resolve executable path so that .cmd/.bat (e.g. npm.cmd) and virtualenv bins are found
+        exec_parts = list(parts)
+        if sys.platform == "win32" and not Path(exec_parts[0]).is_file():
+            resolved = shutil.which(exec_parts[0])
+            if resolved:
+                exec_parts[0] = resolved
+
         try:
             process = await asyncio.create_subprocess_exec(
-                *parts,
+                *exec_parts,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
                 stdin=asyncio.subprocess.DEVNULL,

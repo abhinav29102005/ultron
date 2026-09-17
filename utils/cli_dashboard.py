@@ -100,6 +100,7 @@ class CyberneticCLI:
         table.add_row("/tokens", "Display session token usage, latency, and estimated cost")
         table.add_row("/voice [on|off]", "Switch to voice-based responses (spoken audio ON)")
         table.add_row("/text", "Switch to text-only responses (spoken audio OFF)")
+        table.add_row("/ps <cmd>, !<cmd>", "Execute native Windows PowerShell CLI command & stream telemetry")
         table.add_row("/guardrails <on|off>", "Toggle safety execution guardrails")
         table.add_row("/clear", "Clear message history of the current chat")
         table.add_row("/help", "Show this command manual")
@@ -213,15 +214,18 @@ class CyberneticCLI:
         Intercept and process a slash command.
         Returns True if the line was a handled slash command, False if it is a normal chat prompt.
         """
-        if not line.startswith("/"):
+        if not line.startswith("/") and not line.startswith("!"):
             return False
 
-        parts = line[1:].strip().split(maxsplit=1)
-        if not parts:
-            return True
-
-        cmd = parts[0].lower()
-        arg = parts[1].strip() if len(parts) > 1 else ""
+        if line.startswith("!"):
+            cmd = "ps"
+            arg = line[1:].strip()
+        else:
+            parts = line[1:].strip().split(maxsplit=1)
+            if not parts:
+                return True
+            cmd = parts[0].lower()
+            arg = parts[1].strip() if len(parts) > 1 else ""
 
         if cmd in ("help", "?"):
             self.render_help()
@@ -419,6 +423,12 @@ class CyberneticCLI:
                 console.print("[bold green]✓ Cleared conversation context.[/bold green]")
                 self.render_header()
 
+        elif cmd in ("ps", "powershell", "exec", "sh"):
+            if not arg:
+                console.print("[red]Usage: /ps <command> (or !<command>)[/red]")
+            else:
+                await self.execute_powershell_command(arg)
+
         elif cmd in ("exit", "quit", "q"):
             console.print("[bold cyan]Saving session and shutting down ULTRON. Farewell.[/bold cyan]")
             return "exit"
@@ -427,3 +437,69 @@ class CyberneticCLI:
             console.print(f"[red]Unknown command '/{cmd}'. Type /help for valid commands.[/red]")
 
         return True
+
+    async def execute_powershell_command(self, cmd_str: str) -> None:
+        """Execute a native Windows PowerShell command asynchronously with telemetry."""
+        import asyncio
+        import subprocess
+        import time
+
+        # Security guardrails validation
+        if hasattr(self, "settings") and self.settings:
+            safe, reason = self.settings.check_guardrails(cmd_str)
+            if not safe:
+                console.print(f"[bold red]🛡️ {reason}[/bold red]")
+                return
+
+        console.print(f"[dim]⚡ Running in PowerShell:[/] [bold cyan]{cmd_str}[/]")
+        start = time.perf_counter()
+
+        try:
+            ps_executable = "powershell.exe"
+            args = [
+                ps_executable,
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                cmd_str,
+            ]
+            proc = await asyncio.create_subprocess_exec(
+                *args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            stdout, stderr = await proc.communicate()
+            elapsed_ms = (time.perf_counter() - start) * 1000
+
+            out_text = stdout.decode("utf-8", errors="replace").strip()
+            err_text = stderr.decode("utf-8", errors="replace").strip()
+
+            from utils.cli import mask_secrets, sanitize_terminal_text
+            out_text = mask_secrets(sanitize_terminal_text(out_text))
+            err_text = mask_secrets(sanitize_terminal_text(err_text))
+
+            if proc.returncode == 0:
+                body = out_text if out_text else "[dim](Command completed with exit code 0 and no output)[/dim]"
+                border = "green"
+                status_badge = f"[bold green]● Exit: 0[/] [dim]({elapsed_ms:.1f}ms)[/]"
+            else:
+                body = f"{out_text}\n[bold red]{err_text}[/]" if out_text else f"[bold red]{err_text}[/]"
+                if not body.strip():
+                    body = f"[red]Process exited with code {proc.returncode}[/red]"
+                border = "red"
+                status_badge = f"[bold red]● Exit: {proc.returncode}[/] [dim]({elapsed_ms:.1f}ms)[/]"
+
+            console.print(Panel(
+                body,
+                title=f"[bold cyan] PowerShell CLI [/] {status_badge}",
+                title_align="left",
+                border_style=border,
+                box=ROUNDED,
+                padding=(0, 1),
+            ))
+        except Exception as exc:
+            console.print(f"[bold red]✗ Failed to run PowerShell command: {exc}[/bold red]")
+
