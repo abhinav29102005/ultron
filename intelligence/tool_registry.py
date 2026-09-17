@@ -292,14 +292,11 @@ ALL_TOOLS: tuple[ToolDef, ...] = (
     ToolDef(
         name="research",
         description=(
-            "Research a question on the web and return a cited answer. This "
-            "reads the actual pages, not just search results, so it takes "
-            "20-45 seconds -- use it when the user wants to KNOW something "
-            "current or external: news, prices, scores, facts about the world, "
-            "documentation.\n\n"
-            "Do NOT use this for anything about the user's own machine, "
-            "screen, files, or code. A bug in their code is not researched, it "
-            "is read with read_screen_text or read_file and then fixed."
+            "Search the web and read external online pages. Use this ONLY when "
+            "the user explicitly asks to search the web, browse online, or query "
+            "live breaking news, current stock prices, or live sports scores. "
+            "Do NOT use this for general knowledge, definitions, history, "
+            "geography, or questions you already know from your training data."
         ),
         intent="search_web",
         properties={"query": _str("The question to research.")},

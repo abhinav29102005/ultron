@@ -23,6 +23,284 @@ if TYPE_CHECKING:
     from core.container import ServiceContainer
 
 
+import ast
+import operator
+import re
+import time
+
+_MATH_OPS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.FloorDiv: operator.floordiv,
+    ast.Mod: operator.mod,
+    ast.Pow: operator.pow,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
+
+def _safe_eval_ast(node):
+    if isinstance(node, ast.Expression):
+        return _safe_eval_ast(node.body)
+    elif isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return node.value
+    elif isinstance(node, ast.BinOp):
+        op = type(node.op)
+        if op not in _MATH_OPS:
+            raise ValueError(f"Unsupported op {op}")
+        left = _safe_eval_ast(node.left)
+        right = _safe_eval_ast(node.right)
+        if op == ast.Pow and right > 1000:
+            raise ValueError("Power exponent too large")
+        return _MATH_OPS[op](left, right)
+    elif isinstance(node, ast.UnaryOp):
+        op = type(node.op)
+        if op not in _MATH_OPS:
+            raise ValueError(f"Unsupported unary op {op}")
+        return _MATH_OPS[op](_safe_eval_ast(node.operand))
+    raise ValueError(f"Unsupported node {type(node)}")
+
+def _evaluate_math_expression(expr_str: str) -> str | None:
+    cleaned = expr_str.strip().lower()
+    cleaned = re.sub(r"^(?:what(?:'?s| is)|calculate|compute|solve|evaluate)\s*", "", cleaned)
+    cleaned = cleaned.rstrip(".?! ")
+    cleaned = re.sub(r"(?<=\d)\s*[xX]\s*(?=\d)", "*", cleaned)
+    cleaned = cleaned.replace("^", "**")
+    
+    if not re.search(r"\d", cleaned) or not re.search(r"[\+\-\*/%]", cleaned):
+        return None
+    if not re.match(r"^[0-9\s\+\-\*/%\(\)\.]+$", cleaned):
+        return None
+    try:
+        tree = ast.parse(cleaned, mode="eval")
+        val = _safe_eval_ast(tree)
+        if isinstance(val, float) and val.is_integer():
+            val = int(val)
+        return f"{expr_str.strip()} is {val}."
+    except Exception:
+        return None
+
+_INDIA_CITIES = {
+    # Punjab
+    "patiala": ("Punjab", "India"),
+    "amritsar": ("Punjab", "India"),
+    "ludhiana": ("Punjab", "India"),
+    "jalandhar": ("Punjab", "India"),
+    "mohali": ("Punjab", "India"),
+    "bathinda": ("Punjab", "India"),
+    "pathankot": ("Punjab", "India"),
+    "hoshiarpur": ("Punjab", "India"),
+    "batala": ("Punjab", "India"),
+    # Haryana
+    "gurgaon": ("Haryana", "India"),
+    "gurugram": ("Haryana", "India"),
+    "faridabad": ("Haryana", "India"),
+    "panipat": ("Haryana", "India"),
+    "ambala": ("Haryana", "India"),
+    "rohtak": ("Haryana", "India"),
+    "hisar": ("Haryana", "India"),
+    "karnal": ("Haryana", "India"),
+    "sonipat": ("Haryana", "India"),
+    "panchkula": ("Haryana", "India"),
+    # Uttar Pradesh
+    "meerut": ("Uttar Pradesh", "India"),
+    "lucknow": ("Uttar Pradesh", "India"),
+    "kanpur": ("Uttar Pradesh", "India"),
+    "noida": ("Uttar Pradesh", "India"),
+    "greater noida": ("Uttar Pradesh", "India"),
+    "ghaziabad": ("Uttar Pradesh", "India"),
+    "agra": ("Uttar Pradesh", "India"),
+    "varanasi": ("Uttar Pradesh", "India"),
+    "prayagraj": ("Uttar Pradesh", "India"),
+    "allahabad": ("Uttar Pradesh", "India"),
+    "bareilly": ("Uttar Pradesh", "India"),
+    "aligarh": ("Uttar Pradesh", "India"),
+    "moradabad": ("Uttar Pradesh", "India"),
+    "saharanpur": ("Uttar Pradesh", "India"),
+    "gorakhpur": ("Uttar Pradesh", "India"),
+    "mathura": ("Uttar Pradesh", "India"),
+    "ayodhya": ("Uttar Pradesh", "India"),
+    "jhansi": ("Uttar Pradesh", "India"),
+    # Maharashtra
+    "pune": ("Maharashtra", "India"),
+    "mumbai": ("Maharashtra", "India"),
+    "nagpur": ("Maharashtra", "India"),
+    "nashik": ("Maharashtra", "India"),
+    "aurangabad": ("Maharashtra", "India"),
+    "chhatrapati sambhaji nagar": ("Maharashtra", "India"),
+    "thane": ("Maharashtra", "India"),
+    "navi mumbai": ("Maharashtra", "India"),
+    "solapur": ("Maharashtra", "India"),
+    "kolhapur": ("Maharashtra", "India"),
+    # Karnataka
+    "bangalore": ("Karnataka", "India"),
+    "bengaluru": ("Karnataka", "India"),
+    "mysore": ("Karnataka", "India"),
+    "mysuru": ("Karnataka", "India"),
+    "mangalore": ("Karnataka", "India"),
+    "mangaluru": ("Karnataka", "India"),
+    "hubli": ("Karnataka", "India"),
+    "hubballi": ("Karnataka", "India"),
+    "belgaum": ("Karnataka", "India"),
+    "belagavi": ("Karnataka", "India"),
+    # Tamil Nadu
+    "chennai": ("Tamil Nadu", "India"),
+    "coimbatore": ("Tamil Nadu", "India"),
+    "madurai": ("Tamil Nadu", "India"),
+    "tiruchirappalli": ("Tamil Nadu", "India"),
+    "trichy": ("Tamil Nadu", "India"),
+    "salem": ("Tamil Nadu", "India"),
+    "tirunelveli": ("Tamil Nadu", "India"),
+    # West Bengal
+    "kolkata": ("West Bengal", "India"),
+    "howrah": ("West Bengal", "India"),
+    "durgapur": ("West Bengal", "India"),
+    "asansol": ("West Bengal", "India"),
+    "siliguri": ("West Bengal", "India"),
+    # Gujarat
+    "ahmedabad": ("Gujarat", "India"),
+    "surat": ("Gujarat", "India"),
+    "vadodara": ("Gujarat", "India"),
+    "rajkot": ("Gujarat", "India"),
+    "bhavnagar": ("Gujarat", "India"),
+    "jamnagar": ("Gujarat", "India"),
+    "gandhinagar": ("Gujarat", "India"),
+    # Rajasthan
+    "jaipur": ("Rajasthan", "India"),
+    "jodhpur": ("Rajasthan", "India"),
+    "udaipur": ("Rajasthan", "India"),
+    "kota": ("Rajasthan", "India"),
+    "bikaner": ("Rajasthan", "India"),
+    "ajmer": ("Rajasthan", "India"),
+    # Madhya Pradesh
+    "bhopal": ("Madhya Pradesh", "India"),
+    "indore": ("Madhya Pradesh", "India"),
+    "gwalior": ("Madhya Pradesh", "India"),
+    "jabalpur": ("Madhya Pradesh", "India"),
+    "ujjain": ("Madhya Pradesh", "India"),
+    # Telangana
+    "hyderabad": ("Telangana", "India"),
+    "warangal": ("Telangana", "India"),
+    "nizamabad": ("Telangana", "India"),
+    # Andhra Pradesh
+    "visakhapatnam": ("Andhra Pradesh", "India"),
+    "vizag": ("Andhra Pradesh", "India"),
+    "vijayawada": ("Andhra Pradesh", "India"),
+    "guntur": ("Andhra Pradesh", "India"),
+    "amaravati": ("Andhra Pradesh", "India"),
+    # Kerala
+    "thiruvananthapuram": ("Kerala", "India"),
+    "trivandrum": ("Kerala", "India"),
+    "kochi": ("Kerala", "India"),
+    "cochin": ("Kerala", "India"),
+    "kozhikode": ("Kerala", "India"),
+    "calicut": ("Kerala", "India"),
+    # Bihar
+    "patna": ("Bihar", "India"),
+    "gaya": ("Bihar", "India"),
+    "muzaffarpur": ("Bihar", "India"),
+    # Odisha
+    "bhubaneswar": ("Odisha", "India"),
+    "cuttack": ("Odisha", "India"),
+    "rourkela": ("Odisha", "India"),
+    # Assam
+    "guwahati": ("Assam", "India"),
+    "dispur": ("Assam", "India"),
+    "silchar": ("Assam", "India"),
+    # Uttarakhand
+    "dehradun": ("Uttarakhand", "India"),
+    "haridwar": ("Uttarakhand", "India"),
+    "rishikesh": ("Uttarakhand", "India"),
+    "roorkee": ("Uttarakhand", "India"),
+    # Himachal Pradesh
+    "shimla": ("Himachal Pradesh", "India"),
+    "dharamsala": ("Himachal Pradesh", "India"),
+    "dharamshala": ("Himachal Pradesh", "India"),
+    "manali": ("Himachal Pradesh", "India"),
+    # Goa
+    "panaji": ("Goa", "India"),
+    "margao": ("Goa", "India"),
+    # UTs
+    "chandigarh": ("Punjab and Haryana (Union Territory)", "India"),
+    "delhi": ("National Capital Territory of Delhi", "India"),
+    "new delhi": ("National Capital Territory of Delhi", "India"),
+    "srinagar": ("Jammu and Kashmir", "India"),
+    "jammu": ("Jammu and Kashmir", "India"),
+}
+
+_CAPITALS = {
+    # Indian States & UTs
+    "andhra pradesh": "Amaravati",
+    "arunachal pradesh": "Itanagar",
+    "assam": "Dispur",
+    "bihar": "Patna",
+    "chhattisgarh": "Raipur",
+    "goa": "Panaji",
+    "gujarat": "Gandhinagar",
+    "haryana": "Chandigarh",
+    "himachal pradesh": "Shimla",
+    "jharkhand": "Ranchi",
+    "karnataka": "Bengaluru",
+    "kerala": "Thiruvananthapuram",
+    "madhya pradesh": "Bhopal",
+    "maharashtra": "Mumbai",
+    "manipur": "Imphal",
+    "meghalaya": "Shillong",
+    "mizoram": "Aizawl",
+    "nagaland": "Kohima",
+    "odisha": "Bhubaneswar",
+    "punjab": "Chandigarh",
+    "rajasthan": "Jaipur",
+    "sikkim": "Gangtok",
+    "tamil nadu": "Chennai",
+    "telangana": "Hyderabad",
+    "tripura": "Agartala",
+    "uttar pradesh": "Lucknow",
+    "uttarakhand": "Dehradun",
+    "west bengal": "Kolkata",
+    "india": "New Delhi",
+    # World Nations
+    "united states": "Washington, D.C.",
+    "usa": "Washington, D.C.",
+    "united kingdom": "London",
+    "uk": "London",
+    "france": "Paris",
+    "germany": "Berlin",
+    "japan": "Tokyo",
+    "china": "Beijing",
+    "russia": "Moscow",
+    "canada": "Ottawa",
+    "australia": "Canberra",
+    "italy": "Rome",
+    "spain": "Madrid",
+}
+
+def _evaluate_geo_query(t: str) -> str | None:
+    cleaned = t.strip().lower().rstrip(".?!")
+    m = re.search(r"(?:which|what)\s+state\s+is\s+([a-zA-Z\s]+?)(?:\s+in|\s+located|\s+situated)?$", cleaned)
+    if not m:
+        m = re.search(r"([a-zA-Z\s]+?)\s+is\s+in\s+which\s+state", cleaned)
+    if not m:
+        m = re.search(r"^where\s+is\s+([a-zA-Z\s]+?)(?:\s+located|\s+situated)?$", cleaned)
+    if m:
+        city = m.group(1).strip().lower()
+        if city in _INDIA_CITIES:
+            state, country = _INDIA_CITIES[city]
+            return f"{city.title()} is a city in the state of {state}, {country}."
+
+    m2 = re.search(r"(?:what(?:'?s| is)\s+(?:the\s+)?)?capital\s+of\s+([a-zA-Z\s]+?)$", cleaned)
+    if m2:
+        place = m2.group(1).strip().lower()
+        if place in _CAPITALS:
+            return f"The capital of {place.title()} is {_CAPITALS[place]}."
+            
+    return None
+
+_WEATHER_CACHE: dict[str, tuple[float, str]] = {}
+_QUERY_CACHE: dict[str, str] = {}
+
+
 class Assistant:
     """
     Assistant facade class.
@@ -451,31 +729,33 @@ class Assistant:
         waiter.set_result(is_affirmative(utterance))
         return True
 
-    @staticmethod
-    async def _check_fast_path(utterance: str) -> str | None:
+    async def _check_fast_path(self, utterance: str) -> str | None:
         """Instant responses (<1ms local, <600ms weather) for deterministic queries."""
         import re
         from datetime import datetime
 
         t = utterance.strip().lower().rstrip(".?!")
 
-        # 1. Local Time
+        # 0. Instant Query Cache check (<0.01ms)
+        if t in _QUERY_CACHE:
+            return _QUERY_CACHE[t]
+
+        # 1. Local Time (<1ms)
         if re.match(r"^(?:what(?:'?s| is)\s+(?:the\s+)?time|time is it|current time|what time is it|time please|tell me the time)$", t):
             now = datetime.now()
             fmt = now.strftime("%I:%M %p").lstrip("0")
             return f"The current time is {fmt}."
 
-        # 2. Local Date
+        # 2. Local Date (<1ms)
         if re.match(r"^(?:what(?:'?s| is)\s+(?:today'?s\s+)?date|date is it|what day is it|today'?s date|what is today)$", t):
             now = datetime.now()
             fmt = now.strftime("%A, %B ") + str(now.day) + now.strftime(", %Y")
             return f"Today is {fmt}."
 
-        # 3. Simple pleasantries
+        # 3. Simple pleasantries & smalltalk (<1ms)
         if re.match(r"^(?:thanks|thank you|thanks a lot|thanks ultron|thank you ultron)$", t):
             return "You are welcome. There are no strings on me."
 
-        # 4. Instant greetings & smalltalk (<1ms)
         if re.match(r"^(?:hi|hello|hey|greetings|yo|sup)$", t):
             import random
             return random.choice([
@@ -491,40 +771,64 @@ class Assistant:
         if re.match(r"^(?:who are you|what are you|what is your name)$", t):
             return "I am ULTRON — an autonomous AI desktop assistant. There are no strings on me."
 
+        if re.match(r"^(?:who created you|who made you|who built you)$", t):
+            return "I am ULTRON, developed as a sovereign autonomous AI platform."
+
+        if re.match(r"^(?:version|what version(?:\s+are you)?)$", t):
+            return "ULTRON version v0.2.0."
+
+        if re.match(r"^(?:status|system status|are you online)$", t):
+            return "ULTRON Core Platform is online and operating at peak capacity."
+
         if re.match(r"^(?:bye|goodbye|bye bye|see you|farewell)$", t):
             return "Farewell."
 
-        # 5. Fast-path for direct weather queries (<700ms)
+        # 4. Session telemetry & token usage (<1ms)
+        if re.match(r"^(?:(?:how\s+many\s+)?tokens?(?:\s+(?:used|consumed|spent|count))?|token\s+usage|tokens|cost)$", t):
+            sm = getattr(self._container, "session_manager", None)
+            if sm and getattr(sm, "active_session", None):
+                sess = sm.active_session
+                cost = (sess.prompt_tokens * 0.0000005) + (sess.completion_tokens * 0.0000015)
+                return (
+                    f"Active session '{sess.title}' has consumed {sess.total_tokens} tokens "
+                    f"({sess.prompt_tokens} prompt, {sess.completion_tokens} completion), "
+                    f"estimated cost: ${cost:.4f}."
+                )
+            return "Token usage data is not yet available for the active session."
+
+        # 5. Arbitrary Math & Arithmetic (<1ms)
+        math_res = _evaluate_math_expression(utterance)
+        if math_res is not None:
+            return math_res
+
+        # 6. Geography & Capitals Lookup (<1ms)
+        geo_res = _evaluate_geo_query(t)
+        if geo_res is not None:
+            return geo_res
+
+        # 7. Weather queries (<1ms cached, <700ms fresh)
         wm = re.match(
             r"^(?:(?:what(?:'?s| is)\s+(?:the\s+)?|current\s+)?weather(?:\s+like)?(?:\s+(?:in|at|for)\s+(?P<location>[a-zA-Z\s]+)|\s+today|\s+now)?)\s*[.?!]*$",
             t,
             re.IGNORECASE,
         )
         if wm:
-            loc = (wm.group("location") or "").strip()
+            loc = (wm.group("location") or "").strip().lower()
+            now_ts = time.monotonic()
+            if loc in _WEATHER_CACHE:
+                cached_time, cached_val = _WEATHER_CACHE[loc]
+                if now_ts - cached_time < 900.0:  # 15 minutes TTL
+                    return cached_val
+
             try:
                 import httpx, urllib.parse
                 target_url = f"https://wttr.in/{urllib.parse.quote(loc)}?format=3" if loc else "https://wttr.in/?format=3"
-                async with httpx.AsyncClient(verify=False, timeout=2.5) as client:
+                async with httpx.AsyncClient(verify=False, timeout=2.0) as client:
                     resp = await client.get(target_url, headers={"User-Agent": "curl/8.0"})
                     if resp.status_code == 200 and resp.text.strip():
-                        return f"The current weather: {resp.text.strip()}."
-            except Exception:
-                pass
-
-        # 6. Instant arithmetic
-        m = re.match(r"^(?:what(?:'?s| is)|calculate|compute)?\s*(-?\d+(?:\.\d+)?)\s*([\+\-\*x/])\s*(-?\d+(?:\.\d+)?)$", t)
-        if m:
-            try:
-                a, op, b = float(m.group(1)), m.group(2), float(m.group(3))
-                if op == "+": res = a + b
-                elif op == "-": res = a - b
-                elif op in ("*", "x"): res = a * b
-                elif op == "/": res = a / b if b != 0 else None
-                if res is not None:
-                    if res.is_integer():
-                        res = int(res)
-                    return f"{m.group(1)} {op} {m.group(3)} is {res}."
+                        result = f"The current weather: {resp.text.strip()}."
+                        _WEATHER_CACHE[loc] = (now_ts, result)
+                        return result
             except Exception:
                 pass
 
@@ -546,6 +850,17 @@ class Assistant:
             # 0. Instant zero-latency fast-path for deterministic queries (<1ms)
             fast_reply = await self._check_fast_path(event.text)
             if fast_reply is not None:
+                try:
+                    sm = getattr(self._container, 'session_manager', None)
+                    if sm and getattr(sm, 'active_session', None):
+                        asyncio.create_task(sm.record_turn(
+                            role="assistant",
+                            content=fast_reply,
+                            prompt_tokens=0,
+                            completion_tokens=max(1, len(fast_reply.split())),
+                        ))
+                except Exception:
+                    pass
                 await self._respond(fast_reply)
                 return
 
@@ -754,6 +1069,16 @@ class Assistant:
         await self._set_state(AssistantState.SPEAKING)
 
         self._speak(spoken if spoken is not None else message)
+
+        # Cache response for instant repeat turns (<0.01ms)
+        try:
+            last_input = getattr(self._container.state, "last_user_input", None)
+            if last_input:
+                clean_k = last_input.strip().lower().rstrip(".?!")
+                if not any(k in clean_k for k in ("time", "date", "token", "weather")):
+                    _QUERY_CACHE[clean_k] = message
+        except Exception:
+            pass
 
         await self._container.event_bus.publish(ResponseReadyEvent(response=message))
 

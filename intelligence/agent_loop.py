@@ -303,7 +303,7 @@ class AgentLoop:
             # human-readable message, return immediately without burning 5-10s on a redundant LLM pass.
             DIRECT_RETURN_TOOLS = {
                 "get_weather", "weather", "system_weather",
-                "get_time", "get_date", "calculate",
+                "calculate",
                 "take_screenshot", "set_volume", "set_brightness", "set_microphone",
                 "play_music", "control_media", "open_application", "close_application",
                 "open_website", "open_folder", "add_note", "list_notes",
