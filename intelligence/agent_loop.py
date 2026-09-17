@@ -299,6 +299,24 @@ class AgentLoop:
                     }
                 )
 
+            # Direct return fast-path: for single query/action tools that produced a complete,
+            # human-readable message, return immediately without burning 5-10s on a redundant LLM pass.
+            DIRECT_RETURN_TOOLS = {
+                "get_weather", "weather", "system_weather",
+                "get_time", "get_date", "calculate",
+                "take_screenshot", "set_volume", "set_brightness", "set_microphone",
+                "play_music", "control_media", "open_application", "close_application",
+                "open_website", "open_folder", "add_note", "list_notes",
+                "set_reminder", "list_reminders", "cancel_reminder", "end_session"
+            }
+            if (
+                len(response.tool_calls) == 1
+                and response.tool_calls[0].name in DIRECT_RETURN_TOOLS
+                and output.ran
+                and not output.text.startswith("Error")
+            ):
+                return AgentResult(text=output.text, tools_used=tools_used, steps=steps)
+
     # ── one tool call ─────────────────────────────────────────────────────
 
     @dataclass

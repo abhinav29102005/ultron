@@ -452,8 +452,8 @@ class Assistant:
         return True
 
     @staticmethod
-    def _check_fast_path(utterance: str) -> str | None:
-        """Instant zero-latency responses (<1ms) for simple deterministic queries."""
+    async def _check_fast_path(utterance: str) -> str | None:
+        """Instant responses (<1ms local, <600ms weather) for deterministic queries."""
         import re
         from datetime import datetime
 
@@ -494,7 +494,25 @@ class Assistant:
         if re.match(r"^(?:bye|goodbye|bye bye|see you|farewell)$", t):
             return "Farewell."
 
-        # 4. Instant arithmetic
+        # 5. Fast-path for direct weather queries (<700ms)
+        wm = re.match(
+            r"^(?:(?:what(?:'?s| is)\s+(?:the\s+)?|current\s+)?weather(?:\s+like)?(?:\s+(?:in|at|for)\s+(?P<location>[a-zA-Z\s]+)|\s+today|\s+now)?)\s*[.?!]*$",
+            t,
+            re.IGNORECASE,
+        )
+        if wm:
+            loc = (wm.group("location") or "").strip()
+            try:
+                import httpx, urllib.parse
+                target_url = f"https://wttr.in/{urllib.parse.quote(loc)}?format=3" if loc else "https://wttr.in/?format=3"
+                async with httpx.AsyncClient(verify=False, timeout=2.5) as client:
+                    resp = await client.get(target_url, headers={"User-Agent": "curl/8.0"})
+                    if resp.status_code == 200 and resp.text.strip():
+                        return f"The current weather: {resp.text.strip()}."
+            except Exception:
+                pass
+
+        # 6. Instant arithmetic
         m = re.match(r"^(?:what(?:'?s| is)|calculate|compute)?\s*(-?\d+(?:\.\d+)?)\s*([\+\-\*x/])\s*(-?\d+(?:\.\d+)?)$", t)
         if m:
             try:
@@ -526,7 +544,7 @@ class Assistant:
 
         try:
             # 0. Instant zero-latency fast-path for deterministic queries (<1ms)
-            fast_reply = self._check_fast_path(event.text)
+            fast_reply = await self._check_fast_path(event.text)
             if fast_reply is not None:
                 await self._respond(fast_reply)
                 return
