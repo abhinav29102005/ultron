@@ -95,6 +95,8 @@ class HoldToTalkController:
 
     def collect_while_held(self) -> bytes | None:
         """Record audio chunks while the key is held, return concatenated array."""
+        from utils.cli import CLI
+
         # Ensure listener is running (start only once)
         if self._listener is None:
             self.start_listening()
@@ -110,12 +112,15 @@ class HoldToTalkController:
             chunks = []
             max_duration = 30.0  # safety cap
             start_time = time.time()
+            CLI.render_listening_bar(0.0, is_held=True, status="Key held, speak...")
             while self.is_held() and (time.time() - start_time) < max_duration:
                 try:
                     chunk = self.recorder.audio_queue.get(timeout=0.05)
                     chunks.append(chunk.copy())
+                    CLI.render_listening_bar(chunk.flatten(), is_held=True)
                 except Exception:
                     continue
+            CLI.clear_listening_bar()
             # After release, gather remaining speech via VAD/silence if any
             if chunks:
                 import numpy as np
@@ -123,5 +128,4 @@ class HoldToTalkController:
                 return audio
             return None
         finally:
-            # Do NOT stop listener here; keep it alive across calls
-            pass
+            CLI.clear_listening_bar()

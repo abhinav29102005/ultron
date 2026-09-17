@@ -93,6 +93,7 @@ class Recorder:
         self.speech_buffer.clear()
         self.is_recording = False
         self.last_speech_time = None
+        CLI.clear_listening_bar()
 
     def start(self):
         """Open the input stream. Safe to call when already open."""
@@ -125,6 +126,7 @@ class Recorder:
 
     def stop(self):
         """Close the input stream. Safe to call when already closed."""
+        CLI.clear_listening_bar()
         with self._state_lock:
             stream, self.stream = self.stream, None
             if stream is not None:
@@ -161,39 +163,55 @@ class Recorder:
 
         deadline = time.time() + timeout
 
-        while True:
-            if not self.is_recording and time.time() > deadline:
-                logger.debug("Nothing was said within %.1fs; giving up.", timeout)
-                return None
+        try:
+            while True:
+                if not self.is_recording and time.time() > deadline:
+                    logger.debug("Nothing was said within %.1fs; giving up.", timeout)
+                    return None
 
-            try:
-                chunk = self.audio_queue.get(timeout=0.25).flatten()
-            except queue.Empty:
-                continue
+                try:
+                    chunk = self.audio_queue.get(timeout=0.25).flatten()
+                except queue.Empty:
+                    if self.is_recording and self.last_speech_time:
+                        if time.time() - self.last_speech_time > self.silence_timeout:
+                            CLI.clear_listening_bar()
+                            CLI.print_processing()
+                            audio = np.concatenate(self.speech_buffer)
+                            self.speech_buffer.clear()
+                            self.rolling_buffer.clear()
+                            self.is_recording = False
+                            return audio
+                    continue
 
-            self.rolling_buffer.append(chunk)
-            if len(self.rolling_buffer) < self.rolling_buffer.maxlen:
-                continue
+                self.rolling_buffer.append(chunk)
+                if len(self.rolling_buffer) < self.rolling_buffer.maxlen:
+                    continue
 
-            audio = np.concatenate(self.rolling_buffer)
-            speech = self.vad.has_speech(audio)
+                audio = np.concatenate(self.rolling_buffer)
+                speech = self.vad.has_speech(audio)
 
-            if speech:
-                self.last_speech_time = time.time()
-                if not self.is_recording:
-                    CLI.print_listening()
-                    self.is_recording = True
-                    # Save the audio that happened BEFORE detection
-                    self.speech_buffer = list(self.rolling_buffer)
-                else:
+                if speech:
+                    self.last_speech_time = time.time()
+                    if not self.is_recording:
+                        self.is_recording = True
+                        # Save the audio that happened BEFORE detection
+                        self.speech_buffer = list(self.rolling_buffer)
+                    else:
+                        self.speech_buffer.append(chunk)
+                    CLI.render_listening_bar(chunk, is_speech=True)
+
+                elif self.is_recording:
                     self.speech_buffer.append(chunk)
-
-            elif self.is_recording:
-                self.speech_buffer.append(chunk)
-                if time.time() - self.last_speech_time > self.silence_timeout:
-                    CLI.print_processing()
-                    audio = np.concatenate(self.speech_buffer)
-                    self.speech_buffer.clear()
-                    self.rolling_buffer.clear()
-                    self.is_recording = False
-                    return audio
+                    CLI.render_listening_bar(chunk, is_speech=False)
+                    if time.time() - self.last_speech_time > self.silence_timeout:
+                        CLI.clear_listening_bar()
+                        CLI.print_processing()
+                        audio = np.concatenate(self.speech_buffer)
+                        self.speech_buffer.clear()
+                        self.rolling_buffer.clear()
+                        self.is_recording = False
+                        return audio
+                else:
+                    CLI.render_listening_bar(chunk, is_speech=False)
+        finally:
+            CLI.clear_listening_bar()
