@@ -129,11 +129,8 @@ class UserSettings:
             parsed_val = style
 
         setattr(self, key, parsed_val)
-        if db and hasattr(db, "set_setting"):
-            import inspect
-            res = db.set_setting(key, parsed_val)
-            if inspect.isawaitable(res):
-                await res
+        if db:
+            await db.set_setting(key, parsed_val)
         return True, f"Updated '{key}' to {parsed_val}"
 
     def check_guardrails(self, command_or_path: str) -> Tuple[bool, Optional[str]]:
