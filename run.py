@@ -452,6 +452,9 @@ def main() -> None:
         render_provider_hub()
         return
 
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
