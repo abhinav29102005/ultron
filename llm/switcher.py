@@ -7,12 +7,15 @@ behind a single BaseLLM interface, allowing runtime switching.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from llm.base import BaseLLM
 from llm.response import LLMResponse, LLMUsage
+
+logger = logging.getLogger("ultron.llm.switcher")
 
 if TYPE_CHECKING:
     from config.settings import Settings
@@ -69,8 +72,13 @@ class LLMSwitcher(BaseLLM):
                 secondary_name = "nvidia" if primary_name == "groq" else "groq"
             primary = self._get_by_name(primary_name)
             secondary = self._get_by_name(secondary_name)
+            fallbacks = [
+                self._get_by_name(p)
+                for p in self.available_providers()
+                if p not in (primary_name, secondary_name, "dual")
+            ]
             strategy = getattr(self._settings, "dual_llm_strategy", "speculative_race")
-            self._dual = DualLLM(primary, secondary, strategy=strategy)
+            self._dual = DualLLM(primary, secondary, strategy=strategy, fallbacks=fallbacks)
         return self._dual
 
     def _get_qwen(self) -> BaseLLM:
@@ -180,15 +188,56 @@ class LLMSwitcher(BaseLLM):
     def provider_name(self) -> str:
         return f"switcher({self._provider})"
 
+    def _candidate_providers(self) -> list[str]:
+        curr = self._provider
+        candidates = [curr]
+        for p in self.available_providers():
+            if p not in candidates:
+                candidates.append(p)
+        return candidates
+
     async def complete(self, messages: list[dict[str, str]], **kwargs) -> LLMResponse:
+        candidates = self._candidate_providers()
+        last_exc: BaseException | None = None
+        for p in candidates:
+            try:
+                llm = self._get_dual() if p == "dual" else self._get_by_name(p)
+                return await llm.complete(messages, **kwargs)
+            except Exception as e:
+                last_exc = e
+                logger.warning(f"[LLMSwitcher] Provider '{p}' failed ({e}); circling to next candidate...")
+        if last_exc:
+            raise last_exc
         return await self._active().complete(messages, **kwargs)
 
     async def complete_with_tools(self, messages: list[dict], tools: list[dict], **kwargs):
+        candidates = self._candidate_providers()
+        last_exc: BaseException | None = None
+        for p in candidates:
+            try:
+                llm = self._get_dual() if p == "dual" else self._get_by_name(p)
+                return await llm.complete_with_tools(messages, tools, **kwargs)
+            except Exception as e:
+                last_exc = e
+                logger.warning(f"[LLMSwitcher] Provider '{p}' failed tool call ({e}); circling to next candidate...")
+        if last_exc:
+            raise last_exc
         return await self._active().complete_with_tools(messages, tools, **kwargs)
 
     async def stream(self, messages: list[dict[str, str]], **kwargs) -> AsyncIterator[str]:
-        async for chunk in self._active().stream(messages, **kwargs):
-            yield chunk
+        candidates = self._candidate_providers()
+        last_exc: BaseException | None = None
+        for p in candidates:
+            try:
+                llm = self._get_dual() if p == "dual" else self._get_by_name(p)
+                async for chunk in llm.stream(messages, **kwargs):
+                    yield chunk
+                return
+            except Exception as e:
+                last_exc = e
+                logger.warning(f"[LLMSwitcher] Provider '{p}' stream failed ({e}); circling to next candidate...")
+        if last_exc:
+            raise last_exc
 
     def build_system_message(self, content: str) -> dict[str, str]:
         return self._active().build_system_message(content)

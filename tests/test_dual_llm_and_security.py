@@ -85,6 +85,27 @@ async def test_dual_llm_tools_fallback():
     assert "secondary tools done" in res.content
 
 
+@pytest.mark.asyncio
+async def test_dual_llm_multi_model_circular_rotation():
+    primary = FakeLLM("primary", should_fail=True)
+    secondary = FakeLLM("secondary", should_fail=True)
+    fallback = FakeLLM("fallback", delay=0.01, response_text="fallback answer")
+
+    dual = DualLLM(primary=primary, secondary=secondary, fallbacks=[fallback])
+    res = await dual.complete([{"role": "user", "content": "test"}])
+    assert "fallback: fallback answer" in res.content
+
+
+def test_consent_affirmative_natural_fix_phrases():
+    from utils.consent import is_affirmative
+    assert is_affirmative("fix all the issues") is True
+    assert is_affirmative("fix it") is True
+    assert is_affirmative("apply all") is True
+    assert is_affirmative("patch it") is True
+    assert is_affirmative("don't fix it") is False
+    assert is_affirmative("no thanks") is False
+
+
 def test_switcher_supports_dual():
     settings = Settings(llm_provider="dual")
     switcher = LLMSwitcher(settings)

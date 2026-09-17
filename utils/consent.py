@@ -37,7 +37,9 @@ _AFFIRMATIVE_RE = re.compile(
     r"\b(?:yes|yeah|yep|yup|yes please|sure|ok|okay|alright|"
     r"go ahead|go for it|do it|please do|confirm|confirmed|approved|"
     r"sounds good|absolutely|definitely|certainly|affirmative|"
-    r"that'?s right|correct|proceed|carry on)\b",
+    r"that'?s right|correct|proceed|carry on|"
+    r"fix(?: it| them| all| all the issues| the issues)?"
+    r"|apply(?: it| them| all| the fixes| fixes)?|patch(?: it)?|make the (?:fix|fixes|changes))\b",
     re.IGNORECASE,
 )
 

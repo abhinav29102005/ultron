@@ -34,13 +34,20 @@ class NvidiaLLM(BaseLLM):
         Initialise the NVIDIA NIM provider.
         """
         # Guard against retired models from older/stale .env files (returns HTTP 410 Gone)
+        retired_models = (
+            "meta/llama-3.1-8b-instruct",
+            "meta/llama3-8b-instruct",
+            "meta/llama-3.1-70b-instruct",
+            "meta/llama-3.3-70b-instruct",
+            "nvidia/nemotron-3-nano-30b-a3b",
+        )
         resolved_model = settings.nvidia_model
-        if resolved_model in ("meta/llama-3.1-8b-instruct", "meta/llama3-8b-instruct"):
+        if resolved_model in retired_models:
             resolved_model = "nvidia/nemotron-3-super-120b-a12b"
 
         resolved_fast_model = settings.nvidia_fast_model
-        if resolved_fast_model in ("meta/llama-3.1-8b-instruct", "meta/llama3-8b-instruct"):
-            resolved_fast_model = "nvidia/nemotron-3-nano-30b-a3b"
+        if resolved_fast_model in retired_models:
+            resolved_fast_model = "nvidia/nemotron-3-super-120b-a12b"
 
         super().__init__(
             model=resolved_model,

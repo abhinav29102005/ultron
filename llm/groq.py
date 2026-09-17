@@ -113,6 +113,22 @@ class GroqLLM(BaseLLM):
                     raise
         raise RuntimeError("Unreachable retry state")
 
+    _GROQ_MODELS = ("openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b")
+
+    @classmethod
+    def _is_rate_limit_or_missing(cls, exc: BaseException) -> bool:
+        msg = str(exc).lower()
+        return (
+            "429" in msg
+            or "rate limit" in msg
+            or "quota" in msg
+            or "tpd" in msg
+            or "tpm" in msg
+            or "model_not_found" in msg
+            or "404" in msg
+            or "does not exist" in msg
+        )
+
     async def complete(
         self,
         messages: list[dict[str, str]],
@@ -120,44 +136,60 @@ class GroqLLM(BaseLLM):
     ) -> LLMResponse:
         started_at = datetime.utcnow()
         use_fast = kwargs.pop("use_fast_model", False)
-        model = self._fast_model if use_fast else self.model
-        if any(dep in model.lower() for dep in ("llama", "mixtral")):
-            model = "openai/gpt-oss-20b" if use_fast else "openai/gpt-oss-120b"
-            self.model = "openai/gpt-oss-120b"
-            self._fast_model = "openai/gpt-oss-20b"
+        candidate_models = list(self._GROQ_MODELS)
+        preferred = self._fast_model if use_fast else self.model
+        if preferred in candidate_models:
+            candidate_models.remove(preferred)
+        candidate_models.insert(0, preferred)
 
         max_tokens = max(1024, int(kwargs.get("max_tokens", self._fast_max_tokens if use_fast else self.max_tokens)))
         temperature = kwargs.get("temperature", 0.0 if use_fast else self.temperature)
 
-        try:
-            response = await self._client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                timeout=self._timeout,
-            )
-        except Exception as e:
-            if "model_not_found" in str(e).lower() or "404" in str(e) or "does not exist" in str(e).lower():
-                fallback_model = "openai/gpt-oss-20b" if use_fast else "openai/gpt-oss-120b"
-                if model != fallback_model:
-                    self.model = "openai/gpt-oss-120b"
-                    self._fast_model = "openai/gpt-oss-20b"
-                    model = fallback_model
-                    response = await self._client.chat.completions.create(
-                        model=model,
-                        messages=messages,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                        timeout=self._timeout,
-                    )
-                else:
-                    raise
-            else:
+        last_exc: BaseException | None = None
+        for m in candidate_models:
+            if any(dep in m.lower() for dep in ("llama", "mixtral")):
+                continue
+            try:
+                response = await self._client.chat.completions.create(
+                    model=m,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=self._timeout,
+                )
+                self.model = m
+                finished_at = datetime.utcnow()
+                latency_ms = (finished_at - started_at).total_seconds() * 1000
+
+                usage_data = response.usage
+                prompt_tokens = usage_data.prompt_tokens if usage_data else 0
+                completion_tokens = usage_data.completion_tokens if usage_data else 0
+
+                usage = LLMUsage(
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    total_tokens=prompt_tokens + completion_tokens,
+                )
+
+                return LLMResponse(
+                    content=response.choices[0].message.content or "",
+                    model=m,
+                    finish_reason=response.choices[0].finish_reason or "stop",
+                    usage=usage,
+                    provider=self.provider_name,
+                    latency_ms=latency_ms,
+                    timestamp=finished_at,
+                    raw=response,
+                )
+            except Exception as e:
+                last_exc = e
+                if self._is_rate_limit_or_missing(e):
+                    continue
                 raise
 
-        finished_at = datetime.utcnow()
-        latency_ms = (finished_at - started_at).total_seconds() * 1000
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("No Groq model was able to complete the request.")
 
         usage_data = response.usage
         prompt_tokens = usage_data.prompt_tokens if usage_data else 0
@@ -199,36 +231,40 @@ class GroqLLM(BaseLLM):
             extra_params["tools"] = tools
             extra_params["tool_choice"] = "auto"
 
-        try:
-            response = await self._with_retry(
-                lambda: self._client.chat.completions.create(
-                    model=self.model,
-                    messages=serialised,
-                    temperature=temperature,
-                    max_tokens=self._agent_max_tokens,
-                    timeout=self._timeout,
-                    **extra_params,
-                )
-            )
-        except Exception as e:
-            if "model_not_found" in str(e).lower() or "404" in str(e) or "does not exist" in str(e).lower():
-                if self.model != "openai/gpt-oss-120b":
-                    self.model = "openai/gpt-oss-120b"
-                    self._fast_model = "openai/gpt-oss-20b"
-                    response = await self._with_retry(
-                        lambda: self._client.chat.completions.create(
-                            model=self.model,
-                            messages=serialised,
-                            temperature=temperature,
-                            max_tokens=self._agent_max_tokens,
-                            timeout=self._timeout,
-                            **extra_params,
-                        )
+        candidate_models = list(self._GROQ_MODELS)
+        if self.model in candidate_models:
+            candidate_models.remove(self.model)
+        candidate_models.insert(0, self.model)
+
+        response = None
+        last_exc: BaseException | None = None
+
+        for m in candidate_models:
+            if any(dep in m.lower() for dep in ("llama", "mixtral")):
+                continue
+            try:
+                response = await self._with_retry(
+                    lambda: self._client.chat.completions.create(
+                        model=m,
+                        messages=serialised,
+                        temperature=temperature,
+                        max_tokens=self._agent_max_tokens,
+                        timeout=self._timeout,
+                        **extra_params,
                     )
-                else:
-                    raise
-            else:
+                )
+                self.model = m
+                break
+            except Exception as e:
+                last_exc = e
+                if self._is_rate_limit_or_missing(e):
+                    continue
                 raise
+
+        if response is None:
+            if last_exc:
+                raise last_exc
+            raise RuntimeError("No Groq model was able to complete the tool call.")
 
         finished_at = datetime.utcnow()
         latency_ms = (finished_at - started_at).total_seconds() * 1000
@@ -270,36 +306,37 @@ class GroqLLM(BaseLLM):
         messages: list[dict[str, str]],
         **kwargs: object,
     ) -> AsyncIterator[str]:
-        if any(dep in self.model.lower() for dep in ("llama", "mixtral")):
-            self.model = "openai/gpt-oss-120b"
-            self._fast_model = "openai/gpt-oss-20b"
+        candidate_models = list(self._GROQ_MODELS)
+        if self.model in candidate_models:
+            candidate_models.remove(self.model)
+        candidate_models.insert(0, self.model)
 
-        try:
-            response_stream = await self._client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                stream=True,
-                timeout=self._timeout,
-            )
-        except Exception as e:
-            if "model_not_found" in str(e).lower() or "404" in str(e) or "does not exist" in str(e).lower():
-                if self.model != "openai/gpt-oss-120b":
-                    self.model = "openai/gpt-oss-120b"
-                    self._fast_model = "openai/gpt-oss-20b"
-                    response_stream = await self._client.chat.completions.create(
-                        model=self.model,
-                        messages=messages,
-                        temperature=self.temperature,
-                        max_tokens=self.max_tokens,
-                        stream=True,
-                        timeout=self._timeout,
-                    )
-                else:
-                    raise
-            else:
+        response_stream = None
+        last_exc: BaseException | None = None
+        for m in candidate_models:
+            if any(dep in m.lower() for dep in ("llama", "mixtral")):
+                continue
+            try:
+                response_stream = await self._client.chat.completions.create(
+                    model=m,
+                    messages=messages,
+                    temperature=self.temperature,
+                    max_tokens=self.max_tokens,
+                    stream=True,
+                    timeout=self._timeout,
+                )
+                self.model = m
+                break
+            except Exception as e:
+                last_exc = e
+                if self._is_rate_limit_or_missing(e):
+                    continue
                 raise
+
+        if response_stream is None:
+            if last_exc:
+                raise last_exc
+            raise RuntimeError("No Groq model was able to stream response.")
 
         async for chunk in response_stream:
             if chunk.choices and chunk.choices[0].delta.content:
