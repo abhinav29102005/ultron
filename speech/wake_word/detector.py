@@ -40,7 +40,7 @@ PORCUPINE_ACCESS_KEY = os.getenv("PICOVOICE_ACCESS_KEY", "")
 # dropped us back to openWakeWord even when a valid key was configured.
 # Override with WAKEWORD_KEYWORDS (comma separated) or point
 # PORCUPINE_KEYWORD_PATH at a custom .ppn from the Picovoice console.
-_DEFAULT_PORCUPINE_KEYWORDS = ["ULTRON", "computer"]
+_DEFAULT_PORCUPINE_KEYWORDS = ["computer", "jarvis"]
 PORCUPINE_KEYWORDS = [
     k.strip() for k in os.getenv(
         "WAKEWORD_KEYWORDS", ",".join(_DEFAULT_PORCUPINE_KEYWORDS)
@@ -50,7 +50,7 @@ PORCUPINE_KEYWORD_PATH = os.getenv("PORCUPINE_KEYWORD_PATH", "")
 PORCUPINE_SENSITIVITY = float(os.getenv("WAKEWORD_SENSITIVITY", "0.5"))
 
 # openWakeWord fallback
-OWW_MODEL = "hey_ultron"
+OWW_MODEL = os.getenv("OPENWAKEWORD_MODEL", "hey_jarvis")
 
 
 def _oww_threshold(sensitivity: float) -> float:
@@ -127,22 +127,18 @@ class WakeWordDetector:
                     )
                     label = [os.path.splitext(os.path.basename(p))[0] for p in paths]
                 else:
-                    unknown = [
+                    valid_keywords = [
                         k for k in PORCUPINE_KEYWORDS
-                        if k not in pvporcupine.KEYWORDS
+                        if k in pvporcupine.KEYWORDS
                     ]
-                    if unknown:
-                        raise ValueError(
-                            f"Not Porcupine built-in keywords: {unknown}. "
-                            f"Available: {sorted(pvporcupine.KEYWORDS)}. "
-                            f"For a custom phrase set PORCUPINE_KEYWORD_PATH."
-                        )
+                    if not valid_keywords:
+                        valid_keywords = ["computer"]
                     self._porcupine = pvporcupine.create(
                         access_key=PORCUPINE_ACCESS_KEY,
-                        keywords=PORCUPINE_KEYWORDS,
-                        sensitivities=[PORCUPINE_SENSITIVITY] * len(PORCUPINE_KEYWORDS),
+                        keywords=valid_keywords,
+                        sensitivities=[PORCUPINE_SENSITIVITY] * len(valid_keywords),
                     )
-                    label = PORCUPINE_KEYWORDS
+                    label = valid_keywords
                 self._engine = "porcupine"
                 print(f"Wake word engine: Porcupine (keywords: {label})")
             except Exception as e:
@@ -151,16 +147,20 @@ class WakeWordDetector:
 
         # Fallback to openWakeWord
         if self._porcupine is None and OWWModel is not None:
-            try:
-                self._oww = OWWModel(wakeword_models=[OWW_MODEL])
-                self._engine = "openwakeword"
-                print(f"Wake word engine: openWakeWord ({OWW_MODEL})")
-            except Exception as e:
-                print(f"openWakeWord init failed: {e}")
-                self._oww = None
+            candidate_models = [OWW_MODEL, "hey_jarvis", "alexa"] if OWW_MODEL not in ("hey_jarvis", "alexa") else ["hey_jarvis", "alexa"]
+            for model_name in candidate_models:
+                try:
+                    self._oww = OWWModel(wakeword_models=[model_name], inference_framework="onnx")
+                    self._engine = "openwakeword"
+                    print(f"Wake word engine: openWakeWord ({model_name})")
+                    break
+                except Exception as e:
+                    logger.debug(f"openWakeWord init failed for {model_name}: {e}")
+            if self._oww is None:
+                print(f"openWakeWord init failed: no usable model found among {candidate_models}")
 
         if self._engine == "none":
-            print("Wake word: NO ENGINE AVAILABLE (set PICOVOICE_ACCESS_KEY for Porcupine)")
+            print("Wake word: NO ENGINE AVAILABLE (set PICOVOICE_ACCESS_KEY for Porcupine or install openWakeWord models)")
 
     def stop(self) -> None:
         """Ask the detect loop to finish. Returns before the stream is closed.

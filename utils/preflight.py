@@ -259,6 +259,20 @@ def check_llm(settings: Settings, *, autostart: bool = True) -> PreflightResult:
 
         return PreflightResult(ok=True)
 
+    if provider == "dual":
+        import os
+        groq_key = os.getenv("GROQ_API_KEY") or getattr(settings, "groq_api_key", None)
+        nvidia_key = getattr(settings, "nvidia_api_key", None)
+        nvidia_val = nvidia_key.get_secret_value() if hasattr(nvidia_key, "get_secret_value") else nvidia_key
+        has_groq = bool(groq_key and not str(groq_key).startswith("your_"))
+        has_nvidia = bool(nvidia_val and not str(nvidia_val).startswith("your_"))
+        if not has_groq and not has_nvidia:
+            return PreflightResult(
+                ok=False,
+                problems=["LLM_PROVIDER is 'dual' but neither GROQ_API_KEY nor NVIDIA_API_KEY is configured in .env."],
+            )
+        return PreflightResult(ok=True)
+
     if provider != "qwen":
         return PreflightResult(
             ok=True,
