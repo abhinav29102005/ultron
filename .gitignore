@@ -94,8 +94,10 @@ logs/
 assets/models/
 assets/audio/recordings/
 *.wav
+!assets/ultron_voice_sample.wav
 *.mp3
 *.onnx
+!speech/text_to_speech/models/*.onnx
 *.pt
 *.bin
 
