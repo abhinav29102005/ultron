@@ -37,6 +37,9 @@ from utils.env import load_env_file
 # run.py used to mangle every non-ASCII character it printed.
 force_utf8_output()
 
+# Suppress noisy HuggingFace Hub symlinks warning on Windows
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
+
 # Makes .env visible to the os.getenv readers (speech config, wake word).
 # See utils/env.py -- pydantic parses .env privately and never exports it.
 load_env_file()

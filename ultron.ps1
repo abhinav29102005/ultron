@@ -23,6 +23,7 @@ param(
 $OutputEncoding = [System.Text.Encoding]::UTF8
 $env:PYTHONUTF8 = "1"
 $env:PYTHONIOENCODING = "utf-8"
+$env:HF_HUB_DISABLE_SYMLINKS_WARNING = "1"
 
 $RootDir = $PSScriptRoot
 if (-not $RootDir) {
