@@ -121,3 +121,7 @@ site/
 **/node_modules/
 .wrangler/
 
+
+# Standalone Nebula repository
+nebula/
+
