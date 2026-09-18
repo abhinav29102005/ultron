@@ -36,6 +36,8 @@ if TYPE_CHECKING:
     from skills.chrome_control_skill import ChromeControlSkill
     from skills.document_skill import DocumentSkill
     from skills.excel_skill import ExcelSkill
+    from skills.system_scanner import SystemScannerSkill
+    from skills.audio_device_skill import AudioDeviceSkill
 else:
     # Runtime imports to avoid circular dependency
     from skills.system_skills import (
@@ -62,6 +64,8 @@ else:
     from skills.chrome_control_skill import ChromeControlSkill
     from skills.document_skill import DocumentSkill
     from skills.excel_skill import ExcelSkill
+    from skills.system_scanner import SystemScannerSkill
+    from skills.audio_device_skill import AudioDeviceSkill
 
 
 class TaskRouter:
@@ -98,6 +102,8 @@ class TaskRouter:
         "file_operation": FolderSkill,
         "brightness_control": BrightnessSkill,
         "mic_control": MicSkill,
+        "system_scan": SystemScannerSkill,
+        "audio_device_control": AudioDeviceSkill,
         "screenshot": ScreenshotSkill,
         "clipboard": ClipboardSkill,
         "notes": NotesSkill,

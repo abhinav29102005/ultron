@@ -788,6 +788,54 @@ class ApplicationSkill(Skill):
         frozenset(KNOWN_WEBSITES) | frozenset(WEBSITE_ALIASES)
     ) - frozenset(APP_ALIASES)
 
+    LINUX_APPS = {
+        "chrome": ["google-chrome", "google-chrome-stable", "chromium-browser", "chromium"],
+        "firefox": ["firefox"],
+        "brave": ["brave-browser", "brave"],
+        "edge": ["microsoft-edge"],
+        "vscode": ["code"],
+        "terminal": ["gnome-terminal", "konsole", "xfce4-terminal", "alacritty", "kitty", "xterm"],
+        "spotify": ["spotify"],
+        "discord": ["discord"],
+        "slack": ["slack"],
+        "telegram": ["telegram-desktop", "telegram"],
+        "calculator": ["gnome-calculator", "kcalc", "galculator"],
+        "files": ["nautilus", "dolphin", "thunar", "nemo"],
+        "text_editor": ["gedit", "kate", "mousepad", "gnome-text-editor"],
+    }
+
+    def _execute_linux(self, intent: str, canonical_id: str, display_name: str) -> str:
+        candidates = self.LINUX_APPS.get(canonical_id, [canonical_id])
+        if intent == "open_application":
+            binary = None
+            for cand in candidates:
+                found = shutil.which(cand)
+                if found:
+                    binary = found
+                    break
+            if not binary:
+                if shutil.which("gtk-launch"):
+                    try:
+                        subprocess.Popen(["gtk-launch", canonical_id], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        return f"{display_name} opened successfully."
+                    except Exception:
+                        pass
+                raise RuntimeError(f"I couldn't find {display_name} installed on this Linux system.")
+
+            try:
+                subprocess.Popen([binary], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+                return f"{display_name} opened successfully."
+            except Exception as e:
+                raise RuntimeError(f"Failed to open {display_name}: {e}")
+        elif intent == "close_application":
+            target_proc = candidates[0] if candidates else canonical_id
+            try:
+                subprocess.run(["pkill", "-f", target_proc], check=True, capture_output=True)
+                return f"{display_name} closed successfully."
+            except subprocess.CalledProcessError:
+                raise RuntimeError(f"Application '{display_name}' is not currently running.")
+        raise RuntimeError(f"Unsupported intent: {intent}")
+
     async def execute(self, task: Task) -> str:
         app_name = task.parameters.get("application")
         if not app_name:
@@ -814,6 +862,9 @@ class ApplicationSkill(Skill):
 
         elif system == "Darwin":
             return self._execute_macos(task.intent, canonical_id, display_name)
+
+        elif system == "Linux":
+            return self._execute_linux(task.intent, canonical_id, display_name)
 
         else:
             return f"❌ Unsupported operating system: {system}"
@@ -1360,10 +1411,63 @@ class VolumeSkill(Skill):
 
         system = platform.system()
 
+    def _execute_linux(self, action: str, level: int | None) -> str:
+        if shutil.which("pactl"):
+            if action == "up":
+                subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"+{self.STEP}%"], check=True)
+                return f"Volume increased by {self.STEP}%."
+            elif action == "down":
+                subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"-{self.STEP}%"], check=True)
+                return f"Volume decreased by {self.STEP}%."
+            elif action == "mute":
+                subprocess.run(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "1"], check=True)
+                return "Volume muted."
+            elif action == "unmute":
+                subprocess.run(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "0"], check=True)
+                return "Volume unmuted."
+            elif action == "max":
+                subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", "100%"], check=True)
+                return "Volume set to maximum."
+            elif action == "min":
+                subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", "0%"], check=True)
+                return "Volume set to minimum."
+            elif action == "set":
+                if level is None:
+                    raise ValueError("Missing 'level' for setting volume.")
+                subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{level}%"], check=True)
+                return f"Volume set to {level}%."
+        elif shutil.which("amixer"):
+            if action == "up":
+                subprocess.run(["amixer", "-D", "pulse", "sset", "Master", f"{self.STEP}%+"], check=True)
+                return "Volume increased."
+            elif action == "down":
+                subprocess.run(["amixer", "-D", "pulse", "sset", "Master", f"{self.STEP}%-"], check=True)
+                return "Volume decreased."
+            elif action == "mute":
+                subprocess.run(["amixer", "-D", "pulse", "sset", "Master", "mute"], check=True)
+                return "Volume muted."
+            elif action == "unmute":
+                subprocess.run(["amixer", "-D", "pulse", "sset", "Master", "unmute"], check=True)
+                return "Volume unmuted."
+            elif action == "set":
+                if level is None:
+                    raise ValueError("Missing 'level' for setting volume.")
+                subprocess.run(["amixer", "-D", "pulse", "sset", "Master", f"{level}%"], check=True)
+                return f"Volume set to {level}%."
+        raise RuntimeError("Neither pactl nor amixer found for volume control on Linux.")
+
+    async def execute(self, task: Task) -> str:
+        action = task.parameters.get("action")
+        level = task.parameters.get("level")
+
+        if not action:
+            raise ValueError("Missing 'action' parameter.")
+
+        system = platform.system()
+
         if system == "Windows":
             return self._execute_windows(action, level)
 
-        # macOS fallback, kept for cross-platform compatibility.
         elif system == "Darwin":
             if action == "up":
                 subprocess.run(
@@ -1400,6 +1504,9 @@ class VolumeSkill(Skill):
                 )
                 return f"Volume set to {level}%."
             raise ValueError(f"Unsupported volume action: '{action}'.")
+
+        elif system == "Linux":
+            return self._execute_linux(action, level)
 
         raise RuntimeError(f"Unsupported operating system: {system}")
 

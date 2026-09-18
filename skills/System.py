@@ -369,6 +369,53 @@ class BrightnessSkill(Skill):
             check=True,
         )
 
+
+    # ── Linux helpers ──────────────────────────────────────────
+
+    def _get_brightness_linux(self) -> int:
+        backlight_dir = "/sys/class/backlight"
+        if os.path.isdir(backlight_dir):
+            devs = os.listdir(backlight_dir)
+            if devs:
+                try:
+                    dev = os.path.join(backlight_dir, devs[0])
+                    with open(os.path.join(dev, "actual_brightness")) as f:
+                        cur = int(f.read().strip())
+                    with open(os.path.join(dev, "max_brightness")) as f:
+                        max_val = int(f.read().strip())
+                    return max(1, min(100, round((cur / max_val) * 100)))
+                except Exception:
+                    pass
+        if shutil.which("brightnessctl"):
+            try:
+                res = subprocess.run(["brightnessctl", "g"], capture_output=True, text=True, timeout=2)
+                max_res = subprocess.run(["brightnessctl", "m"], capture_output=True, text=True, timeout=2)
+                if res.returncode == 0 and max_res.returncode == 0:
+                    return max(1, min(100, round((int(res.stdout.strip()) / int(max_res.stdout.strip())) * 100)))
+            except Exception:
+                pass
+        return 70
+
+    def _set_brightness_linux(self, level: int) -> None:
+        level = max(1, min(100, level))
+        if shutil.which("brightnessctl"):
+            try:
+                res = subprocess.run(["brightnessctl", "set", f"{level}%"], capture_output=True, text=True, timeout=2)
+                if res.returncode == 0:
+                    return
+            except Exception:
+                pass
+        if shutil.which("xrandr"):
+            try:
+                out = subprocess.run(["xrandr", "--current"], capture_output=True, text=True, timeout=2)
+                for line in out.stdout.splitlines():
+                    if " connected" in line:
+                        disp = line.split()[0]
+                        subprocess.run(["xrandr", "--output", disp, "--brightness", f"{level / 100:.2f}"], capture_output=True, timeout=2)
+                        return
+            except Exception:
+                pass
+
     # ── execute ───────────────────────────────────────────────
 
     async def execute(self, task: Task) -> str:
@@ -416,6 +463,25 @@ class BrightnessSkill(Skill):
                 if level is None:
                     raise ValueError("Missing 'level' for brightness set.")
                 self._set_brightness_macos(int(level))
+                return f"Brightness set to {level}%."
+
+        elif system == "Linux":
+            current = self._get_brightness_linux()
+
+            if action == "up":
+                new_level = min(100, current + self.STEP)
+                self._set_brightness_linux(new_level)
+                return f"Brightness increased to {new_level}%."
+
+            elif action == "down":
+                new_level = max(1, current - self.STEP)
+                self._set_brightness_linux(new_level)
+                return f"Brightness decreased to {new_level}%."
+
+            elif action == "set":
+                if level is None:
+                    raise ValueError("Missing 'level' for brightness set.")
+                self._set_brightness_linux(int(level))
                 return f"Brightness set to {level}%."
 
         else:
@@ -511,6 +577,26 @@ class MicSkill(Skill):
 
         raise ValueError(f"Unsupported mic action: '{action}'.")
 
+    # ── Linux helpers ──────────────────────────────────────────
+
+    def _execute_linux(self, action: str) -> str:
+        if shutil.which("pactl"):
+            if action == "mute":
+                subprocess.run(["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "1"], check=True)
+                return "Microphone muted."
+            elif action == "unmute":
+                subprocess.run(["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "0"], check=True)
+                return "Microphone unmuted."
+            elif action == "toggle":
+                subprocess.run(["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "toggle"], check=True)
+                out = subprocess.run(["pactl", "get-source-mute", "@DEFAULT_SOURCE@"], capture_output=True, text=True)
+                is_muted = "yes" in out.stdout.lower()
+                return "Microphone muted." if is_muted else "Microphone unmuted."
+        if shutil.which("amixer"):
+            subprocess.run(["amixer", "sset", "Capture", "toggle"], check=True)
+            return "Microphone toggled."
+        raise RuntimeError("Neither pactl nor amixer found for microphone control on Linux.")
+
     # ── execute ───────────────────────────────────────────────
 
     async def execute(self, task: Task) -> str:
@@ -524,6 +610,8 @@ class MicSkill(Skill):
             return self._execute_windows(action)
         elif system == "Darwin":
             return self._execute_macos(action)
+        elif system == "Linux":
+            return self._execute_linux(action)
         else:
             raise RuntimeError(f"Mic control is not supported on {system}.")
 

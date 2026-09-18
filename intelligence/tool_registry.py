@@ -352,6 +352,41 @@ ALL_TOOLS: tuple[ToolDef, ...] = (
         properties={"expression": _str("The expression, e.g. '15% of 240'.")},
         required=("expression",),
     ),
+    # ── Scanning & Controlling The System ──────────────────────────────────
+    ToolDef(
+        name="scan_system",
+        description=(
+            "Scan the user's PC to inspect operating system, CPU load, RAM usage, "
+            "battery level, audio volume, active playback sink, input microphones, "
+            "screen brightness, installed web browsers, and running programs. "
+            "Call this first when the user asks about the state of their computer "
+            "or before adjusting unknown hardware devices."
+        ),
+        intent="system_scan",
+        properties={},
+    ),
+    ToolDef(
+        name="get_audio_devices",
+        description="Scan and list all available audio output devices (speakers, headphones, HDMI) and microphone inputs.",
+        intent="audio_device_control",
+        properties={},
+        fixed={"action": "list"},
+    ),
+    ToolDef(
+        name="switch_audio_device",
+        description="Switch the active default audio playback device (speaker/headphones) or microphone.",
+        intent="audio_device_control",
+        properties={
+            "device": _str("Name, description, or index number of the audio device to switch to."),
+            "type": {
+                "type": "string",
+                "enum": ["output", "input"],
+                "description": "Whether to switch output (speakers/headphones) or input (mic). Defaults to output.",
+            },
+        },
+        required=("device",),
+        fixed={"action": "switch"},
+    ),
     # ── The machine's knobs ───────────────────────────────────────────────
     ToolDef(
         name="set_volume",

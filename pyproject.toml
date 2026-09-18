@@ -194,7 +194,7 @@ testpaths = ["tests"]
 addopts = "-v --tb=short --ignore=tests/scratch"
 filterwarnings = [
     "ignore:.*The httpx module is deprecated.*",
-    "ignore::authlib.deprecate.AuthlibDeprecationWarning",
+    "ignore:.*AuthlibDeprecationWarning.*",
 ]
 
 # ── Coverage ──────────────────────────────────────────────────────────────────

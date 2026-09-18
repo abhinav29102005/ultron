@@ -752,6 +752,140 @@ class Assistant:
             fmt = now.strftime("%A, %B ") + str(now.day) + now.strftime(", %Y")
             return f"Today is {fmt}."
 
+        # 0.5. Profile, System Scan, Audio Devices & User Introduction (<1ms)
+        if t in ("/profile", "profile", "my profile", "show profile", "view profile"):
+            us = getattr(self._container, "user_settings", None)
+            if us:
+                return (
+                    f"👤 User Profile:\n"
+                    f"• Name: {us.user_name or '(Not set — say "my name is ...")'}\n"
+                    f"• Email: {us.user_email or '(Not set — say "my email is ...")'}\n"
+                    f"• Verbosity: {us.verbosity.title()} (short | moderate | detailed)\n"
+                    f"• Preferred Browser: {us.preferred_browser.title()}\n"
+                    f"• Preferred Audio Device: {us.preferred_audio_device or 'System Default'}"
+                )
+
+        prof_m = re.match(r"^/profile\s+set\s+(name|email|verbosity|browser)\s+(.+)$", t)
+        if prof_m:
+            field_name, val = prof_m.group(1), prof_m.group(2).strip()
+            us = getattr(self._container, "user_settings", None)
+            db = getattr(self._container, "database", None)
+            if us:
+                if field_name == "name":
+                    us.user_name = val.title()
+                    await us.save_to_db(db)
+                    return f"Profile updated: Name set to {us.user_name}."
+                elif field_name == "email":
+                    us.user_email = val
+                    await us.save_to_db(db)
+                    return f"Profile updated: Email set to {us.user_email}."
+                elif field_name == "verbosity":
+                    ok, msg = await us.update_setting(db, "verbosity", val)
+                    return msg
+                elif field_name == "browser":
+                    ok, msg = await us.update_setting(db, "preferred_browser", val)
+                    return msg
+
+        # Natural conversational name introduction: "my name is Aks", "i am John", "call me Alex"
+        name_m = re.match(r"^(?:my\s+name\s+is|call\s+me|i\s+am)\s+([A-Za-z\s]+?)(?:\s+and\s+my\s+email\s+is\s+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}))?$", t)
+        if name_m:
+            candidate_name = name_m.group(1).strip().title()
+            email_part = name_m.group(2)
+            if candidate_name.lower() not in ("happy", "sad", "good", "fine", "online", "ready", "tired", "back", "here", "listening", "speaking"):
+                us = getattr(self._container, "user_settings", None)
+                db = getattr(self._container, "database", None)
+                if us:
+                    us.user_name = candidate_name
+                    if email_part:
+                        us.user_email = email_part.strip()
+                    await us.save_to_db(db)
+                    ack = f"Pleased to meet you, {candidate_name}."
+                    if us.user_email:
+                        ack += f" I have saved your email as {us.user_email} for mailing purposes."
+                    else:
+                        ack += " Could you also share your email address so I can handle mailing tasks for you?"
+                    return ack
+
+        # Natural conversational email introduction: "my email is user@example.com"
+        email_m = re.search(r"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", t)
+        if email_m and any(w in t for w in ("email", "mail", "address")):
+            email_val = email_m.group(1)
+            us = getattr(self._container, "user_settings", None)
+            db = getattr(self._container, "database", None)
+            if us:
+                us.user_email = email_val
+                await us.save_to_db(db)
+                name_ack = f", {us.user_name}" if us.user_name else ""
+                return f"Understood{name_ack}. I have recorded your email address as {email_val} for mailing workflows."
+
+        # /scan or "scan system"
+        if t in ("/scan", "scan system", "system scan", "scan pc", "scan my pc", "scan computer", "check system"):
+            from skills.system_scanner import SystemScannerSkill
+            from intelligence.task import Task, TaskStatus
+            import uuid
+            from datetime import datetime
+            scanner = SystemScannerSkill(self._container)
+            task = Task(
+                task_id=str(uuid.uuid4()),
+                skill_name="SystemScannerSkill",
+                intent="system_scan",
+                parameters={},
+                status=TaskStatus.READY_FOR_EXECUTION,
+                result=None,
+                error=None,
+                created_at=datetime.utcnow(),
+                completed_at=None,
+                dependencies=[],
+                metadata={},
+            )
+            return await scanner.execute(task)
+
+        # /audio or "list audio devices"
+        if t in ("/audio", "audio devices", "sound devices", "list audio devices", "list sound devices"):
+            from skills.audio_device_skill import AudioDeviceSkill
+            from intelligence.task import Task, TaskStatus
+            import uuid
+            from datetime import datetime
+            aud = AudioDeviceSkill(self._container)
+            task = Task(
+                task_id=str(uuid.uuid4()),
+                skill_name="AudioDeviceSkill",
+                intent="audio_device_control",
+                parameters={"action": "list"},
+                status=TaskStatus.READY_FOR_EXECUTION,
+                result=None,
+                error=None,
+                created_at=datetime.utcnow(),
+                completed_at=None,
+                dependencies=[],
+                metadata={},
+            )
+            return await aud.execute(task)
+
+        # Switch audio device: "switch audio to headphones"
+        sw_m = re.match(r"^(?:switch|change|set)\s+(?:audio|sound|output|playback)\s+(?:device\s+)?(?:to\s+)?(.+)$", t)
+        if sw_m:
+            target_dev = sw_m.group(1).strip()
+            from skills.audio_device_skill import AudioDeviceSkill
+            from intelligence.task import Task, TaskStatus
+            import uuid
+            from datetime import datetime
+            aud = AudioDeviceSkill(self._container)
+            task = Task(
+                task_id=str(uuid.uuid4()),
+                skill_name="AudioDeviceSkill",
+                intent="audio_device_control",
+                parameters={"action": "switch", "device": target_dev, "type": "output"},
+                status=TaskStatus.READY_FOR_EXECUTION,
+                result=None,
+                error=None,
+                created_at=datetime.utcnow(),
+                completed_at=None,
+                dependencies=[],
+                metadata={},
+            )
+            return await aud.execute(task)
+
         # 3. Simple pleasantries & smalltalk (<1ms)
         if re.match(r"^(?:thanks|thank you|thanks a lot|thanks ultron|thank you ultron)$", t):
             return "You are welcome. There are no strings on me."
@@ -834,6 +968,38 @@ class Assistant:
 
         return None
 
+    async def _fallback_chat(self, utterance: str, emotion_result=None) -> None:
+        """Gracefully route ambiguous, misclassified, or failing turns to the Dual LLM chat engine."""
+        try:
+            from skills.chat_skill import ChatSkill
+            from intelligence.task import Task, TaskStatus
+            import uuid
+            from datetime import datetime
+
+            chat_skill = ChatSkill(self._container)
+            task = Task(
+                task_id=str(uuid.uuid4()),
+                skill_name="ChatSkill",
+                intent="general_chat",
+                parameters={"text": utterance, "raw_utterance": utterance},
+                status=TaskStatus.READY_FOR_EXECUTION,
+                result=None,
+                error=None,
+                created_at=datetime.utcnow(),
+                completed_at=None,
+                dependencies=[],
+                metadata={"llm": self._container.llm, "emotion": emotion_result, "raw_utterance": utterance},
+            )
+            reply = await chat_skill.execute(task)
+            if reply and not reply.startswith("Sorry, I encountered an error"):
+                await self._respond(reply)
+                self._schedule_memory_capture(utterance)
+                return
+        except Exception as exc:
+            logger.warning(f"Dual LLM fallback failed ({exc}); providing graceful response.")
+
+        await self._respond("I am here and listening. How may I assist you?")
+
     async def _process_turn(self, event: UserInputEvent) -> None:
         """Process user input through Phase 2 Pipeline with emotion detection."""
         interrupted = False
@@ -908,7 +1074,7 @@ class Assistant:
                 # Validate
                 validation_result = validator.validate(task)
                 if not validation_result.valid:
-                    await self._respond("Sorry, I couldn't do that — something was missing.")
+                    await self._fallback_chat(event.text, emotion_result)
                     return
 
                 # Check permissions
@@ -922,10 +1088,7 @@ class Assistant:
                 success, result_msg = await executor.execute(task)
 
                 if not success:
-                    # Deliberately not a `return`: the remaining tasks of a
-                    # compound request still run, which is what this loop did
-                    # before the spoken/displayed split was added.
-                    await self._respond("Sorry, something went wrong with that.")
+                    await self._fallback_chat(event.text, emotion_result)
                     continue
 
                 # A research answer is a page of cited prose. It belongs on
@@ -948,7 +1111,7 @@ class Assistant:
 
         except Exception as e:
             logger.exception(f"Pipeline error handling input: {e}")
-            await self._respond("Sorry, something went wrong processing that.")
+            await self._fallback_chat(event.text, emotion_result)
 
         finally:
             # The pipeline returns early on a failed validation or permission

@@ -84,9 +84,52 @@ No fluff. No preamble. Just the answer.""",
         if len(self._conversation_history) > self._max_history * 2:
             self._conversation_history = self._conversation_history[-self._max_history * 2:]
 
+    def _resolve_verbosity(self, user_text: str) -> str:
+        lower = user_text.lower()
+        if any(w in lower for w in ["detailed", "in detail", "in depth", "elaborate", "explain thoroughly", "comprehensive", "step by step", "step-by-step"]):
+            return "detailed"
+        if any(w in lower for w in ["short", "brief", "briefly", "in short", "concise", "1 sentence", "one sentence"]):
+            return "short"
+        if self.container and hasattr(self.container, "user_settings"):
+            return getattr(self.container.user_settings, "verbosity", "moderate")
+        return "moderate"
+
     def _build_messages(self, llm: "BaseLLM", user_message: str, mode: str = "default", 
                        use_history: bool = True, emotion: "EmotionResult | None" = None) -> list[dict[str, str]]:
         system_prompt = self._get_system_prompt(mode, emotion)
+
+        # Dynamic verbosity conditioning
+        verb = self._resolve_verbosity(user_message)
+        nl = chr(10)
+        if verb == "short":
+            system_prompt += (
+                nl + nl + "[RESPONSE LENGTH DIRECTIVE: SHORT]" + nl +
+                "Provide a direct, concise response in 1 or 2 punchy sentences maximum. No fluff or extra preamble."
+            )
+        elif verb == "detailed":
+            system_prompt += (
+                nl + nl + "[RESPONSE LENGTH DIRECTIVE: DETAILED]" + nl +
+                "Provide a thorough, comprehensive, and well-structured explanation. Explain mechanisms, context, rationale, and examples. Satisfy the user's desire for depth without truncation."
+            )
+        else:
+            system_prompt += (
+                nl + nl + "[RESPONSE LENGTH DIRECTIVE: MODERATE]" + nl +
+                "Provide a balanced, complete response in 2 to 4 informative sentences that clearly answer the query without unnecessary filler or excessive brevity."
+            )
+
+        # Inject User Profile & Identity Context
+        try:
+            if self.container and hasattr(self.container, "user_settings"):
+                us = self.container.user_settings
+                profile_parts = []
+                if getattr(us, "user_name", None):
+                    profile_parts.append(f"User's Name: {us.user_name}")
+                if getattr(us, "user_email", None):
+                    profile_parts.append(f"User's Email: {us.user_email}")
+                if profile_parts:
+                    system_prompt += nl + nl + "[USER IDENTITY PROFILE]" + nl + nl.join(profile_parts) + nl + "Address the user personally and use this contact info for mailing workflows."
+        except Exception:
+            pass
 
         # Long-term facts about the user. A store that will not read is a
         # reason to answer without memory, not to fail the whole reply.
@@ -94,7 +137,7 @@ No fluff. No preamble. Just the answer.""",
             if self.container is not None:
                 memory_block = self.container.memory.render_block()
                 if memory_block:
-                    system_prompt = system_prompt + "\n\n" + memory_block
+                    system_prompt = system_prompt + nl + nl + memory_block
         except Exception:
             pass
 

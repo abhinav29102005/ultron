@@ -62,6 +62,20 @@ class UserSettings:
     session_token_budget: int = 100000
     cost_per_1k_tokens: float = 0.0015
 
+    # ── User Profile & Identity ──
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
+
+    # ── Response Verbosity & Detail Control ──
+    # short (1-2 sentences) | moderate (2-4 sentences, default) | detailed (in-depth & structured)
+    verbosity: str = "moderate"
+
+    # ── Cross-Platform System & Hardware Control ──
+    preferred_browser: str = "chrome"  # chrome | firefox | brave | edge | default
+    preferred_audio_device: Optional[str] = None
+    default_volume: int = 50
+    default_brightness: int = 70
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
@@ -127,6 +141,18 @@ class UserSettings:
             if style not in ("cybernetic", "compact", "markdown"):
                 return False, f"Invalid output style '{style}'. Choose: cybernetic, compact, markdown"
             parsed_val = style
+        elif key == "verbosity":
+            v = raw_value.lower().strip()
+            if v not in ("short", "moderate", "detailed"):
+                return False, f"Invalid verbosity '{v}'. Choose: short, moderate, detailed"
+            parsed_val = v
+        elif key == "preferred_browser":
+            b = raw_value.lower().strip()
+            if b not in ("chrome", "firefox", "brave", "edge", "default"):
+                return False, f"Invalid browser '{b}'. Choose: chrome, firefox, brave, edge, default"
+            parsed_val = b
+        elif key in ("user_name", "user_email", "preferred_audio_device"):
+            parsed_val = raw_value.strip() or None
 
         setattr(self, key, parsed_val)
         if db and hasattr(db, "set_setting"):
