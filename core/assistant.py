@@ -756,15 +756,18 @@ class Assistant:
         if t in ("/profile", "profile", "my profile", "show profile", "view profile"):
             us = getattr(self._container, "user_settings", None)
             if us:
+                name_disp = us.user_name if us.user_name else '(Not set — say "my name is ...")'
+                email_disp = us.user_email if us.user_email else '(Not set — say "my email is ...")'
+                aud_disp = us.preferred_audio_device if us.preferred_audio_device else "System Default"
+                nl = chr(10)
                 return (
-                    f"👤 User Profile:\n"
-                    f"• Name: {us.user_name or '(Not set — say "my name is ...")'}\n"
-                    f"• Email: {us.user_email or '(Not set — say "my email is ...")'}\n"
-                    f"• Verbosity: {us.verbosity.title()} (short | moderate | detailed)\n"
-                    f"• Preferred Browser: {us.preferred_browser.title()}\n"
-                    f"• Preferred Audio Device: {us.preferred_audio_device or 'System Default'}"
+                    "👤 User Profile:" + nl +
+                    f"• Name: {name_disp}" + nl +
+                    f"• Email: {email_disp}" + nl +
+                    f"• Verbosity: {us.verbosity.title()} (short | moderate | detailed)" + nl +
+                    f"• Preferred Browser: {us.preferred_browser.title()}" + nl +
+                    f"• Preferred Audio Device: {aud_disp}"
                 )
-
         prof_m = re.match(r"^/profile\s+set\s+(name|email|verbosity|browser)\s+(.+)$", t)
         if prof_m:
             field_name, val = prof_m.group(1), prof_m.group(2).strip()

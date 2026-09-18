@@ -88,7 +88,7 @@ class CyberneticCLI:
         table.add_row("/setup, /keys", "Interactive API key setup wizard with cloud panel links")
         table.add_row("/hub, /providers", "View cloud LLM portal links and free tier quotas")
         table.add_row("/key <prov> <val>", "Save an API key (e.g. /key nvidia nvapi-xxxx)")
-        table.add_row("/upgrade, /update", "Self-update Ultron repo, dependencies, and database migrations")
+        table.add_row("/upgrade [flags], /update", "Self-update Ultron repo, dependencies, voice models & database (--check, --force)")
         table.add_row("/chats, /sessions", "List all persistent chat sessions with token counts")
         table.add_row("/switch <id>", "Switch context window to another chat session")
         table.add_row("/new [title]", "Create a fresh session and switch to it")
@@ -241,8 +241,22 @@ class CyberneticCLI:
             render_provider_hub()
 
         elif cmd in ("upgrade", "update"):
-            from utils.updater import run_upgrade
-            await run_upgrade()
+            from utils.updater import parse_upgrade_args, run_upgrade
+            args_list = arg.split() if arg else []
+            try:
+                up_args = parse_upgrade_args(args_list)
+                await run_upgrade(
+                    check_only=up_args.check_only,
+                    force=up_args.force,
+                    target_branch=up_args.branch,
+                    remote=up_args.remote,
+                    skip_deps=up_args.skip_deps,
+                    skip_models=up_args.skip_models,
+                    verbose=up_args.verbose,
+                    as_json=up_args.as_json,
+                )
+            except SystemExit:
+                pass
 
         elif cmd == "key":
             from utils.api_key_manager import set_key_for_provider

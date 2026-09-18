@@ -51,6 +51,13 @@ def parse_args() -> argparse.Namespace:
         description="ULTRON – Autonomous AI Desktop Assistant & Streaming Live RAG",
     )
     parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version="ULTRON v0.2.0 – Autonomous AI Desktop Assistant & Streaming Live RAG",
+        help="Show Ultron version information and exit",
+    )
+    parser.add_argument(
         "command",
         nargs="?",
         default=None,
@@ -610,23 +617,25 @@ async def run_wakeword_mode(container) -> None:
 
 
 def main() -> None:
+    # Fast-path CLI subcommands before general arg parsing
+    if len(sys.argv) > 1:
+        first_arg = sys.argv[1].lower()
+        if first_arg in ("upgrade", "update"):
+            from utils.updater import upgrade_cli
+            code = upgrade_cli(sys.argv[2:])
+            sys.exit(code)
+
+        if first_arg in ("setup", "keys"):
+            from utils.api_key_manager import interactive_setup_wizard
+            asyncio.run(interactive_setup_wizard())
+            sys.exit(0)
+
+        if first_arg in ("hub", "providers"):
+            from utils.api_key_manager import render_provider_hub
+            render_provider_hub()
+            sys.exit(0)
+
     args = parse_args()
-
-    # Direct CLI subcommands
-    if args.command in ("upgrade", "update"):
-        from utils.updater import upgrade_cli
-        upgrade_cli()
-        return
-
-    if args.command in ("setup", "keys"):
-        from utils.api_key_manager import interactive_setup_wizard
-        asyncio.run(interactive_setup_wizard())
-        return
-
-    if args.command in ("hub", "providers"):
-        from utils.api_key_manager import render_provider_hub
-        render_provider_hub()
-        return
 
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
