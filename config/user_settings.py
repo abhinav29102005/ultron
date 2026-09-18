@@ -88,6 +88,8 @@ class UserSettings:
     async def load_from_db(self, db) -> None:
         """Load settings from database table."""
         try:
+            if hasattr(db, "initialize") and getattr(db, "_session_factory", None) is None:
+                await db.initialize()
             stored = await db.get_all_settings()
             if stored:
                 for k, v in stored.items():
@@ -99,6 +101,8 @@ class UserSettings:
     async def save_to_db(self, db) -> None:
         """Persist all current settings to database."""
         try:
+            if hasattr(db, "initialize") and getattr(db, "_session_factory", None) is None:
+                await db.initialize()
             for k, v in self.to_dict().items():
                 await db.set_setting(k, v)
         except Exception as e:
@@ -157,6 +161,8 @@ class UserSettings:
         setattr(self, key, parsed_val)
         if db and hasattr(db, "set_setting"):
             try:
+                if hasattr(db, "initialize") and getattr(db, "_session_factory", None) is None:
+                    await db.initialize()
                 import inspect
                 res = db.set_setting(key, parsed_val)
                 if inspect.isawaitable(res):

@@ -769,7 +769,7 @@ class Assistant:
         if prof_m:
             field_name, val = prof_m.group(1), prof_m.group(2).strip()
             us = getattr(self._container, "user_settings", None)
-            db = getattr(self._container, "database", None)
+            db = getattr(self._container, "db", None) or getattr(self._container, "database", None)
             if us:
                 if field_name == "name":
                     us.user_name = val.title()
@@ -793,7 +793,7 @@ class Assistant:
             email_part = name_m.group(2)
             if candidate_name.lower() not in ("happy", "sad", "good", "fine", "online", "ready", "tired", "back", "here", "listening", "speaking"):
                 us = getattr(self._container, "user_settings", None)
-                db = getattr(self._container, "database", None)
+                db = getattr(self._container, "db", None) or getattr(self._container, "database", None)
                 if us:
                     us.user_name = candidate_name
                     if email_part:
@@ -811,7 +811,7 @@ class Assistant:
         if email_m and any(w in t for w in ("email", "mail", "address")):
             email_val = email_m.group(1)
             us = getattr(self._container, "user_settings", None)
-            db = getattr(self._container, "database", None)
+            db = getattr(self._container, "db", None) or getattr(self._container, "database", None)
             if us:
                 us.user_email = email_val
                 await us.save_to_db(db)
