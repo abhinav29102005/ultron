@@ -17,6 +17,7 @@ Phase: 0 (Scaffold) → Phase 1 (Implementation)
 
 from llm.base import BaseLLM
 from llm.mock import MockLLM
+from llm.nebius import NebiusLLM
 from llm.nvidia import NvidiaLLM
 from llm.groq import GroqLLM
 from llm.switcher import LLMSwitcher
@@ -26,6 +27,7 @@ __all__: list[str] = [
     "BaseLLM",
     "MockLLM",
     "NvidiaLLM",
+    "NebiusLLM",
     "GroqLLM",
     "LLMSwitcher",
     "LLMResponse",

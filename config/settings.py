@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     # Fast model for quick responses (can override via env)
     nvidia_fast_model: str = Field(default="nvidia/nemotron-3-nano-30b-a3b")
 
+    # ── LLM Integration (Nebius Token Factory / Nebius AI Cloud) ──
+    nebius_api_key: SecretStr = Field(default=SecretStr(""))
+    nebius_base_url: str = Field(default="https://api.tokenfactory.nebius.com/v1")
+    nebius_model: str = Field(default="nvidia/nemotron-3-super-120b-a12b")
+    nebius_fast_model: str = Field(default="nvidia/nemotron-3-nano-30b-a3b")
+
     # Shared LLM settings
     llm_temperature: float = Field(default=0.1)  # Lower for faster, more deterministic
     llm_max_tokens: int = Field(default=256)      # Reduced for speed

@@ -40,6 +40,15 @@ class ProviderInfo:
 
 
 PROVIDERS: Dict[str, ProviderInfo] = {
+    "nebius": ProviderInfo(
+        id="nebius",
+        name="Nebius Token Factory",
+        env_var="NEBIUS_API_KEY",
+        portal_url="https://tokenfactory.nebius.com/",
+        free_tier_info="NVIDIA Nemotron open source models (Ultra, Super, Nano)",
+        recommended_models="nvidia/nemotron-3-super-120b-a12b, nvidia/nemotron-3-nano-30b-a3b",
+        prefix_hint="",
+    ),
     "nvidia": ProviderInfo(
         id="nvidia",
         name="NVIDIA NIM",
@@ -162,7 +171,7 @@ def set_key_for_provider(provider_id: str, key_value: str, auto_switch: bool = T
     update_env_file(info.env_var, key_value)
 
     # Automatically set LLM_PROVIDER when configuring an LLM engine
-    if auto_switch and provider_id in ("groq", "nvidia", "qwen"):
+    if auto_switch and provider_id in ("groq", "nebius", "nvidia", "qwen"):
         update_env_file("LLM_PROVIDER", provider_id)
         os.environ["LLM_PROVIDER"] = provider_id
 
@@ -290,7 +299,7 @@ async def interactive_setup_wizard(cli=None) -> None:
                 ok, msg = set_key_for_provider(p_id, val)
                 if ok:
                     console.print(f"[bold green]✓ {msg}[/bold green]\n")
-                    if p_id in ("groq", "nvidia", "qwen"):
+                    if p_id in ("groq", "nebius", "nvidia", "qwen"):
                         console.print(f"[bold green]✓ Switched active LLM engine to {info.name}.[/bold green]\n")
                         if cli and hasattr(cli, "settings"):
                             cli.settings.llm_provider = p_id

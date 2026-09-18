@@ -36,6 +36,13 @@ class LLMSwitcher(BaseLLM):
         self._qwen: BaseLLM | None = None
         self._groq: BaseLLM | None = None
         self._dual: BaseLLM | None = None
+        self._nebius: BaseLLM | None = None
+
+    def _get_nebius(self) -> BaseLLM:
+        if self._nebius is None:
+            from llm.nebius import NebiusLLM
+            self._nebius = NebiusLLM(self._settings)
+        return self._nebius
 
     def _get_groq(self) -> BaseLLM:
         if self._groq is None:
@@ -55,6 +62,8 @@ class LLMSwitcher(BaseLLM):
             return self._get_groq()
         elif name == "nvidia":
             return self._get_nvidia()
+        elif name == "nebius":
+            return self._get_nebius()
         elif name == "qwen":
             return self._get_qwen()
         # Fallback to groq if available, else nvidia
@@ -91,6 +100,8 @@ class LLMSwitcher(BaseLLM):
                 return self._get_qwen()
             if provider == "nvidia":
                 return self._get_nvidia()
+            if provider == "nebius":
+                return self._get_nebius()
 
         # Resilient auto-fallback: if the requested provider is NOT configured/available,
         # seamlessly route to the first provider that IS configured and available!
@@ -118,6 +129,10 @@ class LLMSwitcher(BaseLLM):
             key = getattr(self._settings, "groq_api_key", None)
             value = key.get_secret_value() if hasattr(key, "get_secret_value") else str(key or "")
             return bool(value and not value.startswith("your_"))
+        if provider == "nebius":
+            key = getattr(self._settings, "nebius_api_key", None)
+            value = key.get_secret_value() if hasattr(key, "get_secret_value") else key
+            return bool(value and not str(value).startswith("your_"))
         if provider == "nvidia":
             key = self._settings.nvidia_api_key
             value = key.get_secret_value() if hasattr(key, "get_secret_value") else key
@@ -128,12 +143,12 @@ class LLMSwitcher(BaseLLM):
         return False
 
     def available_providers(self) -> list[str]:
-        return [p for p in ("qwen", "nvidia", "groq", "dual") if self.is_available(p)]
+        return [p for p in ("qwen", "nebius", "nvidia", "groq", "dual") if self.is_available(p)]
 
     def switch(self, provider: str) -> None:
         provider = provider.lower()
-        if provider not in ("dual", "groq", "nvidia", "qwen"):
-            raise ValueError(f"Unknown LLM provider: {provider}. Use 'dual', 'groq', 'nvidia' or 'qwen'.")
+        if provider not in ("dual", "groq", "nebius", "nvidia", "qwen"):
+            raise ValueError(f"Unknown LLM provider: {provider}. Use 'dual', 'nebius', 'groq', 'nvidia' or 'qwen'.")
         if not self.is_available(provider):
             # Refuse here, where the caller can report it, rather than letting
             # every later request blow up.

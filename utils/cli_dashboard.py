@@ -83,7 +83,7 @@ class CyberneticCLI:
         table.add_column("Command", style="bold yellow", width=22)
         table.add_column("Description", style="white")
 
-        table.add_row("/model [dual|groq|nvidia|qwen]", "Switch active LLM engine (Dual ⚡ simultaneous, Groq ~250ms, NVIDIA 120B, Qwen local)")
+        table.add_row("/model [nebius|dual|groq|nvidia|qwen]", "Switch active LLM engine (Nebius Token Factory Nemotron, Dual, Groq, NVIDIA, Qwen)")
         table.add_row("/rag <question>", "Query Theme 4 Streaming Live RAG over verified enterprise policy corpus")
         table.add_row("/setup, /keys", "Interactive API key setup wizard with cloud panel links")
         table.add_row("/hub, /providers", "View cloud LLM portal links and free tier quotas")
@@ -267,7 +267,7 @@ class CyberneticCLI:
                 ok, msg = set_key_for_provider(prov, val)
                 if ok:
                     console.print(f"[bold green]✓ {msg}[/bold green]")
-                    if prov.lower() in ("groq", "nvidia", "qwen"):
+                    if prov.lower() in ("groq", "nebius", "nvidia", "qwen"):
                         console.print(f"[bold green]✓ Switched active LLM engine to {prov.upper()}[/bold green]")
                         if hasattr(self, "settings"):
                             self.settings.llm_provider = prov.lower()
@@ -344,7 +344,7 @@ class CyberneticCLI:
                 console.print(f"[cyan]Current LLM Provider:[/cyan] [bold green]{curr.upper()}[/bold green] (Options: groq, nvidia, qwen)")
             else:
                 target_prov = arg.lower().strip()
-                if target_prov in ("dual", "groq", "nvidia", "qwen"):
+                if target_prov in ("nebius", "dual", "groq", "nvidia", "qwen"):
                     update_env_file("LLM_PROVIDER", target_prov)
                     os.environ["LLM_PROVIDER"] = target_prov
 
@@ -370,7 +370,7 @@ class CyberneticCLI:
                     console.print(f"[bold green]✓ Switched LLM provider to: {target_prov.upper()}[/bold green]")
                     self.render_header()
                 else:
-                    console.print("[red]Invalid provider. Available: 'dual' (Groq + NVIDIA concurrent), 'groq' (~250ms), 'nvidia' (120B cloud), 'qwen' (local)[/red]")
+                    console.print("[red]Invalid provider. Available: 'nebius' (Nebius Token Factory Nemotron), 'dual', 'groq', 'nvidia', 'qwen'[/red]")
 
         elif cmd in ("rag", "search"):
             if not arg:
