@@ -5,12 +5,14 @@ Manages ephemeral conversation session state across turns:
 - Tracks turn history (TurnRecord) with prompt lineage and answer versioning
 - Resolves context discontinuity, coreference, and anaphoric references
 - Extracts and tracks active entities (locations, headcounts, event types, policies)
-- Global/thread-safe SessionRegistry ensuring cross-invocation session persistence
+- Global/thread-safe SessionRegistry with disk persistence for multi-process CLI calls
 """
 
 from __future__ import annotations
 
+import json
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from streaming_rag.models import DocumentChunk, TurnIntent, TurnRecord
@@ -96,7 +98,6 @@ class SessionContext:
         citations: List[str],
         chunks: List[DocumentChunk],
     ) -> TurnRecord:
-        # Update entity state from text
         self.entity_state.update_from_text(raw_query)
         self.entity_state.update_from_text(resolved_query)
 
@@ -120,6 +121,7 @@ class SessionContext:
         for ch in chunks:
             self.retained_chunks[ch.citation_tag] = ch
 
+        SessionRegistry.persist(self)
         return record
 
     def commit_version(self, answer: str, citations: List[str], chunks: List[DocumentChunk]) -> None:
@@ -127,21 +129,56 @@ class SessionContext:
         self.active_citations = list(citations)
         for ch in chunks:
             self.retained_chunks[ch.citation_tag] = ch
+        SessionRegistry.persist(self)
 
     def has_history(self) -> bool:
         return bool(self.last_answer or self.turns)
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "session_id": self.session_id,
+            "active_version": self.active_version,
+            "last_query": self.last_query,
+            "last_answer": self.last_answer,
+            "active_citations": self.active_citations,
+            "entity_state": self.entity_state.model_dump(),
+            "turns": [t.model_dump() for t in self.turns],
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> SessionContext:
+        ctx = cls(session_id=data["session_id"])
+        ctx.active_version = data.get("active_version", 1)
+        ctx.last_query = data.get("last_query", "")
+        ctx.last_answer = data.get("last_answer", "")
+        ctx.active_citations = data.get("active_citations", [])
+        if "entity_state" in data:
+            ctx.entity_state = EntityState(**data["entity_state"])
+        if "turns" in data:
+            ctx.turns = [TurnRecord(**t) for t in data["turns"]]
+        return ctx
+
 
 class SessionRegistry:
-    """Thread-safe persistent session registry across RAG pipeline calls."""
+    """Thread-safe and process-persistent session registry across CLI calls."""
 
     _sessions: Dict[str, SessionContext] = {}
+    _cache_file: Path = Path.home() / ".ultron" / "rag_sessions.json"
 
     @classmethod
     def get_session(cls, session_id: str) -> SessionContext:
         if session_id not in cls._sessions:
-            cls._sessions[session_id] = SessionContext(session_id)
+            loaded = cls._load_from_disk(session_id)
+            if loaded is not None:
+                cls._sessions[session_id] = loaded
+            else:
+                cls._sessions[session_id] = SessionContext(session_id)
         return cls._sessions[session_id]
+
+    @classmethod
+    def persist(cls, session: SessionContext) -> None:
+        cls._sessions[session.session_id] = session
+        cls._save_to_disk(session)
 
     @classmethod
     def clear(cls, session_id: Optional[str] = None) -> None:
@@ -149,3 +186,47 @@ class SessionRegistry:
             cls._sessions.pop(session_id, None)
         else:
             cls._sessions.clear()
+        cls._clear_disk(session_id)
+
+    @classmethod
+    def _save_to_disk(cls, session: SessionContext) -> None:
+        try:
+            cls._cache_file.parent.mkdir(parents=True, exist_ok=True)
+            all_data: Dict[str, Any] = {}
+            if cls._cache_file.exists():
+                with open(cls._cache_file, "r") as f:
+                    all_data = json.load(f)
+            all_data[session.session_id] = session.to_dict()
+            with open(cls._cache_file, "w") as f:
+                json.dump(all_data, f, indent=2)
+        except Exception:
+            pass
+
+    @classmethod
+    def _load_from_disk(cls, session_id: str) -> Optional[SessionContext]:
+        try:
+            if not cls._cache_file.exists():
+                return None
+            with open(cls._cache_file, "r") as f:
+                all_data = json.load(f)
+            if session_id in all_data:
+                return SessionContext.from_dict(all_data[session_id])
+        except Exception:
+            pass
+        return None
+
+    @classmethod
+    def _clear_disk(cls, session_id: Optional[str] = None) -> None:
+        try:
+            if not cls._cache_file.exists():
+                return
+            if session_id is None:
+                cls._cache_file.unlink(missing_ok=True)
+            else:
+                with open(cls._cache_file, "r") as f:
+                    all_data = json.load(f)
+                all_data.pop(session_id, None)
+                with open(cls._cache_file, "w") as f:
+                    json.dump(all_data, f, indent=2)
+        except Exception:
+            pass

@@ -61,7 +61,7 @@ def parse_args() -> argparse.Namespace:
         "command",
         nargs="?",
         default=None,
-        choices=["upgrade", "update", "setup", "keys", "hub", None],
+        choices=["upgrade", "update", "setup", "keys", "hub", "rag", "streaming-rag", None],
         help="Subcommand to execute: 'upgrade' (update Ultron to latest release), 'setup', or 'hub'",
     )
     parser.add_argument(
@@ -635,6 +635,11 @@ def main() -> None:
             render_provider_hub()
             sys.exit(0)
 
+        if first_arg in ("rag", "streaming-rag", "search"):
+            from streaming_rag.cli import rag_cli
+            code = rag_cli(sys.argv[2:])
+            sys.exit(code)
+
     args = parse_args()
 
     if sys.platform == 'win32':
@@ -662,3 +667,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+def rag_main() -> None:
+    """Entry point for ultron-rag global command."""
+    from streaming_rag.cli import main as _cli_main
+    _cli_main()
