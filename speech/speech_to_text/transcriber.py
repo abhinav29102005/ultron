@@ -85,6 +85,7 @@ class Transcriber:
             "condition_on_previous_text": False,
             "no_speech_threshold": 0.6,
             "repetition_penalty": 1.2,
+            "initial_prompt": "Hello, this is a conversation with Ultron. I can understand normal conversational English, numbers, punctuation, and mixed Hindi words like haan, theek hai, okay.",
         }
         if STT_LANGUAGE:
             transcribe_kwargs["language"] = STT_LANGUAGE
@@ -111,6 +112,7 @@ class Transcriber:
             "condition_on_previous_text": False,
             "no_speech_threshold": 0.6,
             "repetition_penalty": 1.2,
+            "initial_prompt": "Hello, this is a conversation with Ultron. I can understand normal conversational English, numbers, punctuation, and mixed Hindi words like haan, theek hai, okay.",
         }
         if STT_LANGUAGE:
             transcribe_kwargs["language"] = STT_LANGUAGE
