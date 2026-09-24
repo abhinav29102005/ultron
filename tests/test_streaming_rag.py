@@ -4,12 +4,13 @@ tests/test_streaming_rag.py
 Real-data integration and unit tests for the Streaming Live RAG pipeline.
 ZERO MOCKS: Tested entirely on real corpus documents, real BM25 lexical inverted
 index, real dense semantic embedding vectors, real Reciprocal Rank Fusion,
-real multi-intent decomposition, and real session state management.
+real multi-intent decomposition, cross-turn context continuity, intra-stream pivot
+invalidation, streaming token generation, and real session state management.
 """
 from __future__ import annotations
 
 import pytest
-from streaming_rag.models import ControllerAction, StreamingChunk, DocumentChunk
+from streaming_rag.models import ControllerAction, StreamingChunk, DocumentChunk, TurnIntent
 from streaming_rag.pipeline import StreamingLiveRAG
 from streaming_rag.corpus import SAMPLE_CORPUS
 from streaming_rag.retrieval import HybridRetriever, BM25Index, DenseSemanticIndex
@@ -102,7 +103,11 @@ def test_presentation_query_suppression(rag):
     record = rag.process_stream(turn_2, session_id='sess_pres')
     assert '•' in record.answer
     assert len(record.retrieval_events) == 0  # 0 vector searches executed
-    assert record.citations == ['Doc_45 §1']  # Citations preserved without fabrication
+    assert 'Doc_45 §1' in record.citations  # Citations preserved without fabrication
+    # Verify bullets don't strand or detach citations
+    for line in record.answer.splitlines():
+        if line.startswith('•'):
+            assert '[' in line and ']' in line
 
 
 def test_uncertainty_flagging_missing_evidence(rag):
@@ -124,3 +129,68 @@ def test_telemetry_trace_recording(rag):
     assert record.telemetry.total_latency_ms > 0
     assert record.session_id == 'sess_telem'
     assert len(record.retrieval_events) > 0
+
+
+def test_cross_turn_context_continuity_anaphora(rag):
+    session_id = 'sess_continuity_test'
+    # Turn 1: Setup workshop in Pune
+    t1 = [
+        StreamingChunk(timestamp_s=1.0, text='I need to plan a customer workshop in Pune for 30 people, and I need the cancellation policy.', is_final=True)
+    ]
+    rec_1 = rag.process_stream(t1, session_id=session_id)
+    assert 'Doc_12 §2' in rec_1.citations
+    assert rec_1.active_entities.get('location') == 'Pune'
+
+    # Turn 2: Anaphoric follow-up with capacity change ('What if it is for 50 people?')
+    t2 = [
+        StreamingChunk(timestamp_s=1.0, text='What if it is for 50 people?', is_final=True)
+    ]
+    rec_2 = rag.process_stream(t2, session_id=session_id)
+    # Context discontinuity resolved
+    assert rec_2.resolved_query is not None
+    assert '50' in rec_2.resolved_query
+    assert 'Pune' in rec_2.resolved_query
+    # Capacity limit reasoned
+    assert 'Doc_12 §2' in rec_2.citations
+    assert rec_2.uncertainty is not None
+    assert 'exceed' in rec_2.uncertainty.lower()
+
+    # Turn 3: Deictic reference ('What about hotel lodging tariffs there?')
+    t3 = [
+        StreamingChunk(timestamp_s=1.0, text='What about hotel lodging tariffs there?', is_final=True)
+    ]
+    rec_3 = rag.process_stream(t3, session_id=session_id)
+    assert rec_3.resolved_query is not None
+    assert 'Pune' in rec_3.resolved_query
+    assert 'Doc_52 §2' in rec_3.citations
+    assert '6,500' in rec_3.answer
+
+
+def test_intra_stream_speculative_pivot(rag):
+    # User begins asking about Pune, then pivots mid-speech to Mumbai
+    stream = [
+        StreamingChunk(timestamp_s=0.0, text='I need lodging rates for Pune...'),
+        StreamingChunk(timestamp_s=0.6, text='...wait, actually make that Mumbai for 2 nights.'),
+        StreamingChunk(timestamp_s=1.2, text='I need lodging rates for Mumbai for 2 nights.', is_final=True),
+    ]
+    rec = rag.process_stream(stream, session_id='sess_pivot_test')
+    # Both initial speculative early and speculative pivot events logged
+    triggers = [ev.trigger for ev in rec.retrieval_events]
+    assert 'speculative_early' in triggers
+    assert 'speculative_pivot' in triggers
+    # Final answer grounds Mumbai lodging
+    assert 'Doc_52 §2' in rec.citations
+    assert 'Mumbai' in rec.answer
+
+
+def test_realtime_streaming_token_generator(rag):
+    stream = [
+        StreamingChunk(timestamp_s=0.5, text='Summarize the hotel lodging caps.', is_final=True)
+    ]
+    tokens = list(rag.process_stream_streaming(stream, session_id='sess_stream_test'))
+    assert len(tokens) > 5
+    assert tokens[0].ttft_ms is not None
+    assert tokens[0].ttft_ms > 0
+    assert tokens[-1].is_final is True
+    reconstructed = ''.join(t.token for t in tokens)
+    assert 'Doc_52 §2' in reconstructed

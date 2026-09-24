@@ -2,7 +2,7 @@
 """
 scripts/demo_streaming_rag.py
 ==============================
-Live interactive demonstration of ULTRON Streaming Live RAG.
+Live interactive demonstration of ULTRON Evolved Streaming Live RAG.
 100% REAL DATA · ZERO MOCKS · REAL HYBRID INDEX & CORPUS.
 """
 from __future__ import annotations
@@ -38,7 +38,7 @@ def warn(msg: str): print(f"  {YELLOW}[!!]{RESET} {msg}")
 def main():
     sep = "=" * 68
     print(f"\n{BOLD}{CYAN}{sep}{RESET}")
-    print(f"{BOLD}{CYAN}  ULTRON Streaming Live RAG — Live Real-Data Demonstration           {RESET}")
+    print(f"{BOLD}{CYAN}  ULTRON Evolved Streaming Live RAG — Live Demonstration             {RESET}")
     print(f"{BOLD}{CYAN}  100% Real Corpus · Real BM25 + Dense Hybrid Search · Zero Mocks   {RESET}")
     print(f"{BOLD}{CYAN}{sep}{RESET}")
 
@@ -59,7 +59,7 @@ def main():
     ]
 
     for chunk in stream_1:
-        time.sleep(0.2)
+        time.sleep(0.1)
         dec = rag.controller.evaluate_chunk(chunk)
         action_name = dec.action.value.upper()
         if "WAIT" in action_name:
@@ -98,14 +98,12 @@ def main():
     # Flow 4: Session Continuity & Late-Arriving Detail Refinement (G5)
     # ------------------------------------------------------------------
     banner("Flow 4: Session Continuity & Late-Arriving Detail Refinement (G5)")
-    # Turn 1
     t1 = [StreamingChunk(timestamp_s=1.0, text="Summarize the travel reimbursement rule for an employee trip.", is_final=True)]
     r1 = rag.process_stream(t1, session_id="real_travel_sess")
     info(f"Turn 1 Request : {t1[0].text}")
     ok(f"Answer Version {r1.answer_version} | Citations: {r1.citations}")
     print(f"    Answer: {r1.answer}\n")
 
-    # Turn 2
     t2 = [StreamingChunk(timestamp_s=1.0, text="The trip was international and the booking was made after travel.", is_final=True)]
     r2 = rag.process_stream(t2, session_id="real_travel_sess")
     info(f"Turn 2 Late Constraint: {t2[0].text}")
@@ -114,9 +112,9 @@ def main():
     print(f"    Refined Answer: {r2.answer}\n")
 
     # ------------------------------------------------------------------
-    # Flow 5: Presentation Query Suppression (Pitfall #4)
+    # Flow 5: Presentation Query Suppression with Intact Citations
     # ------------------------------------------------------------------
-    banner("Flow 5: Query Suppression on Presentation Reformatting (Pitfall #4)")
+    banner("Flow 5: Query Suppression on Presentation Reformatting")
     t3 = [StreamingChunk(timestamp_s=0.5, text="Please repeat your last answer in two bullets.", is_final=True)]
     r3 = rag.process_stream(t3, session_id="real_travel_sess")
     info(f"User Input: {t3[0].text}")
@@ -125,9 +123,52 @@ def main():
     print(f"    Formatted Output:\n{r3.answer}\n")
 
     # ------------------------------------------------------------------
-    # Flow 6: Telemetry & Observability Tracing (G6)
+    # Flow 6: Context Discontinuity Resolution & Anaphora Bridging (G7)
     # ------------------------------------------------------------------
-    banner("Flow 6: Telemetry & Observability Tracing (G6)")
+    banner("Flow 6: Context Discontinuity Resolution & Anaphora Bridging (G7)")
+    info("User follow-up utterance referencing prior workshop session: 'What if it is for 50 people?'")
+    t4 = [StreamingChunk(timestamp_s=1.0, text="What if it is for 50 people?", is_final=True)]
+    r4 = rag.process_stream(t4, session_id="real_demo_sess")
+    ok(f"Context Discontinuity Resolved Canonical Query: '{r4.resolved_query}'")
+    ok(f"Active Entity State: {r4.active_entities}")
+    ok(f"Answer Version {r4.answer_version} | Citations: {r4.citations}")
+    print(f"    Answer: {r4.answer}\n")
+    if r4.uncertainty:
+        warn(f"Capacity Limit Reasoned: {r4.uncertainty}")
+
+    # ------------------------------------------------------------------
+    # Flow 7: Intra-Stream Speculative Pivot (G8)
+    # ------------------------------------------------------------------
+    banner("Flow 7: Intra-Stream Speculative Pivot & Invalidation (G8)")
+    info("User self-corrects mid-speech (pivoting from Pune to Mumbai):")
+    stream_pivot = [
+        StreamingChunk(timestamp_s=0.0, text="I need lodging rates for Pune..."),
+        StreamingChunk(timestamp_s=0.6, text="...wait, actually make that Mumbai for 2 nights."),
+        StreamingChunk(timestamp_s=1.2, text="I need lodging rates for Mumbai for 2 nights.", is_final=True),
+    ]
+    r_pivot = rag.process_stream(stream_pivot, session_id="real_pivot_sess")
+    triggers = [(ev.trigger, ev.query) for ev in r_pivot.retrieval_events]
+    ok(f"Trigger sequence: {triggers}")
+    ok(f"Pivoted Answer Grounded for Mumbai: {r_pivot.answer}")
+    ok(f"Citations: {r_pivot.citations}")
+
+    # ------------------------------------------------------------------
+    # Flow 8: Real-Time Incremental Streaming Token Generator (G9)
+    # ------------------------------------------------------------------
+    banner("Flow 8: Real-Time Incremental Streaming Token Generator (G9)")
+    info("Streaming token-by-token generation with microsecond TTFT tracking:")
+    stream_tokens = list(rag.process_stream_streaming([StreamingChunk(timestamp_s=0.5, text="Summarize the hotel lodging caps.", is_final=True)], session_id="real_stream_tok"))
+    print(f"    {MAGENTA}Streaming Output:{RESET} ", end="", flush=True)
+    for tok in stream_tokens:
+        print(tok.token, end="", flush=True)
+        time.sleep(0.01)
+    print()
+    ok(f"TTFT (Time To First Token): {stream_tokens[0].ttft_ms:.1f}ms | Total tokens: {len(stream_tokens)}")
+
+    # ------------------------------------------------------------------
+    # Flow 9: Telemetry & Observability Tracing (G6)
+    # ------------------------------------------------------------------
+    banner("Flow 9: Telemetry & Observability Tracing (G6)")
     telem = record_1.telemetry
     ok("Real Execution Telemetry Trace:")
     print(f"    Session ID          : {record_1.session_id}")
@@ -139,7 +180,7 @@ def main():
     print(f"    Completion Tokens   : {telem.completion_tokens}")
     print(f"    Retrieval Events    : {len(record_1.retrieval_events)} logged event(s)")
 
-    banner("ALL 6 REAL-DATA DEMONSTRATION FLOWS COMPLETED (ZERO MOCKS)")
+    banner("ALL 9 REAL-DATA DEMONSTRATION FLOWS COMPLETED (ZERO MOCKS)")
 
 if __name__ == "__main__":
     main()

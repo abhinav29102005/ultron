@@ -379,9 +379,14 @@ class CyberneticCLI:
                 from streaming_rag.pipeline import StreamingLiveRAG
                 from streaming_rag.models import StreamingChunk
                 console.print(f"[dim]Executing Streaming Live RAG over enterprise corpus...[/dim]")
-                rag = StreamingLiveRAG()
+                rag = StreamingLiveRAG.get_instance()
                 stream = [StreamingChunk(timestamp_s=0.5, text=arg, is_final=True)]
-                rec = rag.process_stream(stream, session_id=self.sm.active_session.id if self.sm.active_session else "rag_cli")
+                session_id = self.sm.active_session.id if self.sm.active_session else "rag_cli"
+                rec = rag.process_stream(stream, session_id=session_id)
+                if rec.resolved_query and rec.resolved_query != arg:
+                    console.print(f"[dim cyan]⚡ Context resolved: "{rec.resolved_query}" (Turn {rec.turn_id})[/dim cyan]")
+                if rec.answer_version > 1:
+                    console.print(f"[dim green]🔄 Version {rec.answer_version} (Cumulative Delta State)[/dim green]")
                 self.render_response(
                     rec.answer,
                     citations=rec.citations,
