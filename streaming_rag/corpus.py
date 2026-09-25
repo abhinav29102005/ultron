@@ -2,6 +2,7 @@
 streaming_rag/corpus.py – Evaluation Corpus Registry
 ===================================================
 Provides verified factual document chunks formatted strictly as [Doc_ID §Section].
+Includes both enterprise policy documents and Samsung PRISM Theme 4 hackathon specifications.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from streaming_rag.models import DocumentChunk
 
 
 SAMPLE_CORPUS: List[DocumentChunk] = [
+    # ── Enterprise Policy Documents ──────────────────────────────────────────
     DocumentChunk(
         doc_id="Doc_12",
         section="§2",
@@ -52,5 +54,35 @@ SAMPLE_CORPUS: List[DocumentChunk] = [
         title="Hotel Lodging Caps and Per Diem Limits",
         text="Nightly hotel tariffs in Tier-1 cities (Mumbai, Delhi, Bangalore, Pune) are capped at INR 6,500 per night inclusive of breakfast.",
         metadata={"category": "Lodging", "tier": "Tier-1"}
+    ),
+
+    # ── Samsung PRISM Theme 4 Hackathon Specifications ──────────────────────
+    DocumentChunk(
+        doc_id="Doc_SAM_01",
+        section="§1",
+        title="Samsung PRISM Theme 4: Streaming Live RAG Problem Scope & Architecture",
+        text="The Samsung PRISM Theme 4 Streaming Live RAG challenge requires building a low-latency conversational RAG system that processes streaming audio/text transcripts incrementally, triggers speculative retrieval before the user finishes speaking, isolates multi-intent compound queries, and avoids sequential wait latency.",
+        metadata={"domain": "Samsung", "theme": "Theme 4", "topic": "Problem Scope"}
+    ),
+    DocumentChunk(
+        doc_id="Doc_SAM_02",
+        section="§1",
+        title="Samsung PRISM Theme 4: Technical Evaluation Gates (G1 to G6) & Target Thresholds",
+        text="Samsung Theme 4 evaluation requires passing six technical gates: Gate G1 Reproducibility (automated single-command execution), Gate G2 Early Retrieval Triggering (commencing retrieval before utterance end on >=80% of eligible queries with >=800ms latency gain), Gate G3 Multi-Intent Identification (extracting >=2 orthogonal sub-queries on >=70% of compound utterances), Gate G4 Factual Grounding (>=85% citation support with 0 fabricated document IDs), Gate G5 Session Refinement (verified state continuity V1 -> V2 on late constraints), and Gate G6 Telemetry & Observability (100% trace capture of latency and token metrics).",
+        metadata={"domain": "Samsung", "theme": "Theme 4", "topic": "Evaluation Gates"}
+    ),
+    DocumentChunk(
+        doc_id="Doc_SAM_02",
+        section="§2",
+        title="Samsung PRISM Theme 4: Hard Engineering Rules & Constraints",
+        text="Samsung Theme 4 mandates zero parametric hallucination where all factual assertions must cite exact source chunks formatted as [Doc_ID §Section], explicit uncertainty flags when corpus evidence is missing, strictly session-bound ephemeral state without cross-session leakage, architectural parsimony avoiding heavy multi-agent loops, and Gate 0 presentation query suppression where reformatting or summarization requests execute zero corpus vector queries.",
+        metadata={"domain": "Samsung", "theme": "Theme 4", "topic": "Engineering Rules"}
+    ),
+    DocumentChunk(
+        doc_id="Doc_SAM_03",
+        section="§1",
+        title="Samsung PRISM Theme 4: Demonstration Flows & Deliverables",
+        text="The required Samsung Theme 4 demonstration requires showcasing: 1) Speculative early retrieval with >=800ms gain, 2) Compound multi-intent decomposition into orthogonal sub-queries, 3) Factual grounding with exact section citations [Doc_XX §YY], 4) Session continuity and delta constraint refinement (Version 1 -> Version 2), 5) Presentation query suppression with zero corpus queries, and 6) Real-time telemetry logging of latency and token accounting.",
+        metadata={"domain": "Samsung", "theme": "Theme 4", "topic": "Demonstration Flows"}
     ),
 ]

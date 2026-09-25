@@ -15,10 +15,12 @@ from streaming_rag.pipeline import StreamingLiveRAG
 from streaming_rag.corpus import SAMPLE_CORPUS
 from streaming_rag.retrieval import HybridRetriever, BM25Index, DenseSemanticIndex
 from streaming_rag.controller import RetrievalController
+from streaming_rag.session import SessionRegistry
 
 
 @pytest.fixture
 def rag():
+    SessionRegistry.clear()
     return StreamingLiveRAG()
 
 
