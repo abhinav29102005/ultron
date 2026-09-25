@@ -384,7 +384,7 @@ class CyberneticCLI:
                 session_id = self.sm.active_session.id if self.sm.active_session else "rag_cli"
                 rec = rag.process_stream(stream, session_id=session_id)
                 if rec.resolved_query and rec.resolved_query != arg:
-                    console.print(f"[dim cyan]⚡ Context resolved: "{rec.resolved_query}" (Turn {rec.turn_id})[/dim cyan]")
+                    console.print(f"[dim cyan]⚡ Context resolved: '{rec.resolved_query}' (Turn {rec.turn_id})[/dim cyan]")
                 if rec.answer_version > 1:
                     console.print(f"[dim green]🔄 Version {rec.answer_version} (Cumulative Delta State)[/dim green]")
                 self.render_response(
