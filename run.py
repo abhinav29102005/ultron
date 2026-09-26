@@ -61,8 +61,23 @@ def parse_args() -> argparse.Namespace:
         "command",
         nargs="?",
         default=None,
-        choices=["upgrade", "update", "setup", "keys", "hub", "rag", "streaming-rag", None],
+        choices=["upgrade", "update", "setup", "keys", "hub", "rag", "streaming-rag", "demo", "record", "policy", "test", "questions", None],
         help="Subcommand to execute: 'upgrade' (update Ultron to latest release), 'setup', or 'hub'",
+    )
+    parser.add_argument(
+        "--policy",
+        action="store_true",
+        help="Ingest policy.pdf and run the 15-question policy evaluation suite",
+    )
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help="Execute the 15 official Theme 4 evaluation test questions",
+    )
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Launch the Samsung PRISM Theme 4 Streaming Live RAG broadcast demonstration",
     )
     parser.add_argument(
         "--mode",
@@ -320,7 +335,7 @@ async def run_text_mode(container) -> None:
 
     from utils.api_key_manager import prompt_first_run_if_needed
     await prompt_first_run_if_needed(cli=cli, container=container)
-    Console().print("[dim]Type your message or use slash commands ([bold cyan]/help, /model, /listen, /mode, /rag, /chats, /voice, /text, /settings[/bold cyan]).[/dim]\n")
+    Console().print("[dim]Type your message, [bold cyan]/demo[/bold cyan] for Theme 4 showcase, or slash commands ([bold cyan]/help, /rag, /model, /listen, /chats[/bold cyan]).[/dim]\n")
 
     # Configure prompt_toolkit for rich interactive terminal sessions
     is_interactive = sys.stdin.isatty()
@@ -362,6 +377,9 @@ async def run_text_mode(container) -> None:
                 "/voice": {"on": None, "off": None},
                 "/text": None,
                 "/ps": None,
+                "/demo": {"auto": None, "step": None},
+                "/policy": None,
+                "/questions": None,
                 "/powershell": None,
                 "/guardrails": {"on": None, "off": None},
                 "/clear": None,
@@ -409,6 +427,11 @@ async def run_text_mode(container) -> None:
             line = sanitize_terminal_text(line.strip())
             if not line:
                 continue
+
+            # Auto-route bare commands like 'demo', 'record', 'policy', 'questions' to slash commands
+            line_lower = line.lower().strip()
+            if line_lower in ("demo", "record", "policy", "questions") or                line_lower.startswith("demo ") or                line_lower.startswith("record ") or                line_lower.startswith("policy ") or                line_lower.startswith("rag "):
+                line = "/" + line.strip()
 
             is_voice_turn = False
             # Check slash command or shell ! command
@@ -635,12 +658,45 @@ def main() -> None:
             render_provider_hub()
             sys.exit(0)
 
+        if first_arg in ("policy", "test", "questions"):
+            if first_arg == "questions":
+                from scripts.test_policy_questions import POLICY_QUESTIONS
+                from rich.table import Table
+                from rich.console import Console
+                c = Console()
+                t = Table(title="15 Official Evaluation Questions", border_style="cyan")
+                t.add_column("#", style="bold yellow", width=4)
+                t.add_column("Topic", style="bold white", width=28)
+                t.add_column("Question", style="cyan")
+                for q in POLICY_QUESTIONS:
+                    t.add_row(str(q["id"]), q["title"], q["query"])
+                c.print(t)
+                sys.exit(0)
+            else:
+                from scripts.test_policy_questions import main as policy_main
+                policy_main()
+                sys.exit(0)
+
+        if first_arg in ("demo", "record", "/demo", "/record"):
+            from scripts.record_demo import main as demo_main
+            mode = "auto" if ("--auto" in sys.argv or "auto" in sys.argv) else "step"
+            speed = "fast" if ("--fast" in sys.argv or "fast" in sys.argv) else "normal"
+            demo_main(["--mode", mode, "--speed", speed])
+            sys.exit(0)
+
         if first_arg in ("rag", "streaming-rag", "search"):
             from streaming_rag.cli import rag_cli
             code = rag_cli(sys.argv[2:])
             sys.exit(code)
 
     args = parse_args()
+
+    if getattr(args, "demo", False):
+        from scripts.record_demo import main as demo_main
+        mode = "auto" if ("--auto" in sys.argv or "auto" in sys.argv) else "step"
+        speed = "fast" if ("--fast" in sys.argv or "fast" in sys.argv) else "normal"
+        demo_main(["--mode", mode, "--speed", speed])
+        sys.exit(0)
 
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())

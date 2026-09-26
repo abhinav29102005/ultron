@@ -214,11 +214,12 @@ def chunk_text(text: str, max_chars: int = 500, overlap: int = 50) -> List[str]:
     return chunks if chunks else [text.strip()]
 
 
-def extract_chunks_from_file(file_path: Path) -> List[Tuple[str, str, Dict[str, Any]]]:
+def extract_chunks_from_file(file_path: Path | str) -> List[Tuple[str, str, Dict[str, Any]]]:
     """
     Extract structured chunks from a file.
     Returns: List of (section_name, text, metadata)
     """
+    file_path = Path(file_path)
     ext = file_path.suffix.lower()
     base_name = file_path.stem
     results: List[Tuple[str, str, Dict[str, Any]]] = []
@@ -325,8 +326,9 @@ def extract_chunks_from_file(file_path: Path) -> List[Tuple[str, str, Dict[str, 
     return results
 
 
-def ingest_file(file_path: Path, doc_id_prefix: Optional[str] = None) -> List[DocumentChunk]:
+def ingest_file(file_path: Path | str, doc_id_prefix: Optional[str] = None) -> List[DocumentChunk]:
     """Ingest a file into the RAG corpus and return the created DocumentChunks."""
+    file_path = Path(file_path)
     if not doc_id_prefix:
         # Create a clean doc_id like Doc_TRAVEL_01
         clean_name = re.sub(r"[^A-Za-z0-9]", "_", file_path.stem).upper()

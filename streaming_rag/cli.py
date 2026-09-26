@@ -149,6 +149,22 @@ def run_interactive_repl(session_id: str = "global_cli_rag") -> int:
             interactive_ingest_flow("select")
             continue
 
+        elif prompt_text.lower().startswith("/policy") or prompt_text.lower().startswith("/test") or prompt_text.lower() in ("policy", "test"):
+            from scripts.test_policy_questions import main as policy_main
+            policy_main()
+            continue
+
+        elif prompt_text.lower().startswith("/questions") or prompt_text.lower() == "questions":
+            from scripts.test_policy_questions import POLICY_QUESTIONS
+            table = Table(title="15 Official Evaluation Questions", border_style="cyan")
+            table.add_column("#", style="bold yellow", width=4)
+            table.add_column("Topic", style="bold white", width=28)
+            table.add_column("Question", style="cyan")
+            for q in POLICY_QUESTIONS:
+                table.add_row(str(q["id"]), q["title"], q["query"])
+            console.print(table)
+            continue
+
         elif prompt_text.lower() == "/corpus":
             table = Table(title="Indexed Enterprise Policy Corpus", border_style="green")
             table.add_column("Tag", style="bold cyan")
@@ -157,6 +173,13 @@ def run_interactive_repl(session_id: str = "global_cli_rag") -> int:
             for doc in rag.corpus:
                 table.add_row(doc.citation_tag, doc.title, str(doc.metadata))
             console.print(table)
+            continue
+
+        elif prompt_text.lower().startswith("/demo") or prompt_text.lower().startswith("/rag demo") or prompt_text.lower() in ("demo", "record") or prompt_text.lower().startswith("demo "):
+            from scripts.record_demo import main as demo_main
+            mode = "auto" if "auto" in prompt_text.lower() else "step"
+            speed = "fast" if "fast" in prompt_text.lower() else "normal"
+            demo_main(["--mode", mode, "--speed", speed])
             continue
 
         elif prompt_text.lower() == "/help":
@@ -186,6 +209,9 @@ def rag_cli(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--session", "-S", default="global_cli_rag", help="Session ID for multi-turn state persistence")
     parser.add_argument("--benchmark", "-b", action="store_true", help="Run full Technical Evaluation Gates (G1-G9)")
     parser.add_argument("--demo", "-d", action="store_true", help="Run 9-flow live interactive demonstration")
+    parser.add_argument("--policy", action="store_true", help="Ingest policy.pdf and run the 15-question evaluation suite")
+    parser.add_argument("--test", action="store_true", help="Execute the 15 official Theme 4 evaluation test questions")
+    parser.add_argument("--questions", action="store_true", help="List all 15 official evaluation test questions")
     parser.add_argument("--add", "-a", metavar="FILE", help="Ingest and chunk a file (PDF, TXT, MD, JSON) into RAG corpus")
     parser.add_argument("--select", action="store_true", help="Open native desktop GUI file chooser to select documents")
 
@@ -194,6 +220,22 @@ def rag_cli(argv: Optional[List[str]] = None) -> int:
     if args.benchmark:
         from streaming_rag.benchmark import main as bench_main
         bench_main()
+        return 0
+
+    if args.policy or args.test:
+        from scripts.test_policy_questions import main as policy_main
+        policy_main()
+        return 0
+
+    if args.questions:
+        from scripts.test_policy_questions import POLICY_QUESTIONS
+        table = Table(title="15 Official Evaluation Questions", border_style="cyan")
+        table.add_column("#", style="bold yellow", width=4)
+        table.add_column("Topic", style="bold white", width=28)
+        table.add_column("Question", style="cyan")
+        for q in POLICY_QUESTIONS:
+            table.add_row(str(q["id"]), q["title"], q["query"])
+        console.print(table)
         return 0
 
     if args.demo:

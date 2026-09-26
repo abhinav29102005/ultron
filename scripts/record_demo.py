@@ -113,13 +113,13 @@ def run_gate_verification(rag: StreamingLiveRAG):
 
     console.print(table)
 
-def main():
+def main(argv: Optional[List[str]] = None):
     parser = argparse.ArgumentParser(description="Samsung PRISM Theme 4 Live RAG Recording Runner")
     parser.add_argument("--mode", choices=["step", "auto"], default="step",
                         help="'step' waits for Enter between scenes (ideal for recording); 'auto' runs automatically.")
     parser.add_argument("--speed", choices=["normal", "fast"], default="normal",
                         help="Execution speed for typing and token streaming.")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     type_delay = 0.02 if args.speed == "normal" else 0.005
     stream_delay = 0.015 if args.speed == "normal" else 0.002

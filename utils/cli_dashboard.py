@@ -84,6 +84,9 @@ class CyberneticCLI:
         table.add_column("Description", style="white")
 
         table.add_row("/model [nebius|dual|groq|nvidia|qwen]", "Switch active LLM engine (Nebius Token Factory Nemotron, Dual, Groq, NVIDIA, Qwen)")
+        table.add_row("/demo [step|auto]", "Launch the Samsung PRISM Theme 4 broadcast demonstration")
+        table.add_row("/policy", "Ingest policy.pdf and run the 15-question master policy evaluation")
+        table.add_row("/questions", "Display all 15 official Theme 4 evaluation test questions")
         table.add_row("/rag [help|corpus|context|stream|...]", "Query Theme 4 Streaming Live RAG with citations, benchmark & state")
         table.add_row("/setup, /keys", "Interactive API key setup wizard with cloud panel links")
         table.add_row("/hub, /providers", "View cloud LLM portal links and free tier quotas")
@@ -125,6 +128,9 @@ class CyberneticCLI:
         table.add_row("/rag reset (or /rag clear)", "Reset active RAG session memory and clear accumulated entity context")
         table.add_row("/rag benchmark", "Execute full Theme 4 Technical Evaluation Gates (G1 to G9)")
         table.add_row("/rag demo", "Run the automated 9-flow verification scenario demonstration")
+        table.add_row("/rag policy (or /policy)", "Ingest policy.pdf and run the 15-question evaluation suite")
+        table.add_row("/rag test (or /test)", "Execute 15 Theme 4 evaluation test questions")
+        table.add_row("/rag questions", "List and browse all 15 official evaluation test questions")
         table.add_row("/rag help", "Display this guide to all /rag capabilities")
 
         console.print(table)
@@ -441,9 +447,29 @@ class CyberneticCLI:
             elif sub_lower == "benchmark":
                 from streaming_rag.benchmark import main as bench_main
                 bench_main()
-            elif sub_lower == "demo":
-                from scripts.demo_streaming_rag import main as demo_main
-                demo_main()
+            elif sub_lower.startswith("demo") or sub_lower.startswith("record"):
+                from scripts.record_demo import main as demo_main
+                mode = "auto" if "auto" in sub_lower else "step"
+                speed = "fast" if "fast" in sub_lower else "normal"
+                demo_main(["--mode", mode, "--speed", speed])
+                console.print("
+[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...
+")
+                self.render_header()
+            elif sub_lower.startswith("policy") or sub_lower.startswith("test") or sub_lower.startswith("eval"):
+                from scripts.test_policy_questions import main as policy_main
+                policy_main()
+            elif sub_lower == "questions":
+                from scripts.test_policy_questions import POLICY_QUESTIONS
+                from rich.table import Table
+                q_table = Table(title="15 Official Evaluation Questions", border_style="cyan", box=ROUNDED)
+                q_table.add_column("#", style="bold yellow", width=4)
+                q_table.add_column("Topic", style="bold white", width=28)
+                q_table.add_column("Question", style="cyan")
+                for q in POLICY_QUESTIONS:
+                    q_table.add_row(str(q["id"]), q["title"], q["query"])
+                console.print(q_table)
+                console.print("[dim]Run any question directly using: [bold yellow]/rag <question>[/bold yellow][/dim]")
             elif sub_lower.startswith("stream "):
                 stream_q = sub[7:].strip()
                 if not stream_q:
@@ -554,6 +580,33 @@ class CyberneticCLI:
             status = "ENABLED 🛡️" if new_val else "DISABLED ⚠️"
             console.print(f"[bold green]✓ Safety Guardrails {status}[/bold green]")
             self.render_header()
+
+        elif cmd in ("policy", "test", "tests", "eval"):
+            from scripts.test_policy_questions import main as policy_main
+            policy_main()
+
+        elif cmd == "questions":
+            from scripts.test_policy_questions import POLICY_QUESTIONS
+            from rich.table import Table
+            q_table = Table(title="15 Official Evaluation Questions", border_style="cyan", box=ROUNDED)
+            q_table.add_column("#", style="bold yellow", width=4)
+            q_table.add_column("Topic", style="bold white", width=28)
+            q_table.add_column("Question", style="cyan")
+            for q in POLICY_QUESTIONS:
+                q_table.add_row(str(q["id"]), q["title"], q["query"])
+            console.print(q_table)
+            console.print("[dim]Run any question directly using: [bold yellow]/rag <question>[/bold yellow][/dim]")
+
+        elif cmd in ("demo", "record"):
+            from scripts.record_demo import main as demo_main
+            mode = "auto" if (arg and "auto" in arg.lower()) else "step"
+            speed = "fast" if (arg and "fast" in arg.lower()) else "normal"
+            demo_main(["--mode", mode, "--speed", speed])
+            console.print("
+[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...
+")
+            self.render_header()
+            return True
 
         elif cmd == "tokens":
             self.render_tokens()

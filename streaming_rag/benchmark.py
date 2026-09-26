@@ -22,13 +22,16 @@ from rich.panel import Panel
 from rich.table import Table
 
 from streaming_rag.models import StreamingChunk
+from streaming_rag.corpus import SAMPLE_CORPUS
 from streaming_rag.pipeline import StreamingLiveRAG
 
 console = Console()
 
 
 def run_gate_evaluations() -> Dict[str, Dict[str, Any]]:
-    rag = StreamingLiveRAG()
+    from streaming_rag.session import SessionRegistry
+    SessionRegistry.clear()
+    rag = StreamingLiveRAG(corpus=list(SAMPLE_CORPUS))
     results: Dict[str, Dict[str, Any]] = {}
 
     # -------------------------------------------------------------
@@ -184,7 +187,7 @@ def run_gate_evaluations() -> Dict[str, Dict[str, Any]]:
 
 
 def run_ablations() -> Dict[str, Any]:
-    rag = StreamingLiveRAG()
+    rag = StreamingLiveRAG(corpus=list(SAMPLE_CORPUS))
     test_query = "cancellation terms and refund policies for workshops"
 
     start_hybrid = time.perf_counter()

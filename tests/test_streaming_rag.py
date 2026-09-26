@@ -21,7 +21,7 @@ from streaming_rag.session import SessionRegistry
 @pytest.fixture
 def rag():
     SessionRegistry.clear()
-    return StreamingLiveRAG()
+    return StreamingLiveRAG(corpus=list(SAMPLE_CORPUS))
 
 
 def test_corpus_indexing_and_structure(rag):
