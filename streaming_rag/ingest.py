@@ -48,13 +48,18 @@ def get_custom_corpus_file() -> Path:
 def load_all_chunks() -> List[DocumentChunk]:
     """Load default corpus combined with any user-ingested custom chunks."""
     corpus: List[DocumentChunk] = list(SAMPLE_CORPUS)
+    existing_keys = {f"{c.doc_id}:{c.section}" for c in corpus}
     custom_file = get_custom_corpus_file()
     if custom_file.exists():
         try:
             with open(custom_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 for item in data:
-                    corpus.append(DocumentChunk(**item))
+                    c = DocumentChunk(**item)
+                    key = f"{c.doc_id}:{c.section}"
+                    if key not in existing_keys:
+                        corpus.append(c)
+                        existing_keys.add(key)
         except Exception as e:
             console.print(f"[dim yellow]Warning: Failed to load custom corpus ({e})[/dim yellow]")
     return corpus

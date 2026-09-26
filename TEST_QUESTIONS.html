@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Streaming Live RAG – 15 Evaluation Test Questions</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #131b2e;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --text: #f1f5f9;
+      --subtext: #94a3b8;
+      --success: #34d399;
+      --tag-bg: #1e293b;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      margin: 0;
+      padding: 30px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #fff;
+      font-size: 28px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .subtitle {
+      color: var(--subtext);
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+    .header-box {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(129, 140, 248, 0.05));
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+    .cli-cmd {
+      background: #000;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      color: #38bdf8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .question-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+      transition: border-color 0.2s;
+    }
+    .question-card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--subtext);
+      margin-bottom: 12px;
+      background: rgba(0,0,0,0.25);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    .meta-item strong {
+      color: #cbd5e1;
+    }
+    .query-box {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 14px 16px;
+      position: relative;
+      margin-top: 8px;
+    }
+    .query-text {
+      font-size: 15px;
+      color: #e2e8f0;
+      font-weight: 500;
+      padding-right: 110px;
+    }
+    .copy-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .copy-btn:hover {
+      background: #1d4ed8;
+    }
+    .copy-btn:active {
+      transform: translateY(-50%) scale(0.97);
+    }
+    .copy-btn.copied {
+      background: var(--success);
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚡ Streaming Live RAG Test Suite</h1>
+    <div class="subtitle">15 Structured Evaluation Test Questions with One-Click Copy & Grounding Metadata</div>
+
+    <div class="header-box">
+      <strong>💻 Interactive Testing Session:</strong>
+      <div class="cli-cmd">
+        <span>python3 -m streaming_rag.cli --interactive</span>
+        <button class="copy-btn" style="position:static;transform:none;" onclick="copyCode(this, 'python3 -m streaming_rag.cli --interactive')">Copy Command</button>
+      </div>
+    </div>
+
+    <!-- Questions list will be rendered -->
+    <div id="questions-list"></div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        id: 1,
+        title: "Domestic Travel Reimbursement & Filing Deadline",
+        category: "Single-Intent Factual",
+        citations: "[Doc_45 §1]",
+        outcome: "100% refund on domestic rail/economy flight with itemized GST receipts within 30 days.",
+        query: "What is the submission deadline and reimbursement rate for domestic employee travel expenses?"
+      },
+      {
+        id: 2,
+        title: "Hotel Lodging Tariff Limits (Tier-1 Metros)",
+        category: "Single-Intent Factual",
+        citations: "[Doc_52 §2]",
+        outcome: "Caps nightly hotel tariffs in Tier-1 cities (Mumbai, Pune) at INR 6,500/night incl. breakfast.",
+        query: "What are the nightly hotel lodging tariff caps in Tier-1 cities like Mumbai and Pune?"
+      },
+      {
+        id: 3,
+        title: "Workshop Venue Booking Cancellation Notice",
+        category: "Single-Intent Factual",
+        citations: "[Doc_31 §4]",
+        outcome: "Requires minimum 14 calendar days advance notice for 100% full refund.",
+        query: "How many days of advance notice are required to receive a 100% full refund on a workshop venue reservation?"
+      },
+      {
+        id: 4,
+        title: "Dietary Accommodations Catering Notice",
+        category: "Single-Intent Factual",
+        citations: "[Doc_09 §1]",
+        outcome: "On-site buffet catering requires 72 hours advance confirmation for vegan/gluten-free.",
+        query: "What is the advance confirmation notice needed for vegan or gluten-free catering accommodations?"
+      },
+      {
+        id: 5,
+        title: "Remote Hardware Setup & Monitor Allocation",
+        category: "Single-Intent Factual",
+        citations: "[Doc_POLICY §7]",
+        outcome: "One-time $1,800 USD stipend for ergonomic seating and up to two 4K UHD displays.",
+        query: "What is the home office remote equipment stipend and external monitor allocation for software engineers?"
+      },
+      {
+        id: 6,
+        title: "Workshop Venue + Cancellation + Catering (3-Way Split)",
+        category: "Multi-Intent Decomposition",
+        citations: "[Doc_12 §2], [Doc_31 §4], [Doc_09 §1]",
+        outcome: "Decomposes into 3 sub-queries in parallel; unifies Pune venues, 14-day refund, and 72h catering.",
+        query: "I need to plan a customer workshop in Pune for 30 people, and I need the cancellation policy and catering options."
+      },
+      {
+        id: 7,
+        title: "Long-Haul Flight Thresholds & Airline Disruption Vouchers",
+        category: "Multi-Intent Decomposition",
+        citations: "[Doc_POLICY §1], [Doc_POLICY §2]",
+        outcome: ">8h Premium Economy / >11h Business Class, plus carrier delay voucher declaration in ERP within 14 days.",
+        query: "What are the flight duration thresholds for international business class and how are airline disruption compensation vouchers handled?"
+      },
+      {
+        id: 8,
+        title: "Accredited AI Hackathons Cloud Grants & Open-Source IP",
+        category: "Multi-Intent Decomposition",
+        citations: "[Doc_POLICY §5], [Doc_POLICY §6]",
+        outcome: "Up to $1,500 USD GPU grant for Nebius H100 / Groq LPU, and default Apache 2.0 open-source licensing.",
+        query: "What cloud GPU prototyping grants are provided for accredited AI hackathons and what is the open-source license policy?"
+      },
+      {
+        id: 9,
+        title: "Turn 1: Approved Workshop Venues in Pune",
+        category: "Context Continuity (T1)",
+        citations: "[Doc_12 §2]",
+        outcome: "Lists Venue A (Kalyani Nagar) and Venue B (Shivajinagar); establishes Pune session memory.",
+        query: "What approved corporate workshop venues do we have for 30 attendees in Pune?"
+      },
+      {
+        id: 10,
+        title: "Turn 2: Anaphoric Headcount Mutation (Elliptical)",
+        category: "Context Continuity (T2)",
+        citations: "[Doc_POLICY §4]",
+        outcome: "Resolves elliptical query to 'Pune workshop venue capacity for 75 attendees'; recommends Grand Ballroom B ($450 surcharge).",
+        query: "What if the workshop headcount increases to 75 people?"
+      },
+      {
+        id: 11,
+        title: "Turn 3: Deictic Spatial Reference ('there')",
+        category: "Context Continuity (T3)",
+        citations: "[Doc_52 §2]",
+        outcome: "Resolves 'there' -> Pune hotel tariffs (INR 6,500/night) without repeating context.",
+        query: "What about hotel lodging tariffs there?"
+      },
+      {
+        id: 12,
+        title: "Mid-Utterance Speculative Pivot (Pune -> Mumbai)",
+        category: "Speculative Invalidation",
+        citations: "[Doc_52 §2]",
+        outcome: "Emits early speculative retrieval on Pune, invalidates on mid-speech correction, answers for Mumbai.",
+        query: "I need lodging rates for Pune... wait, actually make that Mumbai for 2 nights."
+      },
+      {
+        id: 13,
+        title: "Delta Constraint Refinement (Version 1 -> Version 2)",
+        category: "Session Refinement",
+        citations: "[Doc_45 §1], [Doc_45 §3]",
+        outcome: "State increments to Version 2. Retains domestic baseline and integrates VP approval and late-booking non-reimbursability.",
+        query: "The trip was international and the booking was made after travel."
+      },
+      {
+        id: 14,
+        title: "Presentation Query Suppression (Gate 0)",
+        category: "Gate 0 Suppression",
+        citations: "[Doc_45 §1], [Doc_45 §3]",
+        outcome: "Executes 0 vector/corpus searches; formats prior response into bullets with citations intact.",
+        query: "Please format that previous response into two concise bullet points."
+      },
+      {
+        id: 15,
+        title: "Out-of-Corpus Query (Missing Evidence Detection)",
+        category: "Negative Control / Uncertainty",
+        citations: "None (0 fabricated IDs)",
+        outcome: "Zero hallucination; explicitly flags uncertainty because submarine propulsion is absent from corpus.",
+        query: "What is the submarine propeller maintenance protocol for deep-sea naval fleets?"
+      }
+    ];
+
+    function copyCode(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "✓ Copied!";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.classList.remove("copied");
+        }, 2000);
+      });
+    }
+
+    const container = document.getElementById("questions-list");
+    questions.forEach(q => {
+      const card = document.createElement("div");
+      card.className = "question-card";
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="card-title">Q${q.id}: ${q.title}</div>
+          <span class="tag">${q.category}</span>
+        </div>
+        <div class="meta-row">
+          <div class="meta-item"><strong>Citations:</strong> ${q.citations}</div>
+          <div class="meta-item"><strong>Outcome:</strong> ${q.outcome}</div>
+        </div>
+        <div class="query-box">
+          <div class="query-text">${q.query}</div>
+          <button class="copy-btn" onclick="copyCode(this, '${q.query.replace(/'/g, "\\'")}')">
+            📋 Copy Query
+          </button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  </script>
+</body>
+</html>
