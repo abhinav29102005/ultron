@@ -26,6 +26,58 @@
 </p>
 
 ---
+---
+
+## 🏆 Samsung PRISM GenAI Hackathon 2026 — Theme 4: Streaming Live RAG
+
+> **Team Name**: 4 Bottle Codeka  
+> **College**: Thapar Institute of Engineering & Technology, Patiala  
+> **Members**: Abhinav Kumar Singh (Lead), Sukhansh Mittal, Lakkshya Jha, Vikramaditya Singh  
+> **Official Release Tag**: `PRISM_GENAI_HACKATHON_Y2026`  
+
+### 📂 Official Submission Deliverables (`submission/`)
+| Deliverable | Location | Description |
+|---|---|---|
+| **Presentation Deck (PPTX)** | [`submission/Thapar_4_Bottle_Codeka_Submission.pptx`](submission/Thapar_4_Bottle_Codeka_Submission.pptx) | Official 12-slide presentation with embedded architecture & telemetry HUD |
+| **Presentation Deck (PDF)** | [`submission/Thapar_4_Bottle_Codeka_Submission.pdf`](submission/Thapar_4_Bottle_Codeka_Submission.pdf) | High-resolution PDF export following official nomenclature |
+| **System Architecture Brief** | [`submission/SYSTEM_ARCHITECTURE_BRIEF.md`](submission/SYSTEM_ARCHITECTURE_BRIEF.md) | 6-page comprehensive technical design rationale, pipeline & telemetry |
+| **Benchmarking Report** | [`submission/BENCHMARK_REPORT.md`](submission/BENCHMARK_REPORT.md) | Quantitative evaluation (G1–G9), edge-case analysis & 2 ablation studies |
+| **Demo Video Walkthrough** | [`submission/DEMO_VIDEO.md`](submission/DEMO_VIDEO.md) | Full 9-scene video walkthrough breakdown and evaluator replay instructions |
+| **Deliverables Checklist** | [`submission/CHECKLIST.md`](submission/CHECKLIST.md) | Official 8-point Engineering Deliverables verification |
+
+### ⚡ Instant Verification & Reproduction Commands
+```bash
+# 1. Run all 10 Samsung PRISM Technical Evaluation Gates (G1–G9 + G0)
+PYTHONPATH=. python3 streaming_rag/benchmark.py
+
+# 2. Launch the 9-scene live broadcast demonstration (interactive or auto)
+python3 run.py demo
+# Or inside the interactive Cybernetic CLI:
+python3 run.py --cli  # type /demo
+
+# 3. Evaluate the 15 official questions against the 21-section master policy.pdf
+PYTHONPATH=. python3 scripts/test_policy_questions.py
+
+# 4. Run automated test suite (11/11 tests green)
+pytest tests/test_streaming_rag.py -v
+
+# 5. One-command containerized execution
+docker compose up
+```
+
+### 📊 Benchmark Scorecard (All Gates Passed)
+- **G1 Reproducibility**: Automated single-command pass (11/11 tests green).
+- **G2 Early Retrieval Trigger**: **+1,300.0ms** time gain before sentence completion (Target >= 800ms).
+- **G3 Multi-Intent Identification**: **3 orthogonal sub-queries** parallelized concurrently.
+- **G4 Factual Grounding**: **100% exact section citations** (`[Doc_POLICY §XX]`), 0 hallucinated IDs.
+- **G5 Session Refinement**: Incremental state lineage ($V_1 \to V_2$) with baseline preservation.
+- **G6 Telemetry & Observability**: Complete end-to-end trace capture (latency, TTFT, token budgets).
+- **G7 Context Discontinuity**: Cross-turn coreference & anaphora resolution (*"there"*, *"for 50 people"*).
+- **G8 Intra-Stream Pivot**: Mid-speech self-correction (*"Pune... actually Mumbai"*) cache invalidation.
+- **G9 TTFT & Token Yield**: **16.0ms TTFT** (Target < 50ms) with true incremental streaming yield.
+- **G0 Presentation Suppression**: **0 corpus vector queries** executed on reformatting turns.
+
+---
 
 ## 🧠 What is ULTRON?
 
