@@ -55,8 +55,19 @@ class StreamingLiveRAG:
         self.synthesizer = GroundedSynthesizer()
         self.delta_resolver = DeltaConstraintResolver()
 
-        # Ingest default or provided corpus
-        self.corpus = corpus or SAMPLE_CORPUS
+        # Ingest default or provided corpus plus custom chunks
+        if corpus is not None:
+            self.corpus = corpus
+        else:
+            try:
+                from streaming_rag.ingest import load_all_chunks
+                self.corpus = load_all_chunks()
+            except Exception:
+                self.corpus = SAMPLE_CORPUS
+        self.retriever.ingest_corpus(self.corpus)
+
+    def reload_corpus(self) -> None:
+        """Rebuild BM25 and Dense semantic indexes with current corpus."""
         self.retriever.ingest_corpus(self.corpus)
 
     @property

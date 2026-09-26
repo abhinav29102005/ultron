@@ -118,6 +118,8 @@ class CyberneticCLI:
 
         table.add_row("/rag <question>", "Ask any policy or Samsung PRISM Theme 4 question with verified citations")
         table.add_row("/rag stream <question>", "Stream synthesized response tokens in real-time (<2ms TTFT)")
+        table.add_row("/rag add [path]", "Drag & drop a file, paste path, or type /rag select to ingest new documents")
+        table.add_row("/rag select", "Open native GUI file selector dialog (Zenity/Tkinter) to pick documents")
         table.add_row("/rag corpus", "List all indexed factual document chunks (Doc IDs, sections, metadata)")
         table.add_row("/rag context (or /rag state)", "Inspect active session entity memory, active version & constraints")
         table.add_row("/rag reset (or /rag clear)", "Reset active RAG session memory and clear accumulated entity context")
@@ -421,6 +423,16 @@ class CyberneticCLI:
                 table.add_row("Active Constraints", ", ".join(session.entity_state.constraints) or "None")
                 table.add_row("Retained Citations", ", ".join(session.active_citations) or "None")
                 console.print(table)
+            elif sub_lower in ("select", "browse", "choose"):
+                from streaming_rag.ingest import interactive_ingest_flow
+                interactive_ingest_flow("select")
+            elif sub_lower in ("drop", "drag") or sub_lower in ("add", "ingest", "upload"):
+                from streaming_rag.ingest import interactive_ingest_flow
+                interactive_ingest_flow()
+            elif sub_lower.startswith("add ") or sub_lower.startswith("ingest ") or sub_lower.startswith("upload "):
+                from streaming_rag.ingest import interactive_ingest_flow
+                param = sub.split(maxsplit=1)[1].strip()
+                interactive_ingest_flow(param)
             elif sub_lower in ("reset", "clear"):
                 from streaming_rag.session import SessionRegistry
                 session_id = self.sm.active_session.id if self.sm.active_session else "rag_cli"
@@ -454,6 +466,9 @@ class CyberneticCLI:
                         cites = " ".join([f"[bold green][{c}][/bold green]" for c in last_turn.citations])
                         elapsed = (time.perf_counter() - start_t) * 1000.0
                         console.print(f"[dim]Citations: {cites} | Latency: {elapsed:.1f}ms | Turn: {last_turn.turn_id}[/dim]")
+            elif (lambda p: p and __import__('streaming_rag.ingest', fromlist=['clean_file_path']).clean_file_path(p) is not None)(sub):
+                from streaming_rag.ingest import interactive_ingest_flow
+                interactive_ingest_flow(sub)
             else:
                 from streaming_rag.pipeline import StreamingLiveRAG
                 from streaming_rag.models import StreamingChunk

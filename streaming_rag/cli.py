@@ -137,6 +137,18 @@ def run_interactive_repl(session_id: str = "global_cli_rag") -> int:
             console.print(table)
             continue
 
+        elif prompt_text.lower().startswith("/add") or prompt_text.lower().startswith("/ingest"):
+            parts = prompt_text.split(maxsplit=1)
+            arg = parts[1].strip() if len(parts) > 1 else None
+            from streaming_rag.ingest import interactive_ingest_flow
+            interactive_ingest_flow(arg)
+            continue
+
+        elif prompt_text.lower() in ("/select", "/browse"):
+            from streaming_rag.ingest import interactive_ingest_flow
+            interactive_ingest_flow("select")
+            continue
+
         elif prompt_text.lower() == "/corpus":
             table = Table(title="Indexed Enterprise Policy Corpus", border_style="green")
             table.add_column("Tag", style="bold cyan")
@@ -174,6 +186,8 @@ def rag_cli(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--session", "-S", default="global_cli_rag", help="Session ID for multi-turn state persistence")
     parser.add_argument("--benchmark", "-b", action="store_true", help="Run full Technical Evaluation Gates (G1-G9)")
     parser.add_argument("--demo", "-d", action="store_true", help="Run 9-flow live interactive demonstration")
+    parser.add_argument("--add", "-a", metavar="FILE", help="Ingest and chunk a file (PDF, TXT, MD, JSON) into RAG corpus")
+    parser.add_argument("--select", action="store_true", help="Open native desktop GUI file chooser to select documents")
 
     args = parser.parse_args(argv)
 
@@ -185,6 +199,15 @@ def rag_cli(argv: Optional[List[str]] = None) -> int:
     if args.demo:
         from scripts.demo_streaming_rag import main as demo_main
         demo_main()
+        return 0
+    if args.select:
+        from streaming_rag.ingest import interactive_ingest_flow
+        interactive_ingest_flow("select")
+        return 0
+
+    if args.add:
+        from streaming_rag.ingest import interactive_ingest_flow
+        interactive_ingest_flow(args.add)
         return 0
 
     if args.query:
