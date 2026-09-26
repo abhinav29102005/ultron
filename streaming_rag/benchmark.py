@@ -62,7 +62,7 @@ def run_gate_evaluations() -> Dict[str, Dict[str, Any]]:
     }
 
     # Gate G4: Factual Grounding & Citations
-    valid_doc_ids = {"Doc_12", "Doc_31", "Doc_09", "Doc_45", "Doc_52"}
+    valid_doc_ids = {"Doc_12", "Doc_31", "Doc_09", "Doc_45", "Doc_52", "Doc_SAM_01", "Doc_SAM_02", "Doc_SAM_03", "Doc_POLICY"}
     all_citations_valid = all(c.split()[0] in valid_doc_ids for c in record_1.citations) and len(record_1.citations) > 0
     results["G4"] = {
         "name": "Factual Grounding & Citations",

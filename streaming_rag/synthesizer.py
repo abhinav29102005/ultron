@@ -137,6 +137,8 @@ class GroundedSynthesizer:
                 top_ch = chunks[0]
                 citations_used.append(top_ch.citation_tag)
                 full_answer = f"{top_ch.text.strip()} [{top_ch.citation_tag}]"
+                if not uncertainty:
+                    uncertainty = f"Policies or documentation for '{query}' could not be verified from the retrieved corpus."
             else:
                 full_answer = " ".join(answer_parts)
 
