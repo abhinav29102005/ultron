@@ -251,43 +251,43 @@ def extract_chunks_from_file(file_path: Path) -> List[Tuple[str, str, Dict[str, 
         try:
             import pypdf
             reader = pypdf.PdfReader(str(file_path))
-            sec_idx = 1
-            for page_num, page in enumerate(reader.pages, start=1):
-                extracted = (page.extract_text() or "").strip()
-                if extracted:
-                    sub_chunks = chunk_text(extracted, max_chars=600)
-                    for sub in sub_chunks:
-                        results.append((
-                            f"§{sec_idx}",
-                            sub,
-                            {"source": file_path.name, "page": page_num, "title": f"{base_name} (Page {page_num})", "type": "pdf"}
-                        ))
-                        sec_idx += 1
-                else:
-                    # Try OCR if text is empty (scanned PDF)
-                    try:
-                        from rapidocr_onnxruntime import RapidOCR
-                        ocr = RapidOCR()
-                        import pypdfium2
-                        pdf = pypdfium2.PdfDocument(str(file_path))
-                        pil_image = pdf[page_num - 1].render().to_pil()
-                        ocr_res, _ = ocr(pil_image)
-                        if ocr_res:
-                            ocr_text = "\n".join([line[1] for line in ocr_res])
-                            sub_chunks = chunk_text(ocr_text, max_chars=600)
-                            for sub in sub_chunks:
-                                results.append((
-                                    f"§{sec_idx}",
-                                    sub,
-                                    {"source": file_path.name, "page": page_num, "title": f"{base_name} (OCR Page {page_num})", "type": "pdf_ocr"}
-                                ))
-                                sec_idx += 1
-                    except Exception:
-                        pass
+            full_pdf_text = ""
+            for page in reader.pages:
+                t = page.extract_text() or ""
+                if t:
+                    full_pdf_text += t + "\n\n"
+
+            # Check if text contains numbered sections like Section 1:, §1, etc.
+            sec_splits = re.split(r"\n(?=(?:Section\s+\d+|§\s*\d+|Article\s+\d+))", full_pdf_text, flags=re.IGNORECASE)
+            if len(sec_splits) > 1:
+                sec_idx = 1
+                for s in sec_splits:
+                    s = s.strip()
+                    if not s or len(s) < 20:
+                        continue
+                    first_line = s.split("\n", 1)[0].strip()
+                    results.append((
+                        f"§{sec_idx}",
+                        s,
+                        {"source": file_path.name, "title": f"{base_name} - {first_line[:50]}", "type": "pdf"}
+                    ))
+                    sec_idx += 1
+            else:
+                sec_idx = 1
+                for page_num, page in enumerate(reader.pages, start=1):
+                    extracted = (page.extract_text() or "").strip()
+                    if extracted:
+                        sub_chunks = chunk_text(extracted, max_chars=800)
+                        for sub in sub_chunks:
+                            results.append((
+                                f"§{sec_idx}",
+                                sub,
+                                {"source": file_path.name, "page": page_num, "title": f"{base_name} (Page {page_num})", "type": "pdf"}
+                            ))
+                            sec_idx += 1
         except Exception as e:
             console.print(f"[red]Error parsing PDF: {e}[/red]")
 
-    # 3. JSON Structured Data
     elif ext == ".json":
         try:
             with open(file_path, "r", encoding="utf-8") as f:
