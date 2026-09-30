@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/ultron-banner.jpg" alt="ULTRON Agent" width="200" />
+  <img src="assets/ultron-banner.png" alt="ULTRON Agent" width="200" />
 </p>
 
 <h1 align="center">ULTRON Agent</h1>
