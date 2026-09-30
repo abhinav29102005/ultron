@@ -152,6 +152,7 @@ docs = [
 ultron = "run:main"
 ultron-cli = "run:main"
 ultron-gui = "main_gui:main"
+ultron-rag = "streaming_rag.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = [
@@ -162,6 +163,7 @@ packages = [
     "memory",
     "skills",
     "speech",
+    "streaming_rag",
     "ui",
     "utils",
     "vision",

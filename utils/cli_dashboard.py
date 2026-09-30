@@ -84,7 +84,10 @@ class CyberneticCLI:
         table.add_column("Description", style="white")
 
         table.add_row("/model [nebius|dual|groq|nvidia|qwen]", "Switch active LLM engine (Nebius Token Factory Nemotron, Dual, Groq, NVIDIA, Qwen)")
-        table.add_row("/rag <question>", "Query Theme 4 Streaming Live RAG over verified enterprise policy corpus")
+        table.add_row("/demo [step|auto]", "Launch the Samsung PRISM Theme 4 broadcast demonstration")
+        table.add_row("/policy", "Ingest policy.pdf and run the 15-question master policy evaluation")
+        table.add_row("/questions", "Display all 15 official Theme 4 evaluation test questions")
+        table.add_row("/rag [help|corpus|context|stream|...]", "Query Theme 4 Streaming Live RAG with citations, benchmark & state")
         table.add_row("/setup, /keys", "Interactive API key setup wizard with cloud panel links")
         table.add_row("/hub, /providers", "View cloud LLM portal links and free tier quotas")
         table.add_row("/key <prov> <val>", "Save an API key (e.g. /key nvidia nvapi-xxxx)")
@@ -107,6 +110,28 @@ class CyberneticCLI:
         table.add_row("/clear", "Clear message history of the current chat")
         table.add_row("/help", "Show this command manual")
         table.add_row("/quit, /exit", "Exit ULTRON safely with state persistence")
+
+        console.print(table)
+
+    def render_rag_help(self) -> None:
+        """Render full guide for /rag commands."""
+        table = Table(title="ULTRON Streaming Live RAG — /rag Command Suite", border_style="cyan", box=ROUNDED)
+        table.add_column("Command", style="bold yellow", width=28)
+        table.add_column("Description", style="white")
+
+        table.add_row("/rag <question>", "Ask any policy or Samsung PRISM Theme 4 question with verified citations")
+        table.add_row("/rag stream <question>", "Stream synthesized response tokens in real-time (<2ms TTFT)")
+        table.add_row("/rag add [path]", "Drag & drop a file, paste path, or type /rag select to ingest new documents")
+        table.add_row("/rag select", "Open native GUI file selector dialog (Zenity/Tkinter) to pick documents")
+        table.add_row("/rag corpus", "List all indexed factual document chunks (Doc IDs, sections, metadata)")
+        table.add_row("/rag context (or /rag state)", "Inspect active session entity memory, active version & constraints")
+        table.add_row("/rag reset (or /rag clear)", "Reset active RAG session memory and clear accumulated entity context")
+        table.add_row("/rag benchmark", "Execute full Theme 4 Technical Evaluation Gates (G1 to G9)")
+        table.add_row("/rag demo", "Run the automated 9-flow verification scenario demonstration")
+        table.add_row("/rag policy (or /policy)", "Ingest policy.pdf and run the 15-question evaluation suite")
+        table.add_row("/rag test (or /test)", "Execute 15 Theme 4 evaluation test questions")
+        table.add_row("/rag questions", "List and browse all 15 official evaluation test questions")
+        table.add_row("/rag help", "Display this guide to all /rag capabilities")
 
         console.print(table)
 
@@ -373,15 +398,115 @@ class CyberneticCLI:
                     console.print("[red]Invalid provider. Available: 'nebius' (Nebius Token Factory Nemotron), 'dual', 'groq', 'nvidia', 'qwen'[/red]")
 
         elif cmd in ("rag", "search"):
-            if not arg:
-                console.print("[red]Usage: /rag <question> (e.g. /rag Pune workshop for 30 people)[/red]")
+            sub = (arg or "").strip()
+            sub_lower = sub.lower()
+            if not sub or sub_lower in ("help", "-h", "--help"):
+                self.render_rag_help()
+            elif sub_lower == "corpus":
+                from streaming_rag.pipeline import StreamingLiveRAG
+                rag = StreamingLiveRAG.get_instance()
+                table = Table(title="Indexed Enterprise & Samsung PRISM Corpus", border_style="green", box=ROUNDED)
+                table.add_column("Tag", style="bold cyan", width=16)
+                table.add_column("Document Title", style="white")
+                table.add_column("Metadata", style="dim")
+                for doc in rag.corpus:
+                    table.add_row(doc.citation_tag, doc.title, str(doc.metadata))
+                console.print(table)
+            elif sub_lower in ("context", "state", "memory"):
+                from streaming_rag.pipeline import StreamingLiveRAG
+                rag = StreamingLiveRAG.get_instance()
+                session_id = self.sm.active_session.id if self.sm.active_session else "rag_cli"
+                session = rag.get_or_create_session(session_id)
+                table = Table(title=f"Active RAG Session State ({session_id})", border_style="cyan", box=ROUNDED)
+                table.add_column("Property", style="bold white", width=22)
+                table.add_column("Current Value", style="green")
+                table.add_row("Active Version", str(session.active_version))
+                table.add_row("Turns Recorded", str(len(session.turns)))
+                table.add_row("Location", str(session.entity_state.location))
+                table.add_row("Event Type", str(session.entity_state.event_type))
+                table.add_row("Headcount", str(session.entity_state.headcount))
+                table.add_row("Service Topics", ", ".join(session.entity_state.service_topics) or "None")
+                table.add_row("Active Constraints", ", ".join(session.entity_state.constraints) or "None")
+                table.add_row("Retained Citations", ", ".join(session.active_citations) or "None")
+                console.print(table)
+            elif sub_lower in ("select", "browse", "choose"):
+                from streaming_rag.ingest import interactive_ingest_flow
+                interactive_ingest_flow("select")
+            elif sub_lower in ("drop", "drag") or sub_lower in ("add", "ingest", "upload"):
+                from streaming_rag.ingest import interactive_ingest_flow
+                interactive_ingest_flow()
+            elif sub_lower.startswith("add ") or sub_lower.startswith("ingest ") or sub_lower.startswith("upload "):
+                from streaming_rag.ingest import interactive_ingest_flow
+                param = sub.split(maxsplit=1)[1].strip()
+                interactive_ingest_flow(param)
+            elif sub_lower in ("reset", "clear"):
+                from streaming_rag.session import SessionRegistry
+                session_id = self.sm.active_session.id if self.sm.active_session else "rag_cli"
+                SessionRegistry.clear(session_id)
+                console.print(f"[bold green]✓ RAG session memory cleared for '{session_id}'.[/bold green]")
+            elif sub_lower == "benchmark":
+                from streaming_rag.benchmark import main as bench_main
+                bench_main()
+            elif sub_lower.startswith("demo") or sub_lower.startswith("record"):
+                from scripts.record_demo import main as demo_main
+                mode = "auto" if "auto" in sub_lower else "step"
+                speed = "fast" if "fast" in sub_lower else "normal"
+                demo_main(["--mode", mode, "--speed", speed])
+                console.print("
+[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...
+")
+                self.render_header()
+            elif sub_lower.startswith("policy") or sub_lower.startswith("test") or sub_lower.startswith("eval"):
+                from scripts.test_policy_questions import main as policy_main
+                policy_main()
+            elif sub_lower == "questions":
+                from scripts.test_policy_questions import POLICY_QUESTIONS
+                from rich.table import Table
+                q_table = Table(title="15 Official Evaluation Questions", border_style="cyan", box=ROUNDED)
+                q_table.add_column("#", style="bold yellow", width=4)
+                q_table.add_column("Topic", style="bold white", width=28)
+                q_table.add_column("Question", style="cyan")
+                for q in POLICY_QUESTIONS:
+                    q_table.add_row(str(q["id"]), q["title"], q["query"])
+                console.print(q_table)
+                console.print("[dim]Run any question directly using: [bold yellow]/rag <question>[/bold yellow][/dim]")
+            elif sub_lower.startswith("stream "):
+                stream_q = sub[7:].strip()
+                if not stream_q:
+                    console.print("[red]Usage: /rag stream <question>[/red]")
+                else:
+                    from streaming_rag.pipeline import StreamingLiveRAG
+                    from streaming_rag.models import StreamingChunk
+                    rag = StreamingLiveRAG.get_instance()
+                    session_id = self.sm.active_session.id if self.sm.active_session else "rag_cli"
+                    stream = [StreamingChunk(timestamp_s=0.5, text=stream_q, is_final=True)]
+                    console.print("[bold green]Answer:[/] ", end="")
+                    start_t = time.perf_counter()
+                    for tok in rag.process_stream_streaming(stream, session_id=session_id):
+                        console.print(tok.token, end="", highlight=False)
+                        sys.stdout.flush()
+                    console.print()
+                    session = rag.get_or_create_session(session_id)
+                    if session.turns:
+                        last_turn = session.turns[-1]
+                        cites = " ".join([f"[bold green][{c}][/bold green]" for c in last_turn.citations])
+                        elapsed = (time.perf_counter() - start_t) * 1000.0
+                        console.print(f"[dim]Citations: {cites} | Latency: {elapsed:.1f}ms | Turn: {last_turn.turn_id}[/dim]")
+            elif (lambda p: p and __import__('streaming_rag.ingest', fromlist=['clean_file_path']).clean_file_path(p) is not None)(sub):
+                from streaming_rag.ingest import interactive_ingest_flow
+                interactive_ingest_flow(sub)
             else:
                 from streaming_rag.pipeline import StreamingLiveRAG
                 from streaming_rag.models import StreamingChunk
                 console.print(f"[dim]Executing Streaming Live RAG over enterprise corpus...[/dim]")
-                rag = StreamingLiveRAG()
-                stream = [StreamingChunk(timestamp_s=0.5, text=arg, is_final=True)]
-                rec = rag.process_stream(stream, session_id=self.sm.active_session.id if self.sm.active_session else "rag_cli")
+                rag = StreamingLiveRAG.get_instance()
+                stream = [StreamingChunk(timestamp_s=0.5, text=sub, is_final=True)]
+                session_id = self.sm.active_session.id if self.sm.active_session else "rag_cli"
+                rec = rag.process_stream(stream, session_id=session_id)
+                if rec.resolved_query and rec.resolved_query != sub:
+                    console.print(f"[dim cyan]⚡ Context resolved: '{rec.resolved_query}' (Turn {rec.turn_id})[/dim cyan]")
+                if rec.answer_version > 1:
+                    console.print(f"[dim green]🔄 Version {rec.answer_version} (Cumulative Delta State)[/dim green]")
                 self.render_response(
                     rec.answer,
                     citations=rec.citations,
@@ -462,6 +587,33 @@ class CyberneticCLI:
             status = "ENABLED 🛡️" if new_val else "DISABLED ⚠️"
             console.print(f"[bold green]✓ Safety Guardrails {status}[/bold green]")
             self.render_header()
+
+        elif cmd in ("policy", "test", "tests", "eval"):
+            from scripts.test_policy_questions import main as policy_main
+            policy_main()
+
+        elif cmd == "questions":
+            from scripts.test_policy_questions import POLICY_QUESTIONS
+            from rich.table import Table
+            q_table = Table(title="15 Official Evaluation Questions", border_style="cyan", box=ROUNDED)
+            q_table.add_column("#", style="bold yellow", width=4)
+            q_table.add_column("Topic", style="bold white", width=28)
+            q_table.add_column("Question", style="cyan")
+            for q in POLICY_QUESTIONS:
+                q_table.add_row(str(q["id"]), q["title"], q["query"])
+            console.print(q_table)
+            console.print("[dim]Run any question directly using: [bold yellow]/rag <question>[/bold yellow][/dim]")
+
+        elif cmd in ("demo", "record"):
+            from scripts.record_demo import main as demo_main
+            mode = "auto" if (arg and "auto" in arg.lower()) else "step"
+            speed = "fast" if (arg and "fast" in arg.lower()) else "normal"
+            demo_main(["--mode", mode, "--speed", speed])
+            console.print("
+[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...
+")
+            self.render_header()
+            return True
 
         elif cmd == "tokens":
             self.render_tokens()

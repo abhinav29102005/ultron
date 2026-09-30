@@ -1,5 +1,4 @@
 # ULTRON Agent - One-line Installer for Windows
-# Run via: irm https://ultron.mlsctiet.com/install | iex
 
 $ErrorActionPreference = 'Stop'
 
