@@ -42,10 +42,7 @@
 |---|---|---|
 | **Presentation Deck (PPTX)** | [`submission/Thapar_4_Bottle_Codeka_Submission.pptx`](submission/Thapar_4_Bottle_Codeka_Submission.pptx) | Official 12-slide presentation with embedded architecture & telemetry HUD |
 | **Presentation Deck (PDF)** | [`submission/Thapar_4_Bottle_Codeka_Submission.pdf`](submission/Thapar_4_Bottle_Codeka_Submission.pdf) | High-resolution PDF export following official nomenclature |
-| **System Architecture Brief** | [`submission/SYSTEM_ARCHITECTURE_BRIEF.md`](submission/SYSTEM_ARCHITECTURE_BRIEF.md) | 6-page comprehensive technical design rationale, pipeline & telemetry |
-| **Benchmarking Report** | [`submission/BENCHMARK_REPORT.md`](submission/BENCHMARK_REPORT.md) | Quantitative evaluation (G1–G9), edge-case analysis & 2 ablation studies |
-| **Demo Video Walkthrough** | [YouTube Video](https://youtu.be/L_8gDd7ju04) & [`submission/DEMO_VIDEO.md`](submission/DEMO_VIDEO.md) | Full 9-scene video walkthrough breakdown and evaluator replay instructions |
-| **Deliverables Checklist** | [`submission/CHECKLIST.md`](submission/CHECKLIST.md) | Official 8-point Engineering Deliverables verification |
+| **Demo Video Walkthrough** | [YouTube Video](https://youtu.be/L_8gDd7ju04) | Full 9-scene video walkthrough breakdown and evaluator replay instructions |
 
 ### ⚡ Instant Verification & Reproduction Commands
 ```bash
