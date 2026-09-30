@@ -34,7 +34,7 @@
 > **Team Name**: 4 Bottle Codeka  
 > **College**: Thapar Institute of Engineering & Technology, Patiala  
 > **Members**: Abhinav Kumar Singh (Lead), Sukhansh Mittal, Lakkshya Jha, Vikramaditya Singh  
-> **Demo Video**: [https://youtu.be/L_8gDd7ju04](https://youtu.be/L_8gDd7ju04)  
+> **Demo Video**: [https://youtu.be/16i0Lc2PuY8](https://youtu.be/16i0Lc2PuY8)  
 > **Official Release Tag**: `PRISM_GENAI_HACKATHON_Y2026`  
 
 ### 📂 Official Submission Deliverables (`submission/`)
@@ -42,7 +42,7 @@
 |---|---|---|
 | **Presentation Deck (PPTX)** | [`submission/Thapar_4_Bottle_Codeka_Submission.pptx`](submission/Thapar_4_Bottle_Codeka_Submission.pptx) | Official 12-slide presentation with embedded architecture & telemetry HUD |
 | **Presentation Deck (PDF)** | [`submission/Thapar_4_Bottle_Codeka_Submission.pdf`](submission/Thapar_4_Bottle_Codeka_Submission.pdf) | High-resolution PDF export following official nomenclature |
-| **Demo Video Walkthrough** | [YouTube Video](https://youtu.be/L_8gDd7ju04) | Full 9-scene video walkthrough breakdown and evaluator replay instructions |
+| **Demo Video Walkthrough** | [YouTube Video](https://youtu.be/16i0Lc2PuY8) | Full 9-scene video walkthrough breakdown and evaluator replay instructions |
 
 ### ⚡ Instant Verification & Reproduction Commands
 ```bash
