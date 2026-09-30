@@ -6,7 +6,8 @@
 
 <p align="center">
   <strong>Your AI-Powered Desktop Assistant — Voice, Text & GUI</strong><br>
-  <em>Made by 4 Bottle Codeka</em>
+  <em>Made by 4 Bottle Codeka</em><br>
+  <a href="https://ultron.abhinavkumarsingh.tech/">🌐 Official Website</a>
 </p>
 
 <p align="center">
@@ -35,6 +36,7 @@
 > **College**: Thapar Institute of Engineering & Technology, Patiala  
 > **Members**: Abhinav Kumar Singh (Lead), Sukhansh Mittal, Lakkshya Jha, Vikramaditya Singh  
 > **Demo Video**: [https://youtu.be/16i0Lc2PuY8](https://youtu.be/16i0Lc2PuY8)  
+> **Official Website**: [https://ultron.abhinavkumarsingh.tech/](https://ultron.abhinavkumarsingh.tech/)  
 > **Official Release Tag**: `PRISM_GENAI_HACKATHON_Y2026`  
 
 ### 📂 Official Submission Deliverables (`submission/`)
