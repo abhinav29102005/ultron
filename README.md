@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/ultron-banner.png" alt="ULTRON Agent" width="200" />
+  <img src="assets/ultron-banner.png" alt="ULTRON Agent" width="400" />
 </p>
 
 <h1 align="center">ULTRON Agent</h1>
@@ -34,6 +34,7 @@
 > **Team Name**: 4 Bottle Codeka  
 > **College**: Thapar Institute of Engineering & Technology, Patiala  
 > **Members**: Abhinav Kumar Singh (Lead), Sukhansh Mittal, Lakkshya Jha, Vikramaditya Singh  
+> **Demo Video**: [https://youtu.be/L_8gDd7ju04](https://youtu.be/L_8gDd7ju04)  
 > **Official Release Tag**: `PRISM_GENAI_HACKATHON_Y2026`  
 
 ### 📂 Official Submission Deliverables (`submission/`)
@@ -43,7 +44,7 @@
 | **Presentation Deck (PDF)** | [`submission/Thapar_4_Bottle_Codeka_Submission.pdf`](submission/Thapar_4_Bottle_Codeka_Submission.pdf) | High-resolution PDF export following official nomenclature |
 | **System Architecture Brief** | [`submission/SYSTEM_ARCHITECTURE_BRIEF.md`](submission/SYSTEM_ARCHITECTURE_BRIEF.md) | 6-page comprehensive technical design rationale, pipeline & telemetry |
 | **Benchmarking Report** | [`submission/BENCHMARK_REPORT.md`](submission/BENCHMARK_REPORT.md) | Quantitative evaluation (G1–G9), edge-case analysis & 2 ablation studies |
-| **Demo Video Walkthrough** | [`submission/DEMO_VIDEO.md`](submission/DEMO_VIDEO.md) | Full 9-scene video walkthrough breakdown and evaluator replay instructions |
+| **Demo Video Walkthrough** | [YouTube Video](https://youtu.be/L_8gDd7ju04) & [`submission/DEMO_VIDEO.md`](submission/DEMO_VIDEO.md) | Full 9-scene video walkthrough breakdown and evaluator replay instructions |
 | **Deliverables Checklist** | [`submission/CHECKLIST.md`](submission/CHECKLIST.md) | Official 8-point Engineering Deliverables verification |
 
 ### ⚡ Instant Verification & Reproduction Commands
