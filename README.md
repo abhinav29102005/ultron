@@ -235,6 +235,13 @@ python run.py --mode wakeword
 
 Say **"Hey Ultron"** (or your configured wake word) to activate, then speak your command.
 
+### Continuous Voice Mode
+
+```bash
+python run.py --mode continuous
+```
+Or type `/continuous` in the text CLI. ULTRON will listen, respond, and immediately listen again without needing wake words or button presses. Press `Ctrl+C` to return to text mode.
+
 ### GUI Mode
 
 ```bash

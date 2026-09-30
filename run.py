@@ -81,9 +81,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--mode",
-        choices=["text", "no-wake", "wakeword"],
+        choices=["text", "no-wake", "wakeword", "continuous"],
         default="text",
-        help="Interaction mode: text (default), no-wake, or wakeword",
+        help="Interaction mode: text (default), no-wake, wakeword, or continuous",
     )
     parser.add_argument(
         "--config",
@@ -160,6 +160,7 @@ async def run(args: argparse.Namespace) -> None:
         "text": run_text_mode,
         "no-wake": run_no_wake_mode,
         "wakeword": run_wakeword_mode,
+        "continuous": run_continuous_mode,
     }
 
     runner = mode_runners.get(args.mode)
@@ -298,6 +299,64 @@ async def run_in_session_wakeword_loop(container, cli, turn_meta: dict) -> None:
         Console().print("\n[bold green]✓ Returned to interactive text prompt.[/bold green]\n")
 
 
+async def run_in_session_continuous_loop(container, cli, turn_meta: dict) -> None:
+    """Run interactive continuous voice loop directly within the active session."""
+    import asyncio
+    import time
+    from rich.console import Console
+    from core.state import AssistantState
+    from core.event_bus import UserInputEvent
+    from speech.speech_to_text.stt_pipeline import SpeechPipeline
+    from utils.cli import CLI
+
+    Console().print("\n[bold bright_cyan]🔄 CONTINUOUS VOICE MODE ACTIVATED[/bold bright_cyan]")
+    Console().print("[dim]Listening continuously. Speak directly. (Ctrl+C to return to text)[/dim]")
+    if hasattr(container, "user_settings") and container.user_settings:
+        container.user_settings.voice_enabled = True
+
+    pipeline = SpeechPipeline()
+
+    sess = container.session_manager.active_session
+    sess_id = sess.id if sess else "main"
+    turn_id = 0
+
+    try:
+        while container.assistant.state != AssistantState.SHUTTING_DOWN:
+            CLI.print_listening()
+
+            text = await asyncio.to_thread(pipeline.listen)
+            text = (text or "").strip()
+            if text:
+                turn_id += 1
+                turn_meta["start"] = time.perf_counter()
+                turn_meta["text"] = text
+                turn_meta["received"] = False
+
+                container.cancellation_manager.set_active_turn(sess_id, turn_id)
+                CLI.print_user_input(text)
+
+                await container.assistant._set_state(AssistantState.THINKING)
+                with Console().status("[bold cyan]ULTRON thinking...[/bold cyan]", spinner="dots"):
+                    await container.event_bus.publish(
+                        UserInputEvent(
+                            text=text,
+                            source="voice",
+                            session_id=sess_id,
+                            turn_id=turn_id,
+                        )
+                    )
+                while not turn_meta["received"] and container.assistant.state == AssistantState.THINKING:
+                    await asyncio.sleep(0.05)
+                await asyncio.sleep(0.5)
+            else:
+                await asyncio.sleep(0.1)
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        pass
+    finally:
+        pipeline.stop()
+        Console().print("\n[bold green]✓ Returned to interactive text prompt.[/bold green]\n")
+
+
 async def run_text_mode(container) -> None:
     """Run in interactive cybernetic text input mode (terminal)."""
     import os
@@ -355,6 +414,8 @@ async def run_text_mode(container) -> None:
                 "/mic": None,
                 "/nowake": None,
                 "/wakeword": None,
+                "/continuous": None,
+                "/voicechat": None,
                 "/rag": None,
                 "/chats": None,
                 "/switch": None,
@@ -365,6 +426,7 @@ async def run_text_mode(container) -> None:
                     "text": None,
                     "no-wake": None,
                     "wakeword": None,
+                    "continuous": None,
                     "voice": None,
                     "ptt": None,
                     "hybrid": None,
@@ -449,6 +511,9 @@ async def run_text_mode(container) -> None:
                     continue
                 elif res == "switch_mode:wakeword":
                     await run_in_session_wakeword_loop(container, cli, turn_meta)
+                    continue
+                elif res == "switch_mode:continuous":
+                    await run_in_session_continuous_loop(container, cli, turn_meta)
                     continue
                 elif res:
                     continue
@@ -634,6 +699,59 @@ async def run_wakeword_mode(container) -> None:
         pass
     finally:
         wake_detector.stop()
+        pipeline.stop()
+        await assistant.stop()
+        await container.shutdown()
+
+
+async def run_continuous_mode(container) -> None:
+    """Run in continuous listening mode without a wake word."""
+    from core.state import AssistantState
+    from core.event_bus import UserInputEvent
+    from speech.speech_to_text.stt_pipeline import SpeechPipeline
+    from utils.cli import CLI
+
+    # Initialize persistence and user settings so voice responses are active
+    await container.db.initialize()
+    await container.user_settings.load_from_db(container.db)
+    container.user_settings.voice_enabled = True
+
+    assistant = container.assistant
+    await assistant.start(launch_listen_loop=False)
+
+    pipeline = SpeechPipeline()
+
+    import uuid as _uuid
+    session_id = str(_uuid.uuid4())
+    turn_id = 0
+
+    try:
+        print("🔄 Continuous Voice Mode Active")
+        while assistant.state != AssistantState.SHUTTING_DOWN:
+            CLI.print_listening()
+
+            text = await asyncio.to_thread(pipeline.listen)
+
+            if text and text.strip():
+                import uuid as _uuid
+
+                turn_id += 1
+                container.cancellation_manager.set_active_turn(session_id, turn_id)
+
+                CLI.print_user_input(text)
+                await container.event_bus.publish(
+                    UserInputEvent(
+                        text=text,
+                        source="voice",
+                        session_id=session_id,
+                        turn_id=turn_id,
+                    )
+                )
+    except asyncio.CancelledError:
+        pass
+    except KeyboardInterrupt:
+        pass
+    finally:
         pipeline.stop()
         await assistant.stop()
         await container.shutdown()
