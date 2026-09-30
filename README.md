@@ -5,7 +5,8 @@
 <h1 align="center">ULTRON Agent</h1>
 
 <p align="center">
-  <strong>Your AI-Powered Desktop Assistant — Voice, Text & GUI</strong>
+  <strong>Your AI-Powered Desktop Assistant — Voice, Text & GUI</strong><br>
+  <em>Made by 4 Bottle Codeka</em>
 </p>
 
 <p align="center">

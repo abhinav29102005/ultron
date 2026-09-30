@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # ULTRON Agent - One-line Installer
-# Run via: curl -fsSL https://ultron.mlsctiet.com/install | bash
 
 set -e
 

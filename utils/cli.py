@@ -236,7 +236,7 @@ class CLI:
                 panel_content,
                 border_style="bright_red",
                 title="[bold bright_white] SYSTEM INITIALIZED [/]",
-                subtitle="[dim]ULTRON Core Platform · Ready for Commands[/]",
+                subtitle="[dim]ULTRON Core Platform · Ready for Commands · Made by 4 Bottle Codeka[/]",
                 padding=(1, 2),
             )
             console.print()
@@ -246,6 +246,7 @@ class CLI:
             print("\n====================================================")
             print(ULTRON_ASCII)
             print("         ULTRON – AI DESKTOP AGENT & LIVE RAG")
+            print("                     Made by 4 Bottle Codeka")
             print("====================================================")
             print(f"Status: ONLINE | Mode: {mode} | Version: 0.2.0")
             print("Ready for input. Press Ctrl+C anytime to exit.\n")
