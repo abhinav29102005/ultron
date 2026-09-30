@@ -14,16 +14,16 @@ OUT_PPT_SUBMISSION = "/home/bigboyaks/Projects/ultron/submission/Thapar_4_Bottle
 OUT_PPT_SUBMISSION_ORIG = "/home/bigboyaks/Projects/ultron/submission/CollegeName_TeamName_Submission.pptx"
 
 # Color Palette
-C_PURPLE = RGBColor(112, 78, 166)       # #704EA6 Samsung PRISM Theme Purple
-C_TITLE = RGBColor(30, 41, 59)          # #1E293B Dark Slate
-C_SUBTITLE = RGBColor(71, 85, 105)      # #475569 Slate Grey
-C_BODY = RGBColor(51, 65, 85)           # #334155 Body Slate
-C_CYAN = RGBColor(2, 132, 199)          # #0284C7 Accent Blue
-C_GREEN = RGBColor(16, 185, 129)        # #10B981 Success Green
-C_BORDER = RGBColor(203, 213, 225)      # #CBD5E1 Light Slate Border
-C_BG_CARD = RGBColor(248, 250, 252)     # #F8FAFC Card Fill
+C_PURPLE = RGBColor(112, 78, 166)
+C_TITLE = RGBColor(30, 41, 59)
+C_SUBTITLE = RGBColor(71, 85, 105)
+C_BODY = RGBColor(51, 65, 85)
+C_CYAN = RGBColor(2, 132, 199)
+C_GREEN = RGBColor(16, 185, 129)
+C_BORDER = RGBColor(203, 213, 225)
+C_BG_CARD = RGBColor(248, 250, 252)
 C_WHITE = RGBColor(255, 255, 255)
-C_DARK_CARD = RGBColor(15, 23, 42)      # #0F172A
+C_DARK_CARD = RGBColor(15, 23, 42)
 
 def remove_content_placeholder(slide):
     for shape in list(slide.shapes):
@@ -86,12 +86,38 @@ def add_bullet_point(tf, bold_prefix, text, font_size=11, space_after=6):
     r1.font.size = Pt(font_size)
     r1.font.color.rgb = C_TITLE
     
-    r2 = p.add_run()
-    r2.text = text
-    r2.font.name = "Calibri"
-    r2.font.bold = False
-    r2.font.size = Pt(font_size)
-    r2.font.color.rgb = C_BODY
+    if text:
+        r2 = p.add_run()
+        r2.text = text
+        r2.font.name = "Calibri"
+        r2.font.bold = False
+        r2.font.size = Pt(font_size)
+        r2.font.color.rgb = C_BODY
+
+def add_flowchart_node(slide, left, top, width, height, text, bg_rgb=C_BG_CARD):
+    shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height)
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = bg_rgb
+    shape.line.color.rgb = C_BORDER
+    shape.line.width = Pt(1.5)
+    
+    tf = shape.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.alignment = PP_ALIGN.CENTER
+    p.text = text
+    p.font.name = "Calibri"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = C_TITLE
+    return shape
+
+def add_arrow(slide, left, top, width, height):
+    shape = slide.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, left, top, width, height)
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = RGBColor(203, 213, 225)
+    shape.line.fill.background()
+    return shape
 
 def build_presentation():
     print(f"Loading {SRC_PPT}...")
@@ -129,40 +155,53 @@ def build_presentation():
                 r1.text = label
                 r1.font.name = "Calibri"
                 r1.font.bold = True
-                r1.font.size = Pt(12.5)
-                r1.font.color.rgb = RGBColor(99, 99, 126)
+                r1.font.size = Pt(13)
+                r1.font.color.rgb = C_TITLE
 
                 r2 = p.add_run()
                 r2.text = val
                 r2.font.name = "Calibri"
-                r2.font.bold = (i in (0, 1))
-                r2.font.size = Pt(12.5)
-                r2.font.color.rgb = C_TITLE
+                r2.font.bold = False
+                r2.font.size = Pt(13)
+                r2.font.color.rgb = C_BODY
+            break
 
     # =========================================================================
-    # SLIDE 2: Theme
+    # SLIDE 2: Problem Statement / Motivation
     # =========================================================================
-    print("Formatting Slide 2 (Theme)...")
+    print("Formatting Slide 2 (Problem & Motivation)...")
     s2 = prs.slides[1]
-    set_slide_title(s2, "Theme 4: Streaming Live RAG (Real-Time Grounding & Speculative Retrieval)")
+    set_slide_title(s2, "Problem Statement & Motivation")
     remove_content_placeholder(s2)
 
-    # Left Card
-    tf_c1 = add_card_with_header(s2, Inches(0.85), Inches(1.6), Inches(5.65), Inches(5.2),
-                                 "The Live Conversational RAG Problem", header_color=RGBColor(220, 38, 38))
-    add_bullet_point(tf_c1, "Turn-Complete Bottleneck", "Traditional RAG waits for entire sentences to finish before initiating vector search, incurring 1,500ms–2,500ms TTFT delays that destroy natural voice pacing.")
-    add_bullet_point(tf_c1, "Mid-Utterance Corrections", "Human speech contains self-corrections ('Pune... wait, make that Mumbai'). Standard engines commit to the stale entity or retrieve contradictory chunks.")
-    add_bullet_point(tf_c1, "Context Discontinuity", "Follow-up questions contain ellipses & anaphora ('What about for 50 people there?'). Systems drift away without cross-turn coreference resolution.")
-    add_bullet_point(tf_c1, "Audit Failure & Hallucination", "Generic document-level tags fail enterprise audits; systems hallucinate when queries fall outside the corpus without strict uncertainty guarantees.")
+    tf_c1 = add_card_with_header(s2, Inches(0.85), Inches(1.5), Inches(5.65), Inches(2.2),
+                                 "The Voice Latency Bottleneck", header_color=C_CYAN)
+    add_bullet_point(tf_c1, "Synchronous Waiting", "Traditional RAG waits for a user to finish speaking, processes ASR, chunks text, searches vectors, and only then streams output (often 1.5s - 3s latency).")
+    add_bullet_point(tf_c1, "Speech Corrections", "If a user misspeaks ('Wait, no, I meant policy B'), traditional pipelines fetch stale context, leading to hallucinations.")
 
-    # Right Card
-    tf_c2 = add_card_with_header(s2, Inches(6.8), Inches(1.6), Inches(5.65), Inches(5.2),
-                                 "Ultron's Paradigm & Hackathon Objectives", header_color=C_PURPLE)
-    add_bullet_point(tf_c2, "Speculative Early Triggering", "Analyzes the streaming token trajectory and fires hybrid retrieval at token 6–8, achieving +1,300ms time gain before utterance completion.")
-    add_bullet_point(tf_c2, "Intra-Stream Speculative Pivot", "Real-time diff tracking cancels in-flight vector searches upon detecting mid-sentence pivot keywords ('wait', 'actually'), re-dispatching instantly.")
-    add_bullet_point(tf_c2, "Session Lineage Refinement", "Coreference engine resolves anaphora & deictic markers; Session Lineage tracks constraint mutations (Version 1 → Version 2).")
-    add_bullet_point(tf_c2, "Gate 0 Query Suppression", "Classifies pure formatting/summarization requests ('format into 2 bullets') and executes 0 corpus vector searches, saving 40% compute.")
-    add_bullet_point(tf_c2, "Verifiable Enterprise Grounding", "Exact section citations ('[Doc_POLICY §XX]') across 21 corporate policy sections with zero parametric hallucination.")
+    tf_c2 = add_card_with_header(s2, Inches(6.8), Inches(1.5), Inches(5.65), Inches(2.2),
+                                 "Our Solution: Event-Driven Live RAG", header_color=C_GREEN)
+    add_bullet_point(tf_c2, "Sub-Word Speculation", "Triggering vector search at token 6-8, long before the sentence finishes.")
+    add_bullet_point(tf_c2, "Dynamic Mid-Stream Pivot", "If the user corrects themselves, the pipeline detects the diff, aborts the in-flight vector query, and updates the intent.")
+
+    add_card_with_header(s2, Inches(0.85), Inches(3.9), Inches(11.6), Inches(2.9),
+                         "Flowchart: Traditional RAG vs Ultron Streaming RAG", header_color=C_PURPLE)
+    
+    add_flowchart_node(s2, Inches(1.1), Inches(4.5), Inches(1.8), Inches(0.6), "User Speaks (Wait for EOS)")
+    add_arrow(s2, Inches(3.0), Inches(4.65), Inches(0.4), Inches(0.3))
+    add_flowchart_node(s2, Inches(3.5), Inches(4.5), Inches(1.8), Inches(0.6), "ASR Transcribe")
+    add_arrow(s2, Inches(5.4), Inches(4.65), Inches(0.4), Inches(0.3))
+    add_flowchart_node(s2, Inches(5.9), Inches(4.5), Inches(1.8), Inches(0.6), "Vector Search (Blocks!)")
+    add_arrow(s2, Inches(7.8), Inches(4.65), Inches(0.4), Inches(0.3))
+    add_flowchart_node(s2, Inches(8.3), Inches(4.5), Inches(1.8), Inches(0.6), "LLM Generation", bg_rgb=RGBColor(254, 226, 226))
+    
+    add_flowchart_node(s2, Inches(1.1), Inches(5.6), Inches(1.8), Inches(0.6), "User Speaks (Token 6-8)")
+    add_arrow(s2, Inches(3.0), Inches(5.75), Inches(0.4), Inches(0.3))
+    add_flowchart_node(s2, Inches(3.5), Inches(5.6), Inches(1.8), Inches(0.6), "Speculative Trigger")
+    add_arrow(s2, Inches(5.4), Inches(5.75), Inches(0.4), Inches(0.3))
+    add_flowchart_node(s2, Inches(5.9), Inches(5.6), Inches(1.8), Inches(0.6), "Parallel Multi-Intent DB")
+    add_arrow(s2, Inches(7.8), Inches(5.75), Inches(0.4), Inches(0.3))
+    add_flowchart_node(s2, Inches(8.3), Inches(5.6), Inches(1.8), Inches(0.6), "Zero-Latency Stream", bg_rgb=RGBColor(220, 252, 231))
 
     # =========================================================================
     # SLIDE 3: Existing Solutions & Gaps
@@ -177,6 +216,7 @@ def build_presentation():
     add_bullet_point(tf_s1, "Turn-Based RAG", "LangChain & LlamaIndex wait for sentence boundaries before embedding generation; high user-perceived latency (1.8s+ TTFT).")
     add_bullet_point(tf_s1, "Naive Token Streaming", "Streams only LLM token output; retrieval itself remains synchronous, blocking, and isolated.")
     add_bullet_point(tf_s1, "Static Keyword Search", "Pure lexical search lacks semantic awareness and fails completely on coreference and anaphora.")
+    add_bullet_point(tf_s1, "Rigid Chunking", "Fixed 512-token split breaks semantic boundaries, destroying context.")
 
     tf_s2 = add_card_with_header(s3, Inches(4.8), Inches(1.6), Inches(3.65), Inches(5.2),
                                  "2. Critical Industry Gaps", header_color=RGBColor(220, 38, 38))
@@ -184,6 +224,7 @@ def build_presentation():
     add_bullet_point(tf_s2, "Gap 2: In-Flight Blindness", "Zero ability to abort stale in-flight vector searches when users correct themselves mid-sentence.")
     add_bullet_point(tf_s2, "Gap 3: Compute Waste", "Unnecessary vector searches executed on reformatting turns ('summarize this').")
     add_bullet_point(tf_s2, "Gap 4: Citation Blindness", "Broad document-level references unable to survive rigorous enterprise compliance audits.")
+    add_bullet_point(tf_s2, "Gap 5: Context Drift", "Long sessions lose the original constraint (e.g. 'flight under $500').")
 
     tf_s3 = add_card_with_header(s3, Inches(8.75), Inches(1.6), Inches(3.7), Inches(5.2),
                                  "3. Ultron's Breakthrough", header_color=C_GREEN)
@@ -191,6 +232,7 @@ def build_presentation():
     add_bullet_point(tf_s3, "Dynamic Pivot Engine", "Instant invalidation of stale cache on speech corrections ('Pune' -> 'Mumbai').")
     add_bullet_point(tf_s3, "Gate 0 Suppression", "0 vector queries executed on presentation formatting turns, preserving original citations.")
     add_bullet_point(tf_s3, "Granular Grounding", "Every proposition attributed with exact clause citations ('[Doc_POLICY §16]').")
+    add_bullet_point(tf_s3, "Session Lineage", "Tracks constraint mutations seamlessly across 20+ turns.")
 
     # =========================================================================
     # SLIDE 4: Our Solutions & Architecture Diagram
@@ -200,16 +242,35 @@ def build_presentation():
     set_slide_title(s4, "Our Solutions & Architecture Diagram")
     remove_content_placeholder(s4)
 
-    # Embed Architecture Diagram Image
+    tf_arch_title = add_card_with_header(s4, Inches(0.85), Inches(1.3), Inches(11.6), Inches(5.5),
+                                         "Ultron End-to-End Streaming Live RAG Pipeline", header_color=C_CYAN)
+    
     arch_img_path = "/home/bigboyaks/Projects/ultron/docs/architecture_diagram.png"
     if os.path.exists(arch_img_path):
-        s4.shapes.add_picture(arch_img_path, Inches(0.85), Inches(1.5), Inches(11.6), Inches(5.3))
+        s4.shapes.add_picture(arch_img_path, Inches(1.0), Inches(1.8), Inches(6.0), Inches(4.8))
+        tf_arch_txt = add_card_with_header(s4, Inches(7.2), Inches(1.8), Inches(5.0), Inches(4.8),
+                                         "Pipeline Components", header_color=C_PURPLE)
+        add_bullet_point(tf_arch_txt, "Ingestion Layer", "Structured 21-section corporate policy parser with canonical citation mapper.")
+        add_bullet_point(tf_arch_txt, "Speculative Engine", "Early query trigger at token 6-8 + rolling n-gram pivot controller.")
+        add_bullet_point(tf_arch_txt, "Hybrid Search", "BM25 Okapi + Dense Vectors + Reciprocal Rank Fusion (RRF) + Cross-Encoder Reranker.")
+        add_bullet_point(tf_arch_txt, "Dual LLM Generation", "Groq LPU for low-latency streaming + Qwen for offline fallback.")
+        add_bullet_point(tf_arch_txt, "Telemetry HUD", "Real-time cost & latency monitoring terminal UI.")
     else:
-        tf_arch = add_card_with_header(s4, Inches(0.85), Inches(1.6), Inches(11.6), Inches(5.2),
-                                       "Ultron End-to-End Streaming Live RAG Pipeline")
-        add_bullet_point(tf_arch, "Ingestion Layer", "Structured 21-section corporate policy parser with canonical citation mapper.")
-        add_bullet_point(tf_arch, "Speculative Engine", "Early query trigger at token 6-8 + rolling n-gram pivot controller.")
-        add_bullet_point(tf_arch, "Hybrid Search", "BM25 Okapi + Dense Vectors + Reciprocal Rank Fusion (RRF) + Cross-Encoder Reranker.")
+        add_flowchart_node(s4, Inches(1.5), Inches(2.0), Inches(2.2), Inches(0.8), "PDF Ingestion\n(PyPDF + Canonical Mapper)")
+        add_arrow(s4, Inches(3.8), Inches(2.25), Inches(0.5), Inches(0.3))
+        add_flowchart_node(s4, Inches(4.4), Inches(2.0), Inches(2.2), Inches(0.8), "Vector DB + BM25\n(Hybrid Indexing)")
+        
+        add_flowchart_node(s4, Inches(1.5), Inches(3.5), Inches(2.2), Inches(0.8), "User Streaming Input\n(Token 6-8 Trigger)")
+        add_arrow(s4, Inches(3.8), Inches(3.75), Inches(0.5), Inches(0.3))
+        add_flowchart_node(s4, Inches(4.4), Inches(3.5), Inches(2.2), Inches(0.8), "Multi-Intent Router\n(Gate 0 / Gate 1)")
+        
+        add_arrow(s4, Inches(6.7), Inches(3.75), Inches(0.5), Inches(0.3))
+        add_flowchart_node(s4, Inches(7.3), Inches(3.5), Inches(2.2), Inches(0.8), "Retrieval Engine\n(Top-K RRF)")
+        
+        add_arrow(s4, Inches(9.6), Inches(3.75), Inches(0.5), Inches(0.3))
+        add_flowchart_node(s4, Inches(10.2), Inches(2.0), Inches(2.2), Inches(2.3), "Groq LPU / NIM\n(Stream Gen)", bg_rgb=RGBColor(236, 72, 153))
+
+        add_bullet_point(tf_arch_title, "Key Insight", "Parallelizing speech generation with vector retrieval slices 1,300ms from the critical path.")
 
     # =========================================================================
     # SLIDE 5: Demo & Product Walkthrough
@@ -219,12 +280,10 @@ def build_presentation():
     set_slide_title(s5, "Demo & Product Walkthrough (Gates G1 – G9 Verified)")
     remove_content_placeholder(s5)
 
-    # Embed Framed Technical Evaluation Gates Showcase Image
     gates_img_path = "/home/bigboyaks/Projects/ultron/docs/terminal_full_framed.png"
     if os.path.exists(gates_img_path):
         s5.shapes.add_picture(gates_img_path, Inches(0.85), Inches(1.45), Inches(11.6), Inches(4.84))
-
-    # Bottom Summary & Command Bar
+    
     tf_demo_cmd = add_card_with_header(s5, Inches(0.85), Inches(6.38), Inches(11.6), Inches(0.82),
                                        "Live Interactive Demonstration & Automated Verification Harness", header_color=C_PURPLE)
     p_cmd_title = tf_demo_cmd.paragraphs[0]
@@ -246,22 +305,23 @@ def build_presentation():
     set_slide_title(s6, "Tools and Technology Stack")
     remove_content_placeholder(s6)
 
-    # 4 Grid Cards
     tf_t1 = add_card_with_header(s6, Inches(0.85), Inches(1.6), Inches(5.65), Inches(2.45),
                                  "Retrieval & Semantic Indexing", header_color=C_CYAN)
     add_bullet_point(tf_t1, "BM25 Okapi", "Fast lexical inverted index for exact keywords, section tags, and numerical caps.")
     add_bullet_point(tf_t1, "Dense Semantic Vectors", "High-dimensional vector embeddings for conceptual matching.")
     add_bullet_point(tf_t1, "Reciprocal Rank Fusion (RRF)", "Merges lexical and dense scores with reciprocal rank weighting.")
+    add_bullet_point(tf_t1, "Scikit-Learn/NumPy", "Highly optimized matrix ops for cross-encoder reranking algorithms.")
 
     tf_t2 = add_card_with_header(s6, Inches(6.8), Inches(1.6), Inches(5.65), Inches(2.45),
                                  "Streaming & Concurrency Architecture", header_color=C_GREEN)
     add_bullet_point(tf_t2, "AsyncIO Engine", "Fully asynchronous concurrent retrieval and non-blocking token generation.")
     add_bullet_point(tf_t2, "Streaming Token Yielders", "True generator yield delivering sub-50ms TTFT (16ms measured).")
     add_bullet_point(tf_t2, "Rolling N-gram Window", "Real-time diff tracking for mid-utterance pivot keyword detection.")
+    add_bullet_point(tf_t2, "State Lineage Memory", "Maintains an immutable append-only history of query mutations.")
 
     tf_t3 = add_card_with_header(s6, Inches(0.85), Inches(4.3), Inches(5.65), Inches(2.55),
                                  "Dual LLM Inference Engine", header_color=RGBColor(236, 72, 153))
-    add_bullet_point(tf_t3, "Groq LPU Hardware", "Ultra-fast LPUs for instantaneous streaming token delivery.")
+    add_bullet_point(tf_t3, "Groq LPU Hardware", "Ultra-fast LPUs for instantaneous streaming token delivery (1000+ tps).")
     add_bullet_point(tf_t3, "NVIDIA NIM API", "Nemotron-70B high-capacity reasoning for multi-intent decomposition.")
     add_bullet_point(tf_t3, "Qwen Local Fallback", "On-device offline execution ensuring 100% uptime and data privacy.")
 
@@ -270,6 +330,7 @@ def build_presentation():
     add_bullet_point(tf_t4, "Rich Cybernetic HUD", "Full-color terminal UI with telemetry bars, token budgets, and citation trees.")
     add_bullet_point(tf_t4, "prompt_toolkit REPL", "Interactive prompt with auto-completion, history, and /demo command.")
     add_bullet_point(tf_t4, "PyPDF Ingestion", "Structured parser mapping enterprise PDFs into canonical [Doc_XX §YY] chunks.")
+    add_bullet_point(tf_t4, "Pytest Harness", "Extensive test suite validating semantic suppression and TTFT SLAs.")
 
     # =========================================================================
     # SLIDE 7: Impact & Use case
@@ -284,20 +345,22 @@ def build_presentation():
     add_bullet_point(tf_u1, "Workplace Intelligence", "Instant, grounded policy assistance for 100,000+ enterprise employees.")
     add_bullet_point(tf_u1, "Zero Ticketing Backlog", "Automates 80% of routine HR, travel, and expense questions.")
     add_bullet_point(tf_u1, "Audit Verifiable", "Eliminates compliance disputes via exact [Doc_POLICY §XX] citations.")
+    add_bullet_point(tf_u1, "Strict RBA", "Adheres to role-based access models out-of-the-box.")
 
     tf_u2 = add_card_with_header(s7, Inches(4.8), Inches(1.6), Inches(3.65), Inches(4.0),
-                                 "2. Live Voice Assistants (Galaxy/Bixby)", header_color=C_PURPLE)
+                                 "2. Live Voice Assistants (Galaxy)", header_color=C_PURPLE)
     add_bullet_point(tf_u2, "Conversational Pacing", "16ms TTFT delivers natural speech rhythm without awkward pauses.")
     add_bullet_point(tf_u2, "Speech Self-Correction", "Handles mid-sentence pivots smoothly without restarting conversation.")
     add_bullet_point(tf_u2, "Edge Resilience", "Local offline model fallback for zero-connectivity scenarios.")
+    add_bullet_point(tf_u2, "Battery Optimized", "Pre-computes embeddings efficiently.")
 
     tf_u3 = add_card_with_header(s7, Inches(8.75), Inches(1.6), Inches(3.7), Inches(4.0),
                                  "3. Contact Center Co-Pilot", header_color=C_GREEN)
     add_bullet_point(tf_u3, "Agent Assist", "Pre-fetches policy clauses in real time while customer is speaking.")
     add_bullet_point(tf_u3, "Lowered AHT", "Reduces Average Handle Time by 65% across complex operational queries.")
     add_bullet_point(tf_u3, "Zero Hallucination", "Strict uncertainty alerts agents when policy is missing.")
+    add_bullet_point(tf_u3, "Compliance Shield", "Prevents regulatory fines.")
 
-    # Bottom Metric Banner
     tf_mb = add_card_with_header(s7, Inches(0.85), Inches(5.8), Inches(11.6), Inches(1.15),
                                  "Quantifiable Business ROI & Efficiency Gains", header_color=C_TITLE)
     p_mb = tf_mb.paragraphs[0]
@@ -315,32 +378,41 @@ def build_presentation():
     # =========================================================================
     print("Formatting Slide 8 (Innovations, Results, Limitations)...")
     s8 = prs.slides[7]
-    set_slide_title(s8, "Innovation Highlights, Empirical Results & Limitations")
+    set_slide_title(s8, "Innovation Highlights & Empirical Results")
     remove_content_placeholder(s8)
 
-    tf_i1 = add_card_with_header(s8, Inches(0.85), Inches(1.6), Inches(5.65), Inches(3.9),
+    tf_i1 = add_card_with_header(s8, Inches(0.85), Inches(1.6), Inches(5.65), Inches(2.2),
                                  "Architectural Innovations", header_color=C_PURPLE)
     add_bullet_point(tf_i1, "Sub-Utterance Speculative Trigger", "Retrieval starts at token 6-8 before sentence completion.")
     add_bullet_point(tf_i1, "In-Flight Pivot Invalidation", "Aborts pending vector searches on user speech self-corrections.")
     add_bullet_point(tf_i1, "Gate 0 Semantic Suppression", "Differentiates presentation formatting from information retrieval.")
     add_bullet_point(tf_i1, "State Lineage Preservation", "Manages incremental constraint updates (V1 -> V2) without drift.")
 
-    tf_i2 = add_card_with_header(s8, Inches(6.8), Inches(1.6), Inches(5.65), Inches(3.9),
+    tf_i2 = add_card_with_header(s8, Inches(6.8), Inches(1.6), Inches(5.65), Inches(2.2),
                                  "Empirical Benchmark Results (G1 – G9)", header_color=C_GREEN)
     add_bullet_point(tf_i2, "Speculative Time Gain", "+1,300.0ms (Target: >= 800ms) — PASS (162% of target)")
     add_bullet_point(tf_i2, "Time to First Token (TTFT)", "16.0ms (Target: < 50ms) — PASS (3.1x faster than threshold)")
     add_bullet_point(tf_i2, "Multi-Intent Parallel Retrieval", "3 orthogonal domains resolved in parallel (< 45ms) — PASS")
     add_bullet_point(tf_i2, "Gate 0 Suppression Rate", "100% suppression (0 queries) on reformatting turns — PASS")
-    add_bullet_point(tf_i2, "Gate Verification Status", "Gates G1 through G9: 100% PASS (9 / 9 verified)")
 
-    # Limitations Banner
+    add_card_with_header(s8, Inches(0.85), Inches(4.0), Inches(11.6), Inches(1.5),
+                         "Flowchart: Gate 0 Semantic Suppression Logic", header_color=RGBColor(236, 72, 153))
+    
+    add_flowchart_node(s8, Inches(1.2), Inches(4.4), Inches(2.0), Inches(0.6), "User: 'Format it into bullets'")
+    add_arrow(s8, Inches(3.3), Inches(4.55), Inches(0.5), Inches(0.3))
+    add_flowchart_node(s8, Inches(3.9), Inches(4.4), Inches(1.6), Inches(0.6), "Intent Router")
+    add_arrow(s8, Inches(5.6), Inches(4.55), Inches(0.5), Inches(0.3))
+    add_flowchart_node(s8, Inches(6.2), Inches(4.4), Inches(2.5), Inches(0.6), "Is pure reformatting? (Yes)")
+    add_arrow(s8, Inches(8.8), Inches(4.55), Inches(0.5), Inches(0.3))
+    add_flowchart_node(s8, Inches(9.4), Inches(4.4), Inches(2.5), Inches(0.6), "BYPASS Vectors\nGenerate output directly!", bg_rgb=RGBColor(254, 240, 138))
+
     tf_lim = add_card_with_header(s8, Inches(0.85), Inches(5.7), Inches(11.6), Inches(1.2),
                                   "Engineering Limitations & Robust Mitigations", header_color=C_SUBTITLE)
     p_lim_title = tf_lim.paragraphs[0]
     p_lim_title.font.size = Pt(11)
     p_lim_title.space_after = Pt(2)
     p_lim_text = tf_lim.add_paragraph()
-    p_lim_text.text = "• Semi-Structured PDFs: Requires section headers for canonical chunk tags; mitigated via rule-based chunking.\n• Streaming ASR Jitter: Acoustic speech requires confidence scoring; mitigated via rolling token thresholding."
+    p_lim_text.text = "• Semi-Structured PDFs: Requires section headers for canonical chunk tags; mitigated via rule-based chunking.\n• Streaming ASR Jitter: Acoustic speech requires confidence scoring; mitigated via rolling token thresholding.\n• Context Window Bloat: Extremely long sessions can bloat memory; mitigated via aggressive KV caching and state compaction."
     p_lim_text.font.name = "Calibri"
     p_lim_text.font.size = Pt(10)
     p_lim_text.font.color.rgb = C_BODY
@@ -509,6 +581,7 @@ def build_presentation():
     # Save to all requested destinations
     os.makedirs(os.path.dirname(OUT_PPT_NAMED), exist_ok=True)
     os.makedirs(os.path.dirname(OUT_PPT_REPO), exist_ok=True)
+    os.makedirs(os.path.dirname(OUT_PPT_SUBMISSION), exist_ok=True)
 
     print(f"Saving to {OUT_PPT_ORIG}...")
     prs.save(OUT_PPT_ORIG)
