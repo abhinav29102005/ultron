@@ -223,6 +223,91 @@ ULTRON supports multiple LLM providers. Obtain a free key and configure it with 
 
 ---
 
+## 💻 CLI Command Reference
+
+Once inside the interactive CLI (`python run.py`), all commands start with `/`. You can also type bare words like `demo` or `rag` and they auto-route to their slash equivalents.
+
+### General
+
+| Command | Description |
+|---|---|
+| `/help` | Show all available commands |
+| `/clear` | Clear current conversation context and start fresh |
+| `/exit` or `/quit` | Save session and shut down ULTRON |
+
+### LLM & Model Management
+
+| Command | Description |
+|---|---|
+| `/model` | Show current active LLM provider |
+| `/model groq` | Switch to Groq Cloud |
+| `/model nvidia` | Switch to NVIDIA NIM |
+| `/model qwen` | Switch to local Ollama/Qwen |
+| `/model dual` | Switch to dual-tier (fast + heavy) mode |
+| `/model nebius` | Switch to Nebius Token Factory |
+| `/key <provider> <api_key>` | Set an API key — e.g. `/key nvidia nvapi-xxxx` |
+| `/setup` or `/keys` | Launch interactive API key setup wizard |
+| `/hub` or `/providers` | Show all available LLM provider portals with links |
+
+### Voice & Interaction Modes
+
+| Command | Description |
+|---|---|
+| `/listen` or `/talk` or `/mic` | Capture a single voice turn (speak → process) |
+| `/nowake` | Switch to Push-to-Talk mode (no wake word) |
+| `/wakeword` | Switch to Wake Word mode ("Hey Ultron") |
+| `/continuous` or `/voicechat` | Switch to Continuous listening mode |
+| `/voice on` or `/voice off` | Enable/disable spoken voice replies |
+| `/text` | Switch to text-only responses (no audio) |
+| `/mode <mode>` | Switch mode: `no-wake`, `wakeword`, `continuous`, `text`, `online`, `offline`, `hybrid` |
+
+### Streaming RAG (Theme 4)
+
+| Command | Description |
+|---|---|
+| `/rag <question>` | Run a question through the Streaming Live RAG engine |
+| `/rag stream <question>` | Stream RAG response token-by-token with live citations |
+| `/rag corpus` | View indexed enterprise & Samsung PRISM corpus |
+| `/rag context` or `/rag state` | Inspect active RAG session state (version, entities, citations) |
+| `/rag add <file>` or `/rag ingest` | Ingest a new document into the RAG corpus |
+| `/rag select` | Browse and select documents to ingest |
+| `/rag reset` | Clear RAG session memory for current session |
+| `/rag benchmark` | Run the full Samsung PRISM benchmark suite |
+| `/rag demo` or `/rag record` | Launch the 9-scene demo broadcast |
+| `/rag policy` or `/rag eval` | Evaluate 15 official policy questions |
+| `/rag questions` | List all 15 official evaluation questions |
+
+### Session Management
+
+| Command | Description |
+|---|---|
+| `/chats` | List all saved chat sessions |
+| `/switch <session_id>` | Switch to a different chat session |
+| `/new [title]` | Create a new chat session |
+| `/delete <session_id>` | Delete a chat session |
+| `/rename <new_title>` | Rename current chat session |
+
+### Settings & Configuration
+
+| Command | Description |
+|---|---|
+| `/settings` | View all current settings |
+| `/set <key> <value>` | Update a setting — e.g. `/set voice_enabled true` |
+| `/tokens` | Show token usage statistics |
+| `/guardrails on` or `/guardrails off` | Toggle safety guardrails |
+
+### System & Utilities
+
+| Command | Description |
+|---|---|
+| `/ps <command>` or `!<command>` | Execute a shell/PowerShell command |
+| `/demo [auto\|step]` | Run the 9-scene evaluation demo |
+| `/policy` | Run policy question evaluation |
+| `/questions` | Display the 15 official evaluation questions |
+| `/upgrade` | Update ULTRON to latest release (pulls repo, deps, migrations) |
+
+---
+
 ## ⚙ Configuration
 
 All config lives in `.env`. Copy the example to get started:
@@ -298,29 +383,250 @@ Register it in `SkillRegistry` — the intent router dispatches automatically.
 
 ```
 ultron/
-├── run.py                    # Unified launcher (text / voice / wakeword / demo)
-├── main.py                   # CLI entry point
-├── main_gui.py               # GUI entry point (PyQt6)
-├── pyproject.toml            # Project config & dependencies
-├── .env.example              # Environment variable template
 │
-├── config/                   # Settings, constants, logging
-├── core/                     # Orchestration — Assistant, EventBus, DI Container
-├── intelligence/             # NLU — intent detection, planning, routing
-├── llm/                      # LLM providers — NVIDIA NIM, Groq, Ollama, OpenRouter
-├── skills/                   # Extensible skill system (14+ built-in)
-├── speech/                   # Audio I/O — STT, TTS, wake word, VAD
-├── streaming_rag/            # Speculative streaming RAG engine
-├── memory/                   # Persistent fact memory
-├── vision/                   # Vision processing
-├── ui/                       # PyQt6 desktop GUI
-├── utils/                    # Shared utilities & CLI helpers
-├── tests/                    # Test suite (pytest)
-├── scripts/                  # Setup & bootstrap scripts
-├── website/                  # Official website (ultron.abhinavkumarsingh.tech)
-├── submission/               # Samsung PRISM submission assets
-├── docs/                     # Documentation
-└── assets/                   # Static assets & branding
+│── Entry Points
+├── run.py                       # Unified launcher — text / voice / wakeword / demo / hub / upgrade
+├── main.py                      # Lightweight CLI entry point
+├── main_gui.py                  # PyQt6 GUI entry point
+│
+│── Configuration
+├── pyproject.toml               # Project metadata, deps, scripts
+├── .env.example                 # Environment variable template (copy to .env)
+├── docker-compose.yml           # Containerized deployment
+├── Dockerfile                   # Container image definition
+│
+├── config/                      # Application configuration
+│   ├── settings.py              #   Pydantic-based settings loader
+│   ├── user_settings.py         #   Per-user runtime settings (voice, guardrails, mode)
+│   ├── constants.py             #   Application-wide constants
+│   └── logging_config.py        #   Structured logging (Loguru + structlog)
+│
+├── core/                        # Core orchestration layer
+│   ├── assistant.py             #   Top-level Assistant facade — state machine
+│   ├── orchestrator.py          #   Pipeline coordinator (input → intent → skill → response)
+│   ├── container.py             #   Dependency injection container
+│   ├── event_bus.py             #   Async event pub/sub system
+│   ├── state.py                 #   State machine definitions (IDLE → LISTENING → THINKING → RESPONDING)
+│   ├── lifecycle.py             #   Application boot/shutdown hooks
+│   ├── session_manager.py       #   Multi-session chat management
+│   ├── database.py              #   SQLite persistence layer
+│   ├── reminder_scheduler.py    #   Scheduled reminder execution
+│   ├── permissions.py           #   Skill permission gating
+│   ├── validator.py             #   Input validation layer
+│   └── cancellation.py          #   Async task cancellation
+│
+├── intelligence/                # NLU & reasoning pipeline
+│   ├── intent_detector.py       #   LLM-powered intent classification
+│   ├── planner.py               #   Task planning from detected intents
+│   ├── router.py                #   Route tasks → skills
+│   ├── parser.py                #   LLM response parsing & extraction
+│   ├── agent_loop.py            #   Autonomous agent loop (multi-step)
+│   ├── decomposer.py            #   Multi-intent query decomposition
+│   ├── executor.py              #   Plan executor
+│   ├── synthesizer.py           #   Response synthesis from skill outputs
+│   ├── tool_dispatcher.py       #   Tool calling dispatch
+│   ├── tool_registry.py         #   Tool registration & schema
+│   ├── task.py                  #   Task data model
+│   ├── models.py                #   NLU data models
+│   ├── telemetry.py             #   Inference telemetry
+│   ├── embeddings.py            #   Text embedding generation
+│   ├── retriever.py             #   Vector retrieval
+│   ├── hybrid_retriever.py      #   Hybrid (dense + sparse) retrieval
+│   ├── reranker.py              #   Cross-encoder reranking
+│   ├── retrieval_controller.py  #   Retrieval strategy controller
+│   ├── retrieval_handler.py     #   Retrieval execution handler
+│   ├── emotion_detector.py      #   Emotion/sentiment detection
+│   ├── weaviate_client.py       #   Weaviate vector DB client
+│   └── ingest_weaviate.py       #   Weaviate document ingestion
+│
+├── llm/                         # Multi-provider LLM abstraction
+│   ├── base.py                  #   Abstract LLM interface
+│   ├── nvidia.py                #   NVIDIA NIM implementation
+│   ├── groq.py                  #   Groq Cloud (LPU) implementation
+│   ├── nebius.py                #   Nebius Token Factory
+│   ├── dual.py                  #   Dual-tier (fast + heavy) strategy
+│   ├── qwen.py                  #   Ollama/Qwen local implementation
+│   ├── mock.py                  #   Mock provider for testing
+│   ├── switcher.py              #   Runtime hot-swap between providers
+│   ├── tools.py                 #   Tool/function calling definitions
+│   ├── prompts.py               #   System & few-shot prompts
+│   └── response.py              #   Typed response envelope
+│
+├── skills/                      # Extensible skill system (25+ skills)
+│   ├── base.py                  #   Abstract Skill contract
+│   ├── registry.py              #   Skill lookup registry
+│   ├── manager.py               #   Lifecycle management
+│   ├── system_skills.py         #   Volume, brightness, mic control
+│   ├── browser_skill.py         #   URL navigation & browser launch
+│   ├── chrome_control_skill.py  #   Chrome tab/window automation
+│   ├── chrome_takeover.py       #   Full Chrome session takeover
+│   ├── web_skill.py             #   Web search & result summarization
+│   ├── chat_skill.py            #   General conversation & Q&A
+│   ├── memory_skills.py         #   Fact store/recall
+│   ├── file_skill.py            #   File operations (CRUD)
+│   ├── code_skill.py            #   Code generation & execution
+│   ├── document_skill.py        #   Document creation & editing
+│   ├── excel_skill.py           #   Excel/spreadsheet generation
+│   ├── notes_skill.py           #   Note taking
+│   ├── reminder_skill.py        #   Reminder scheduling
+│   ├── research_skill.py        #   Deep web research
+│   ├── vision_skill.py          #   Screen/image analysis
+│   ├── screen_text_skill.py     #   OCR from screen regions
+│   ├── clipboard_skill.py       #   Clipboard read/write
+│   ├── desktop_skill.py         #   Desktop environment control
+│   ├── window_skill.py          #   Window management (move, resize, snap)
+│   ├── media_skill.py           #   Media playback control
+│   ├── audio_device_skill.py    #   Audio device switching
+│   ├── farewell_skill.py        #   Graceful farewell/exit handling
+│   ├── System.py                #   Low-level system commands
+│   └── system_scanner.py        #   Hardware/software scanner
+│
+├── speech/                      # Audio I/O subsystem
+│   ├── speechconfig.py          #   Audio device configuration
+│   ├── hold_to_talk.py          #   Push-to-talk key controller
+│   ├── microphone.py            #   Microphone input handler
+│   ├── recorder.py              #   Audio capture
+│   ├── audio_bus.py             #   Audio stream routing
+│   ├── audio_player.py          #   Audio output playback
+│   ├── mic_guard.py             #   Mic mute during TTS playback
+│   ├── stt_stream.py            #   Streaming STT with partial transcripts
+│   ├── speech_to_text/          #   STT pipeline
+│   │   ├── transcriber.py       #     Faster Whisper transcription
+│   │   ├── recorder.py          #     Audio capture with VAD
+│   │   ├── stt_pipeline.py      #     End-to-end STT orchestration
+│   │   └── vad.py               #     Silero Voice Activity Detection
+│   ├── text_to_speech/          #   TTS pipeline
+│   │   ├── speaker.py           #     Piper speech synthesis
+│   │   ├── player.py            #     Audio output playback
+│   │   ├── tts_pipeline.py      #     End-to-end TTS orchestration
+│   │   └── ultron_dsp.py        #     Audio DSP (pitch, speed, effects)
+│   └── wake_word/               #   Wake word detection
+│       └── detector.py          #     Porcupine / OpenWakeWord engine
+│
+├── streaming_rag/               # Speculative Streaming Live RAG engine
+│   ├── pipeline.py              #   Main RAG pipeline (speculative pre-retrieval)
+│   ├── controller.py            #   Stream controller & orchestration
+│   ├── retrieval.py             #   Document retrieval with citation tracking
+│   ├── decomposer.py            #   Multi-intent query decomposition
+│   ├── synthesizer.py           #   Grounded answer synthesis with provenance
+│   ├── corpus.py                #   Enterprise corpus management
+│   ├── ingest.py                #   Document ingestion (PDF, DOCX, TXT)
+│   ├── session.py               #   Session state & entity tracking
+│   ├── models.py                #   Data models (StreamingChunk, RAGResult)
+│   ├── telemetry.py             #   Latency & token telemetry
+│   ├── benchmark.py             #   Samsung PRISM gate evaluation (G0–G9)
+│   └── cli.py                   #   RAG CLI sub-commands
+│
+├── memory/                      # Persistent context memory
+│   ├── models.py                #   MemoryFact data model
+│   ├── store.py                 #   JSON-backed persistence
+│   ├── extractor.py             #   Fact extraction from conversations
+│   └── service.py               #   Memory service facade
+│
+├── vision/                      # Vision & screen analysis
+│   ├── vision_client.py         #   Multi-provider vision API client
+│   ├── screen_capture.py        #   Screenshot capture
+│   ├── screen_context.py        #   Screen context extraction
+│   ├── screen_hider.py          #   Privacy screen hiding
+│   ├── ocr.py                   #   On-screen OCR
+│   └── pasted_image.py          #   Clipboard image handling
+│
+├── ui/                          # Desktop GUI
+│   ├── main_window.py           #   PyQt6 main window
+│   ├── chat_panel.py            #   Chat message panel
+│   ├── orb_widget.py            #   Animated orb status indicator
+│   └── tray.py                  #   System tray integration
+│
+├── utils/                       # Shared utilities
+│   ├── cli.py                   #   Terminal UI helpers & banner
+│   ├── cli_dashboard.py         #   Full interactive CLI dashboard & slash commands
+│   ├── api_key_manager.py       #   Multi-provider API key management
+│   ├── model_picker.py          #   Interactive model selection
+│   ├── updater.py               #   Self-update (git pull + deps)
+│   ├── cache.py                 #   LLM response caching
+│   ├── preflight.py             #   System dependency checks
+│   ├── single_instance.py       #   Prevent duplicate launches
+│   ├── autostart.py             #   OS autostart registration
+│   ├── consent.py               #   User consent management
+│   ├── console.py               #   Rich console utilities
+│   ├── env.py                   #   .env file manipulation
+│   ├── record_store.py          #   Audio recording storage
+│   ├── speech_text.py           #   Speech/text conversion utils
+│   ├── when.py                  #   Conditional execution helpers
+│   ├── decorators.py            #   Reusable decorators
+│   ├── helpers.py               #   General utilities
+│   ├── exceptions.py            #   Custom exception hierarchy
+│   └── validators.py            #   Input validation
+│
+├── tests/                       # Test suite — 60+ test modules (pytest)
+├── scripts/                     # Setup, bootstrap, demo recording scripts
+├── website/                     # Official website (ultron.abhinavkumarsingh.tech)
+├── submission/                  # Samsung PRISM submission assets
+├── docs/                        # Documentation
+├── deploy/                      # Cloudflare Workers installer
+└── assets/                      # Static assets & branding
+```
+
+### 🔄 Request Lifecycle Workflow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           USER INPUT                                        │
+│  Voice (Mic → VAD → Faster Whisper)  or  Text (CLI Prompt)  or  GUI        │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  1. EVENT BUS — UserInputEvent published                                     │
+│     - Guardrails check (safety filter)                                       │
+│     - Slash command interception (/rag, /model, /demo, etc.)                 │
+└──────────────────────────────────┬───────────────────────────────────────────┘
+                                   │
+                          ┌────────┴────────┐
+                          ▼                 ▼
+                   Regular Prompt      /rag <query>
+                          │                 │
+                          ▼                 ▼
+┌──────────────────────────────┐  ┌────────────────────────────────────────────┐
+│  2. INTELLIGENCE PIPELINE    │  │  2b. STREAMING RAG PIPELINE                │
+│  ┌─────────────────────────┐ │  │  ┌──────────────────────────────────────┐  │
+│  │ Intent Detection (LLM)  │ │  │  │ Speculative Pre-Retrieval            │  │
+│  │ → classify user intent  │ │  │  │ → starts BEFORE speech completes     │  │
+│  └───────────┬─────────────┘ │  │  └───────────────┬──────────────────────┘  │
+│  ┌───────────▼─────────────┐ │  │  ┌───────────────▼──────────────────────┐  │
+│  │ Multi-Intent Decomposer │ │  │  │ Query Decomposition                  │  │
+│  │ → split compound queries│ │  │  │ → parallel sub-query fan-out         │  │
+│  └───────────┬─────────────┘ │  │  └───────────────┬──────────────────────┘  │
+│  ┌───────────▼─────────────┐ │  │  ┌───────────────▼──────────────────────┐  │
+│  │ Task Planner            │ │  │  │ Retrieval + Reranking                │  │
+│  │ → create execution plan │ │  │  │ → corpus search with citation tags   │  │
+│  └───────────┬─────────────┘ │  │  └───────────────┬──────────────────────┘  │
+│  ┌───────────▼─────────────┐ │  │  ┌───────────────▼──────────────────────┐  │
+│  │ Router → Skill Dispatch │ │  │  │ Grounded Synthesis [Doc_XX §YY]      │  │
+│  └──────────────────────── ┘ │  │  │ → zero hallucination, uncertainty    │  │
+└──────────────────────────────┘  │  └──────────────────────────────────────┘  │
+                          │       └────────────────────────────────────────────┘
+                          │                 │
+                          ▼                 ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  3. SKILL EXECUTION                                                          │
+│     ApplicationSkill, BrowserSkill, WebSkill, MathSkill, FileSkill,          │
+│     VisionSkill, MemorySkill, ChatSkill, SystemSkills, ...                   │
+└──────────────────────────────────┬───────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  4. RESPONSE SYNTHESIS                                                       │
+│     - Format response text                                                   │
+│     - Attach citations (RAG) / telemetry / token counts                      │
+│     - ResponseReadyEvent published on EventBus                               │
+└──────────────────────────────────┬───────────────────────────────────────────┘
+                                   │
+                          ┌────────┴────────┐
+                          ▼                 ▼
+                    CLI / GUI          Voice (TTS)
+                    Rich Panel       Piper → Speaker
+                                   → Audio Playback
 ```
 
 ---
