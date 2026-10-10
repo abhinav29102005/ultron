@@ -513,7 +513,7 @@ document.getElementById('tab-linux').classList.toggle('active', tab === 'linux')
 document.getElementById('tab-windows').classList.toggle('active', tab === 'windows');
 const cmd = tab === 'linux'
 ? 'curl -fsSL ' + origin + '/install | bash'
-: 'irm ' + origin + '/install | iex';
+: 'irm ' + origin + '/install.ps1 | iex';
 document.getElementById('cmd-display').innerText = cmd;
 }
 function copyCommand() {

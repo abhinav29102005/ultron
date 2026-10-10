@@ -166,8 +166,12 @@ Built with a clean, layered architecture — every module is independently testa
 curl -fsSL https://ultron.abhinavkumarsingh.tech/install | bash
 
 # Windows (PowerShell)
-irm https://ultron.abhinavkumarsingh.tech/install | iex
+irm https://ultron.abhinavkumarsingh.tech/install.ps1 | iex
 ```
+
+> **Direct GitHub Raw Fallback** (if custom domain is blocked or offline):
+> - **Linux / macOS**: `curl -fsSL https://raw.githubusercontent.com/abhinav29102005/ultron/main/scripts/install.sh | bash`
+> - **Windows (PowerShell)**: `irm https://raw.githubusercontent.com/abhinav29102005/ultron/main/scripts/install.ps1 | iex`
 
 ### Manual Setup
 
