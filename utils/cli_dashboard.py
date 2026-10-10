@@ -452,9 +452,7 @@ class CyberneticCLI:
                 mode = "auto" if "auto" in sub_lower else "step"
                 speed = "fast" if "fast" in sub_lower else "normal"
                 demo_main(["--mode", mode, "--speed", speed])
-                console.print("
-[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...
-")
+                console.print("\n[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...\n")
                 self.render_header()
             elif sub_lower.startswith("policy") or sub_lower.startswith("test") or sub_lower.startswith("eval"):
                 from scripts.test_policy_questions import main as policy_main
@@ -609,9 +607,7 @@ class CyberneticCLI:
             mode = "auto" if (arg and "auto" in arg.lower()) else "step"
             speed = "fast" if (arg and "fast" in arg.lower()) else "normal"
             demo_main(["--mode", mode, "--speed", speed])
-            console.print("
-[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...
-")
+            console.print("\n[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...\n")
             self.render_header()
             return True
 
