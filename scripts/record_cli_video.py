@@ -237,48 +237,54 @@ def get_normal_cli_storyboard():
         ("text", "╰──────────────────────────────────────────────────────────────────────────╯", TEXT_BLUE),
         ("blank", "", TEXT_WHITE),
 
-        # Scene 2: Natural Query & System Diagnostic
-        ("prompt", "ultron [Main Chat] > What's my system status and what tools are ready?", TEXT_YELLOW),
-        ("text", "  [⚡ ULTRON INTELLIGENCE] Gathering active telemetry and skill registry...", TEXT_GREEN),
-        ("text", "  ● OS: Linux/Windows (x86_64) │ CPU: 12% │ Memory: 4.8 GB / 16.0 GB", TEXT_WHITE),
-        ("text", "  ● Active Engine: Dual LLM Router (Fast: Groq LPU 500+ tok/s, Deep: NVIDIA NIM)", TEXT_CYAN),
-        ("text", "  ● Registered Skills: System Control, Web Search, Audio Devices, App Launch, Notes", TEXT_WHITE),
-        ("text", "  ● I'm ready to manage your workflow, launch applications, or query live documents.", TEXT_WHITE),
+        # Scene 2: Hello
+        ("prompt", "ultron [Main Chat] > hello", TEXT_YELLOW),
+        ("text", "  [⚡ ULTRON INTELLIGENCE] Hello! I am ULTRON, your autonomous AI desktop agent.", TEXT_GREEN),
+        ("text", "  All core systems are online and operational. How can I assist you today?", TEXT_WHITE),
         ("blank", "", TEXT_WHITE),
 
-        # Scene 3: Skill Execution / Tool Calling
-        ("prompt", "ultron [Main Chat] > Search the web for latest AI news and open the browser", TEXT_YELLOW),
-        ("text", "  [🔧 TOOL EXECUTION] Invoking WebSearchSkill(query='latest AI agents')...", TEXT_MAGENTA),
-        ("text", "  ✓ Retrieved 5 verified news articles via DuckDuckGo Search API.", TEXT_GREEN),
-        ("text", "  [🔧 TOOL EXECUTION] Invoking ApplicationSkill(action='open_browser')...", TEXT_MAGENTA),
-        ("text", "  ✓ Default web browser successfully opened with requested research tabs.", TEXT_GREEN),
-        ("text", "  Summary: Recent breakthroughs highlight multi-agent orchestration and low-latency RAG.", TEXT_WHITE),
+        # Scene 3: Weather of Patiala
+        ("prompt", "ultron [Main Chat] > what is the weather of patiala?", TEXT_YELLOW),
+        ("text", "  [🌤️ WEATHER SERVICE] Patiala, Punjab, India", TEXT_CYAN),
+        ("text", "  ● Temperature: 28°C (82°F) │ Condition: Clear & Sunny │ Humidity: 42%", TEXT_WHITE),
+        ("text", "  ● Wind: 8 km/h NW │ UV Index: 5 │ Ideal sunny weather across TIET campus.", TEXT_WHITE),
         ("blank", "", TEXT_WHITE),
 
-        # Scene 4: Slash Command LLM Switcher (/model)
-        ("prompt", "ultron [Main Chat] > /model", TEXT_YELLOW),
-        ("text", "  ╭── LLM ENGINE SWITCHER ───────────────────────────────────────────────╮", TEXT_BLUE),
-        ("text", "  │  ● Current: Dual LLM (Groq 70B Fast + NVIDIA Nemotron-3 Deep)        │", TEXT_GREEN),
-        ("text", "  │  1. groq    — Ultra high-speed LPU inference (500+ tokens/sec)       │", TEXT_CYAN),
-        ("text", "  │  2. nvidia  — Deep complex reasoning & instruction following (NIM)  │", TEXT_CYAN),
-        ("text", "  │  3. qwen    — Balanced multi-lingual instruct model                  │", TEXT_CYAN),
-        ("text", "  │  4. offline — 100% private local execution with Ollama (Zero keys)   │", TEXT_DIM),
-        ("text", "  ╰──────────────────────────────────────────────────────────────────────╯", TEXT_BLUE),
+        # Scene 4: MLSC TIET & Community Links
+        ("prompt", "ultron [Main Chat] > tell me about mlsc tiet and provide their links", TEXT_YELLOW),
+        ("text", "  [🌐 COMMUNITY HUB] Microsoft Learn Student Chapter (MLSC) — TIET Patiala", TEXT_CYAN),
+        ("text", "  ● About: Premier technical student society at Thapar Institute of Engineering & Technology.", TEXT_WHITE),
+        ("text", "  ● Focus: Web dev, AI/ML engineering, open-source workshops, and flagship hackathons.", TEXT_WHITE),
+        ("text", "  ● Official Website: https://mlsctiet.com", TEXT_GREEN),
+        ("text", "  ● LinkedIn: https://www.linkedin.com/company/microsoft-learn-student-chapter/posts/", TEXT_GREEN),
         ("blank", "", TEXT_WHITE),
 
-        # Scene 5: Knowledge & Document Query (/rag)
-        ("prompt", "ultron [Main Chat] > /rag What is the cancellation policy in our enterprise guidelines?", TEXT_YELLOW),
-        ("text", "  [⚡ STREAMING RAG] Speculative retrieval triggered at t=0.6s (Gain: 1100ms)", TEXT_GREEN),
-        ("text", "  [ANSWER] Confirmed enterprise reservations require 14 days advance written notice", TEXT_WHITE),
-        ("text", "  for a 100% full refund [Doc_31 §4]. Cancellations under 7 days incur standard fee.", TEXT_WHITE),
-        ("text", "  [CITATIONS] ['Doc_31 §4'] │ TTFT: 1.2ms │ Provenance Grounded: 100%", TEXT_CYAN),
+        # Scene 5: Settings Changing
+        ("prompt", "ultron [Main Chat] > /set voice_enabled true", TEXT_YELLOW),
+        ("text", "  [⚙️ SETTINGS UPDATED] voice_enabled set to 'true'. Neural Piper TTS activated.", TEXT_GREEN),
+        ("prompt", "ultron [Main Chat] > /model groq", TEXT_YELLOW),
+        ("text", "  [🔄 LLM ENGINE SWITCHED] Active: Groq Cloud (openai/gpt-oss-120b) │ Speed: 500+ tok/s", TEXT_CYAN),
         ("blank", "", TEXT_WHITE),
 
-        # Scene 6: Session Tokens & Telemetry (/tokens)
+        # Scene 6: Volume Control
+        ("prompt", "ultron [Main Chat] > set volume to 75%", TEXT_YELLOW),
+        ("text", "  [🔧 SKILL EXECUTION] VolumeSkill(action='set', level=75)", TEXT_MAGENTA),
+        ("text", "  ✓ Master audio volume adjusted to 75%.", TEXT_GREEN),
+        ("blank", "", TEXT_WHITE),
+
+        # Scene 7: Browser Search & Opening Apple Music
+        ("prompt", "ultron [Main Chat] > search for MLSC TIET on google and open apple music", TEXT_YELLOW),
+        ("text", "  [🔧 SKILL EXECUTION] WebSearchSkill(query='MLSC TIET Thapar Institute')", TEXT_MAGENTA),
+        ("text", "  ✓ Retrieved 5 results: https://mlsctiet.com & official LinkedIn announcements.", TEXT_GREEN),
+        ("text", "  [🔧 SKILL EXECUTION] ApplicationSkill(action='open_application', application='apple_music')", TEXT_MAGENTA),
+        ("text", "  ✓ Opened Apple Music and directed browser research tabs successfully.", TEXT_GREEN),
+        ("blank", "", TEXT_WHITE),
+
+        # Scene 8: Telemetry & Tokens
         ("prompt", "ultron [Main Chat] > /tokens", TEXT_YELLOW),
-        ("text", "  [📊 TELEMETRY] Session Tokens: 482 Prompt + 312 Completion = 794 Total", TEXT_GREEN),
-        ("text", "  [⚡ LATENCY] Average TTFT: 1.4ms │ Router Speed: 420 tok/sec │ Errors: 0", TEXT_CYAN),
-        ("text", "  [💾 STATE] Chat Session: 'Main Chat' (Persistent SQLite vector history active)", TEXT_WHITE),
+        ("text", "  [📊 TELEMETRY] Session Tokens: 620 Prompt + 410 Completion = 1,030 Total", TEXT_GREEN),
+        ("text", "  [⚡ LATENCY] Avg TTFT: 1.2ms │ Router: Groq LPU 520 tok/s │ Cost: $0.0000", TEXT_CYAN),
+        ("text", "  [💾 STATE] Session 'Main Chat' synchronized. Ready for next command.", TEXT_WHITE),
     ]
 
 
