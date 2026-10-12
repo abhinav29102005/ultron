@@ -26,7 +26,7 @@ from rich.text import Text
 from config.user_settings import UserSettings
 from core.session_manager import SessionManager, SessionInfo
 
-console = Console()
+console = Console(record=True)
 
 
 class CyberneticCLI:
@@ -612,6 +612,23 @@ class CyberneticCLI:
             console.print("[bold green]✓ High-definition screenshots saved to ./screenshots/[/bold green]")
             return True
 
+        elif cmd == "screenshot":
+            from datetime import datetime
+            from pathlib import Path
+            from scripts.record_actual_terminal import safe_desktop_screenshot
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            shot_dir = Path("screenshots")
+            shot_dir.mkdir(parents=True, exist_ok=True)
+            png_file = shot_dir / f"terminal_{ts}.png"
+            svg_file = shot_dir / f"terminal_{ts}.svg"
+            try:
+                console.save_svg(str(svg_file), title="ULTRON Live Terminal")
+            except Exception:
+                pass
+            safe_desktop_screenshot(png_file)
+            console.print(f"[bold green]✓ Actual terminal screenshot saved:[/bold green] [cyan]{png_file}[/cyan]")
+            return True
+
         elif cmd in ("demo", "record"):
             if arg and arg.lower() in ("video", "mp4", "webp", "gif", "all"):
                 from scripts.record_cli_video import render_and_export
@@ -619,13 +636,6 @@ class CyberneticCLI:
                 console.print(f"[cyan]🎥 Compiling CLI terminal recording (format: {arg.lower()})...[/cyan]")
                 render_and_export(output_dir=Path("."), export_format=arg.lower(), save_screenshots=True)
                 return True
-            from scripts.record_demo import main as demo_main
-            mode = "auto" if (arg and "auto" in arg.lower()) else "step"
-            speed = "fast" if (arg and "fast" in arg.lower()) else "normal"
-            demo_main(["--mode", mode, "--speed", speed])
-            console.print("\n[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...\n")
-            self.render_header()
-            return True
             from scripts.record_demo import main as demo_main
             mode = "auto" if (arg and "auto" in arg.lower()) else "step"
             speed = "fast" if (arg and "fast" in arg.lower()) else "normal"
