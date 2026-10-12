@@ -84,7 +84,7 @@ class CyberneticCLI:
         table.add_column("Description", style="white")
 
         table.add_row("/model [nebius|dual|groq|nvidia|qwen]", "Switch active LLM engine (Nebius Token Factory Nemotron, Dual, Groq, NVIDIA, Qwen)")
-        table.add_row("/demo [step|auto]", "Launch the Samsung PRISM Theme 4 broadcast demonstration")
+        table.add_row("/demo [step|auto]", "Launch interactive Ultron CLI demonstration walkthrough")
         table.add_row("/policy", "Ingest policy.pdf and run the 15-question master policy evaluation")
         table.add_row("/questions", "Display all 15 official Theme 4 evaluation test questions")
         table.add_row("/rag [help|corpus|context|stream|...]", "Query Theme 4 Streaming Live RAG with citations, benchmark & state")
@@ -108,6 +108,8 @@ class CyberneticCLI:
         table.add_row("/ps <cmd>, !<cmd>", "Execute native Windows PowerShell CLI command & stream telemetry")
         table.add_row("/guardrails <on|off>", "Toggle safety execution guardrails")
         table.add_row("/clear", "Clear message history of the current chat")
+        table.add_row("/screenshot", "Capture high-definition PNG and SVG screenshots to ./screenshots/")
+        table.add_row("/record [format]", "Record full CLI terminal video & animations (mp4/webp/gif) to ./")
         table.add_row("/help", "Show this command manual")
         table.add_row("/quit, /exit", "Exit ULTRON safely with state persistence")
 
@@ -119,7 +121,7 @@ class CyberneticCLI:
         table.add_column("Command", style="bold yellow", width=28)
         table.add_column("Description", style="white")
 
-        table.add_row("/rag <question>", "Ask any policy or Samsung PRISM Theme 4 question with verified citations")
+        table.add_row("/rag <question>", "Ask any policy or enterprise question with verified citations")
         table.add_row("/rag stream <question>", "Stream synthesized response tokens in real-time (<2ms TTFT)")
         table.add_row("/rag add [path]", "Drag & drop a file, paste path, or type /rag select to ingest new documents")
         table.add_row("/rag select", "Open native GUI file selector dialog (Zenity/Tkinter) to pick documents")
@@ -405,7 +407,7 @@ class CyberneticCLI:
             elif sub_lower == "corpus":
                 from streaming_rag.pipeline import StreamingLiveRAG
                 rag = StreamingLiveRAG.get_instance()
-                table = Table(title="Indexed Enterprise & Samsung PRISM Corpus", border_style="green", box=ROUNDED)
+                table = Table(title="Indexed Enterprise Knowledge Corpus", border_style="green", box=ROUNDED)
                 table.add_column("Tag", style="bold cyan", width=16)
                 table.add_column("Document Title", style="white")
                 table.add_column("Metadata", style="dim")
@@ -602,7 +604,28 @@ class CyberneticCLI:
             console.print(q_table)
             console.print("[dim]Run any question directly using: [bold yellow]/rag <question>[/bold yellow][/dim]")
 
+        elif cmd == "screenshot":
+            from scripts.record_cli_video import render_and_export
+            from pathlib import Path
+            console.print("[cyan]📸 Capturing high-definition CLI screenshots...[/cyan]")
+            render_and_export(output_dir=Path("."), export_format="screenshots_only", save_screenshots=True)
+            console.print("[bold green]✓ High-definition screenshots saved to ./screenshots/[/bold green]")
+            return True
+
         elif cmd in ("demo", "record"):
+            if arg and arg.lower() in ("video", "mp4", "webp", "gif", "all"):
+                from scripts.record_cli_video import render_and_export
+                from pathlib import Path
+                console.print(f"[cyan]🎥 Compiling CLI terminal recording (format: {arg.lower()})...[/cyan]")
+                render_and_export(output_dir=Path("."), export_format=arg.lower(), save_screenshots=True)
+                return True
+            from scripts.record_demo import main as demo_main
+            mode = "auto" if (arg and "auto" in arg.lower()) else "step"
+            speed = "fast" if (arg and "fast" in arg.lower()) else "normal"
+            demo_main(["--mode", mode, "--speed", speed])
+            console.print("\n[bold green]✓ Demo completed.[/bold green] Returning to Ultron CLI...\n")
+            self.render_header()
+            return True
             from scripts.record_demo import main as demo_main
             mode = "auto" if (arg and "auto" in arg.lower()) else "step"
             speed = "fast" if (arg and "fast" in arg.lower()) else "normal"
