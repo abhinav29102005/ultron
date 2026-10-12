@@ -29,6 +29,7 @@ from config.settings import Settings
 from config.logging_config import configure_logging, get_logger
 from core.container import ServiceContainer
 from ui.main_window import MainWindow
+from utils.gui_recorder import GuiRecorder
 from utils.console import force_utf8_output
 from utils.env import load_env_file
 from utils.single_instance import SingleInstance
@@ -45,7 +46,59 @@ load_env_file()
 logger = get_logger("boot_gui")
 
 
-async def run(app: QApplication) -> None:
+async def _demo_sequence(window: MainWindow, recorder: GuiRecorder, app: QApplication) -> None:
+    logger.info("[DEMO] Initiating automated feature walkthrough sequence...")
+    await asyncio.sleep(2.5)
+
+    # 1. Standby floating Orb
+    logger.info("[DEMO] State: IDLE (Mode: ORB)")
+    window.collapse()
+    window._apply_state("IDLE")
+    await asyncio.sleep(2.0)
+
+    # 2. Trigger listening waveform Pill
+    logger.info("[DEMO] State: LISTENING (Mode: PILL with waveform)")
+    window._apply_state("LISTENING")
+    await asyncio.sleep(2.5)
+
+    # 3. Expand to Card
+    logger.info("[DEMO] Expanding to Card mode")
+    window.expand()
+    await asyncio.sleep(1.2)
+
+    # 4. Hello Ultron
+    logger.info("[DEMO] Submitting: Hello Ultron")
+    window._on_message_submitted("Hello Ultron")
+    await asyncio.sleep(5.0)
+
+    # 5. Weather of Patiala
+    logger.info("[DEMO] Submitting: What is the weather of Patiala?")
+    window._on_message_submitted("What is the weather of Patiala?")
+    await asyncio.sleep(6.0)
+
+    # 6. MLSC TIET inquiry
+    logger.info("[DEMO] Submitting: Tell me about MLSC TIET at Thapar University and share official links")
+    window._on_message_submitted("Tell me about MLSC TIET at Thapar University and share official links")
+    await asyncio.sleep(7.0)
+
+    # 7. System volume control
+    logger.info("[DEMO] Submitting: Set system volume to 80%")
+    window._on_message_submitted("Set system volume to 80%")
+    await asyncio.sleep(5.0)
+
+    # 8. Collapse back to Orb
+    logger.info("[DEMO] Collapsing back to standby Orb")
+    window.collapse()
+    window._apply_state("IDLE")
+    await asyncio.sleep(2.5)
+
+    # 9. Stop recording and exit
+    logger.info("[DEMO] Demo complete! Finalizing recording and exiting.")
+    recorder.stop()
+    app.quit()
+
+
+async def run(app: QApplication, record: bool = False, demo: bool = False, output_file: str = "ultron_gui_demo.mp4", fps: int = 25) -> None:
     # Printed before anything slow. Preflight only speaks up when something is
     # wrong and the rest of boot logs to file, so a healthy start used to
     # produce no console output at all -- leaving "it is working" and "it is
@@ -86,6 +139,16 @@ async def run(app: QApplication) -> None:
     # not start" rather than "it is loading".
     window = MainWindow(container.event_bus, container.recorder, None, None, container)
     window.show()
+
+    gui_recorder = None
+    if record or demo:
+        os.environ["ULTRON_RECORDING"] = "1"
+        os.environ["ULTRON_ALLOW_CAPTURE"] = "1"
+        gui_recorder = GuiRecorder(window, output_path=output_file, fps=fps)
+        gui_recorder.start()
+        app.aboutToQuit.connect(gui_recorder.stop)
+        if demo:
+            asyncio.ensure_future(_demo_sequence(window, gui_recorder, app))
 
     async def _load_wake_detector() -> None:
         def _build():
@@ -156,6 +219,21 @@ _instance_lock: SingleInstance | None = None
 def main() -> None:
     global _instance_lock
 
+    import argparse
+    parser = argparse.ArgumentParser(description="ULTRON Desktop GUI")
+    parser.add_argument("--allow-capture", action="store_true", default=True, help="Allow the orb and UI to be visible to screen recorders (OBS, Game Bar) on Windows (default: True)")
+    parser.add_argument("--hide-from-capture", action="store_true", help="Explicitly hide the orb from screen recording/screen sharing on Windows")
+    parser.add_argument("--record", action="store_true", help="Record the GUI session to video")
+    parser.add_argument("--demo", action="store_true", help="Run automated feature demonstration and record video")
+    parser.add_argument("--output", default="ultron_gui_demo.mp4", help="Output video path (.mp4 / .webm)")
+    parser.add_argument("--fps", type=int, default=25, help="Frame rate for recording (default: 25)")
+    args, _ = parser.parse_known_args()
+
+    if args.hide_from_capture:
+        os.environ.pop("ULTRON_ALLOW_CAPTURE", None)
+    elif args.allow_capture or args.record or args.demo:
+        os.environ["ULTRON_ALLOW_CAPTURE"] = "1"
+
     app = QApplication(sys.argv)
 
     # After QApplication exists, so the dialog below can actually be shown.
@@ -176,7 +254,7 @@ def main() -> None:
     asyncio.set_event_loop(loop)
 
     with loop:
-        loop.run_until_complete(run(app))
+        loop.run_until_complete(run(app, record=args.record, demo=args.demo, output_file=args.output, fps=args.fps))
 
 
 if __name__ == "__main__":

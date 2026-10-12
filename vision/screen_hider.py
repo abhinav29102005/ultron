@@ -1,28 +1,23 @@
 """
-vision/screen_hider.py – Keep ULTRON out of screen shares
-=========================================================
-``SetWindowDisplayAffinity`` with ``WDA_EXCLUDEFROMCAPTURE`` removes a window
-from every capture path the OS offers — Google Meet, Zoom, Teams, OBS, the
-Snipping Tool, BitBlt, DWM duplication — while leaving it fully visible on the
-physical display. That is exactly the asymmetry we want: the user sees the orb,
-the meeting does not.
+vision/screen_hider.py – Screen-share privacy and recording control
+===================================================================
+On Windows, SetWindowDisplayAffinity with WDA_EXCLUDEFROMCAPTURE removes
+a window from every capture path the OS offers (OBS, Game Bar, Meet, Zoom,
+Teams, Snipping Tool, BitBlt, DWM duplication) while leaving it fully visible
+on the physical display.
 
-Two things follow from doing this at the OS level rather than by filtering our
-own screenshots:
+When recording ULTRON (via OBS, Windows Game Bar, or scripts), capture exclusion
+MUST be disabled so the orb is visible in the recording.
 
-* it holds for capture software we have never heard of, and
-* our own ``screen_capture`` cannot see ULTRON either, so the vision model is
-  never shown a picture of the assistant asking about the picture.
-
-Requires Windows 10 version 2004 (build 19041) or newer. The older
-``WDA_MONITOR`` is deliberately *not* used as a fallback: it paints the window
-black on the shared screen, which is more conspicuous than simply appearing.
-Anywhere unsupported this is a logged no-op — vision still works, the window
-is merely visible to a screen share.
+We support:
+- hide_from_capture(widget): applies WDA_EXCLUDEFROMCAPTURE (0x11)
+- allow_capture(widget): explicitly restores WDA_NONE (0x00) so recording works
+- Environment variable ULTRON_ALLOW_CAPTURE=1 or ULTRON_RECORDING=1 to disable hiding
 """
 
 from __future__ import annotations
 
+import os
 import platform
 import sys
 
@@ -30,10 +25,13 @@ from config.logging_config import get_logger
 
 logger = get_logger("vision.hider")
 
+#: Window is visible to all screen capture (standard Windows behavior).
+WDA_NONE = 0x00000000
+
 #: Excluded from capture entirely; the window is absent, not blacked out.
 WDA_EXCLUDEFROMCAPTURE = 0x00000011
 
-#: First Windows build with WDA_EXCLUDEFROMCAPTURE.
+#: First Windows build with WDA_EXCLUDEFROMCAPTURE (Windows 10 2004).
 MIN_WINDOWS_BUILD = 19041
 
 _warned = False
@@ -55,23 +53,38 @@ def is_hiding_supported() -> bool:
     return _windows_build() >= MIN_WINDOWS_BUILD
 
 
-def _explain_once() -> None:
-    global _warned
-    if _warned:
-        return
-    _warned = True
+def is_capture_allowed_env() -> bool:
+    """Check if screen capture has been explicitly permitted via env."""
+    val = os.getenv("ULTRON_ALLOW_CAPTURE", "").lower()
+    rec = os.getenv("ULTRON_RECORDING", "").lower()
+    return val in ("1", "true", "yes", "on") or rec in ("1", "true", "yes", "on")
+
+
+def allow_capture(widget) -> bool:
+    """Explicitly re-enable screen capture for this window on Windows."""
     if sys.platform != "win32":
-        logger.info(
-            "Screen-share hiding is Windows-only; the window will be visible "
-            "to screen capture on this platform."
+        return True
+
+    try:
+        import ctypes
+
+        handle = int(widget.winId())
+        if not handle:
+            return False
+
+        user32 = ctypes.windll.user32
+        ok = bool(
+            user32.SetWindowDisplayAffinity(
+                ctypes.c_void_p(handle),
+                ctypes.c_uint(WDA_NONE),
+            )
         )
-    else:
-        logger.warning(
-            "Screen-share hiding needs Windows 10 build %d or newer (this is "
-            "build %d); the window will be visible to screen capture.",
-            MIN_WINDOWS_BUILD,
-            _windows_build(),
-        )
+        if ok:
+            logger.debug("Window {} capture enabled (WDA_NONE applied).", handle)
+        return ok
+    except Exception as exc:
+        logger.warning("Failed to set WDA_NONE on window: {}", exc)
+        return False
 
 
 def hide_from_capture(widget) -> bool:
@@ -80,12 +93,15 @@ def hide_from_capture(widget) -> bool:
     Returns True when the exclusion was applied. Never raises: failing to hide
     is a downgrade in privacy, not a reason to refuse to start.
 
-    Call this after the window exists natively, and again from ``showEvent``:
-    Qt destroys and recreates the native handle when window flags change, and
-    the affinity is a property of the handle, not of the widget.
+    If ULTRON_ALLOW_CAPTURE or ULTRON_RECORDING is set, capture exclusion is
+    skipped and allow_capture is called instead so the orb can be recorded.
     """
+    if is_capture_allowed_env() or getattr(widget, "_allow_capture", False):
+        logger.info("Screen recording active/allowed: skipping capture exclusion.")
+        allow_capture(widget)
+        return False
+
     if not is_hiding_supported():
-        _explain_once()
         return False
 
     try:

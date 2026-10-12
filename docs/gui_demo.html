@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ULTRON Desktop GUI - Live Chrome Demonstration & Video Recorder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0a0c10;
+    --card-shell: rgba(30, 31, 36, 0.96);
+    --shell-border: #34353c;
+    --user-bubble: #2f6feb;
+    --ultron-bubble: #2b2c33;
+    --text-primary: #e8e8ea;
+    --text-secondary: #9a9ba3;
+    --input-bg: #26272e;
+    
+    /* Ultron Core States */
+    --state-offline: #5c5f66;
+    --state-starting: #c9a227;
+    --state-idle: #3ddc84;
+    --state-listening: #4dabf7;
+    --state-thinking: #ffa94d;
+    --state-executing: #b794f6;
+    --state-speaking: #38d9d9;
+    --state-shutting-down: #ff6b6b;
+    
+    --active-state-color: var(--state-idle);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background-color: var(--bg-dark);
+    background-image: 
+      radial-gradient(circle at 50% 20%, rgba(61, 220, 132, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(77, 171, 247, 0.06) 0%, transparent 40%),
+      linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Top Navigation / HUD Bar */
+  header {
+    background: rgba(15, 17, 23, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #5aff9f 0%, #3ddc84 70%, #1e824c 100%);
+    box-shadow: 0 0 14px rgba(61, 220, 132, 0.6);
+  }
+  .brand-title {
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .badge-groq { color: #f59e0b; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1); }
+  .badge-gui { color: #38d9d9; border-color: rgba(56, 217, 217, 0.4); background: rgba(56, 217, 217, 0.1); }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    font-family: inherit;
+  }
+  .btn-record {
+    background: #e11d48;
+    color: white;
+    box-shadow: 0 0 12px rgba(225, 29, 72, 0.4);
+  }
+  .btn-record:hover {
+    background: #be123c;
+    box-shadow: 0 0 18px rgba(225, 29, 72, 0.7);
+    transform: translateY(-1px);
+  }
+  .btn-record.recording {
+    background: #991b1b;
+    animation: pulse-rec 1s infinite alternate;
+  }
+  @keyframes pulse-rec {
+    0% { box-shadow: 0 0 10px rgba(225, 29, 72, 0.5); }
+    100% { box-shadow: 0 0 24px rgba(225, 29, 72, 0.9); }
+  }
+  .btn-play {
+    background: #2563eb;
+    color: white;
+  }
+  .btn-play:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+  }
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Main Workspace / Stage Layout */
+  .stage-wrapper {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Left Toolbar Controls */
+  .control-sidebar {
+    width: 320px;
+    background: rgba(18, 20, 26, 0.85);
+    backdrop-filter: blur(16px);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 20;
+    overflow-y: auto;
+  }
+  .sidebar-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-secondary);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .state-pill-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .state-pill-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .state-pill-btn.active {
+    border-color: var(--active-state-color);
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+  }
+  .state-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .mode-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 8px;
+  }
+  .mode-btn {
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: 0.2s;
+  }
+  .mode-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    font-weight: 600;
+  }
+
+  /* Preset Scenarios */
+  .scenario-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .scenario-card:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .scenario-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+  }
+  .scenario-card-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  /* Desktop Canvas Center Stage */
+  .desktop-canvas {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Simulated OS Desktop Background */
+  .desktop-wallpaper {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px;
+  }
+  .desktop-hint {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.3);
+    font-family: 'Fira Code', monospace;
+  }
+
+  /* =========================================================================
+     ULTRON FLOATING WIDGET (PyQt6 main_gui.py Replication)
+     ========================================================================= */
+  #ultronWidget {
+    position: absolute;
+    transition: width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), 
+                height 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-radius 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 0.28s ease;
+    user-select: none;
+    cursor: grab;
+    z-index: 50;
+  }
+  #ultronWidget:active {
+    cursor: grabbing;
+  }
+
+  /* Mode 1: ORB (44x44 circular glowing orb) */
+  #ultronWidget.mode-orb {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: transparent;
+  }
+  .orb-canvas-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .orb-sphere {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff 0%, var(--active-state-color) 45%, #0e301d 100%);
+    box-shadow: 0 0 20px var(--active-state-color), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    position: relative;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  .orb-halo {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--active-state-color);
+    opacity: 0.25;
+    animation: breathing-halo 2.4s infinite ease-in-out;
+    pointer-events: none;
+  }
+  @keyframes breathing-halo {
+    0%, 100% { transform: scale(1); opacity: 0.25; }
+    50% { transform: scale(1.35); opacity: 0.45; }
+  }
+
+  /* Mode 2: PILL (200x48 morphing pill with 13 live waveform bars) */
+  #ultronWidget.mode-pill {
+    width: 200px;
+    height: 48px;
+    border-radius: 24px;
+    background: var(--card-shell);
+    border: 1.4px solid var(--active-state-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(77, 171, 247, 0.2);
+    backdrop-filter: blur(14px);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 12px;
+  }
+  .pill-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--active-state-color);
+    box-shadow: 0 0 10px var(--active-state-color);
+    flex-shrink: 0;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  .waveform-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 28px;
+    padding: 0 4px;
+  }
+  .wave-bar {
+    width: 4px;
+    background: var(--active-state-color);
+    border-radius: 2px;
+    min-height: 4px;
+    transition: height 0.08s ease, background 0.3s ease;
+  }
+
+  /* Mode 3: CARD (310x340 glassmorphic expandable chat card) */
+  #ultronWidget.mode-card {
+    width: 320px;
+    height: 380px;
+    border-radius: 16px;
+    background: var(--card-shell);
+    border: 1px solid var(--shell-border);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Card Header */
+  .card-header {
+    height: 40px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: grab;
+  }
+  .card-header-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-header-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--active-state-color);
+    box-shadow: 0 0 8px var(--active-state-color);
+    transition: background 0.3s;
+  }
+  .card-header-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .card-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .model-pill-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #d1d5db;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+  }
+  .model-pill-tag:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .card-close-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .card-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+
+  /* Chat Message History Scroll Area */
+  .chat-history {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-history::-webkit-scrollbar {
+    width: 6px;
+  }
+  .chat-history::-webkit-scrollbar-thumb {
+    background: #3a3b44;
+    border-radius: 3px;
+  }
+
+  .chat-row {
+    display: flex;
+    width: 100%;
+  }
+  .chat-row.user {
+    justify-content: flex-end;
+  }
+  .chat-row.ultron {
+    justify-content: flex-start;
+  }
+  .chat-row.system {
+    justify-content: center;
+  }
+
+  .chat-bubble {
+    max-width: 84%;
+    padding: 9px 13px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .chat-bubble.user {
+    background: var(--user-bubble);
+    color: white;
+    border-bottom-right-radius: 3px;
+  }
+  .chat-bubble.ultron {
+    background: var(--ultron-bubble);
+    color: var(--text-primary);
+    border-bottom-left-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .chat-bubble.system {
+    background: rgba(201, 162, 39, 0.15);
+    color: #e5c05b;
+    border: 1px solid rgba(201, 162, 39, 0.3);
+    font-size: 11px;
+    text-align: center;
+  }
+  .tool-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-family: 'Fira Code', monospace;
+    background: rgba(183, 148, 246, 0.2);
+    color: #c4b5fd;
+    border: 1px solid rgba(183, 148, 246, 0.35);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .chat-link {
+    color: #38d9d9;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .chat-link:hover {
+    color: #79ecec;
+  }
+
+  /* Card Input Area */
+  .card-footer {
+    padding: 10px 14px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card-note {
+    font-size: 11px;
+    color: #c9a227;
+    font-style: italic;
+    min-height: 14px;
+  }
+  .card-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-input {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--shell-border);
+    border-radius: 18px;
+    padding: 8px 14px;
+    color: var(--text-primary);
+    font-size: 12.5px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .card-input:focus {
+    border-color: #4dabf7;
+  }
+  .card-input::placeholder {
+    color: #6c6d75;
+  }
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .mic-btn.active {
+    background: #e11d48;
+    color: white;
+    border-color: #f43f5e;
+    box-shadow: 0 0 10px rgba(225, 29, 72, 0.6);
+  }
+  .send-btn {
+    background: #2563eb;
+    color: white;
+    border-color: #3b82f6;
+  }
+  .send-btn:hover {
+    background: #1d4ed8;
+  }
+
+  /* Bottom Telemetry Bar */
+  footer {
+    background: #090b0e;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 8px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-family: 'Fira Code', monospace;
+    color: var(--text-secondary);
+    z-index: 100;
+  }
+  .telemetry-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .telemetry-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3ddc84;
+    box-shadow: 0 0 6px #3ddc84;
+  }
+
+  /* Recording status banner */
+  #recordBanner {
+    display: none;
+    background: #e11d48;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    padding: 6px;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+<div id="recordBanner">🔴 RECORDING ACTIVE - DEMONSTRATING ULTRON DESKTOP GUI IN GOOGLE CHROME</div>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo"></div>
+    <div class="brand-title">
+      ULTRON DESKTOP GUI
+      <span class="badge badge-gui">PyQt6 / qasync</span>
+      <span class="badge badge-groq">Dual LLM Active</span>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <button class="btn btn-play" id="btnAutoDemo" onclick="runFullWalkthrough()">
+      ▶ Run Complete Demo
+    </button>
+    <button class="btn btn-record" id="btnRecordVideo" onclick="toggleScreenRecording()">
+      🔴 Record Video (WebM / MP4)
+    </button>
+    <button class="btn btn-secondary" onclick="exportScreenshot()">
+      📸 Screenshot
+    </button>
+  </div>
+</header>
+
+<div class="stage-wrapper">
+  <!-- Left Control Toolbar -->
+  <aside class="control-sidebar">
+    <div>
+      <div class="sidebar-section-title">Visual Mode</div>
+      <div class="mode-selector">
+        <button class="mode-btn" id="modeOrbBtn" onclick="setMode('orb')">Orb (44x44)</button>
+        <button class="mode-btn" id="modePillBtn" onclick="setMode('pill')">Pill (200x48)</button>
+        <button class="mode-btn active" id="modeCardBtn" onclick="setMode('card')">Card (320x380)</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-title">Ultron Assistant State</div>
+      <div class="control-group">
+        <div class="state-pill-btn active" onclick="setState('IDLE')">
+          <span>IDLE (Standby)</span>
+          <span class="state-dot" style="background: #3ddc84;"></span>
+        </div>
+        <div class="state-pill-btn" onclick="setState('LISTENING')">
+          <span>LISTENING (Audio Stream)</span>
+          <span class="state-dot" style="background: #4dabf7;"></span>
+        </div>
+        <div class="state-pill-btn" onclick="setState('THINKING')">
+          <span>THINKING (Dual LLM Routing)</span>
+          <span class="state-dot" style="background: #ffa94d;"></span>
+        </div>
+        <div class="state-pill-btn" onclick="setState('EXECUTING')">
+          <span>EXECUTING (System Tool)</span>
+          <span class="state-dot" style="background: #b794f6;"></span>
+        </div>
+        <div class="state-pill-btn" onclick="setState('SPEAKING')">
+          <span>SPEAKING (TTS Audio Out)</span>
+          <span class="state-dot" style="background: #38d9d9;"></span>
+        </div>
+        <div class="state-pill-btn" onclick="setState('STARTING')">
+          <span>STARTING (Booting Engine)</span>
+          <span class="state-dot" style="background: #c9a227;"></span>
+        </div>
+        <div class="state-pill-btn" onclick="setState('OFFLINE')">
+          <span>OFFLINE (Degraded)</span>
+          <span class="state-dot" style="background: #5c5f66;"></span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-title">Interactive Scenarios</div>
+      <div class="control-group">
+        <div class="scenario-card" onclick="triggerScenario('hello')">
+          <div class="scenario-card-title">1. Introduction & State</div>
+          <div class="scenario-card-desc">&quot;Hello Ultron&quot; &rarr; Greetings & status</div>
+        </div>
+        <div class="scenario-card" onclick="triggerScenario('weather')">
+          <div class="scenario-card-title">2. Weather in Patiala</div>
+          <div class="scenario-card-desc">Tool invocation: get_weather(&quot;Patiala&quot;)</div>
+        </div>
+        <div class="scenario-card" onclick="triggerScenario('mlsc')">
+          <div class="scenario-card-title">3. MLSC TIET & Links</div>
+          <div class="scenario-card-desc">mlsctiet.com & LinkedIn community URLs</div>
+        </div>
+        <div class="scenario-card" onclick="triggerScenario('volume')">
+          <div class="scenario-card-title">4. System Volume Control</div>
+          <div class="scenario-card-desc">Tool execution: adjust_volume(level=80)</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Desktop Simulation Center Stage -->
+  <main class="desktop-canvas" id="desktopCanvas">
+    <div class="desktop-wallpaper">
+      <div class="desktop-hint">LINUX WORKSPACE &middot; FEDORA PLASMA &middot; PYQT6 DESKTOP RUNTIME</div>
+      <div class="desktop-hint" style="text-align: right;">FLOAT ANYWHERE &middot; CLICK ORB TO EXPAND</div>
+    </div>
+
+    <!-- The Replicated PyQt6 Ultron Widget -->
+    <div id="ultronWidget" class="mode-card" style="left: calc(50% - 160px); top: calc(50% - 190px);">
+      <!-- ORB MODE CONTENT -->
+      <div class="orb-canvas-inner" id="orbInner" style="display: none;" onclick="toggleCardMode()">
+        <div class="orb-halo"></div>
+        <div class="orb-sphere"></div>
+      </div>
+
+      <!-- PILL MODE CONTENT -->
+      <div id="pillInner" style="display: none; width: 100%; height: 100%;" onclick="toggleCardMode()">
+        <div class="pill-dot"></div>
+        <div class="waveform-container" id="waveformBars">
+          <!-- 13 bars generated via JS -->
+        </div>
+      </div>
+
+      <!-- CARD MODE CONTENT -->
+      <div id="cardInner" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+        <div class="card-header" id="cardHeader">
+          <div class="card-header-status">
+            <div class="card-header-dot" id="cardDot"></div>
+            <div class="card-header-title" id="cardStatusTitle">ULTRON &middot; IDLE</div>
+          </div>
+          <div class="card-header-controls">
+            <div class="model-pill-tag" title="Switch between Groq Cloud and Local Ollama">Cloud model</div>
+            <button class="card-close-btn" onclick="setMode('orb')" title="Minimize to Orb">&minus;</button>
+          </div>
+        </div>
+
+        <div class="chat-history" id="chatHistory">
+          <div class="chat-row ultron">
+            <div class="chat-bubble ultron">
+              ULTRON cybernetic desktop assistant online. Type below or press the microphone to speak.
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <div class="card-note" id="cardNote"></div>
+          <div class="card-input-row">
+            <input type="text" class="card-input" id="chatInput" placeholder="Ask ULTRON anything..." onkeydown="handleInputKey(event)">
+            <button class="icon-btn mic-btn" id="micBtn" onclick="toggleMic()" title="Speak to ULTRON">🎙️</button>
+            <button class="icon-btn send-btn" onclick="submitUserMessage()" title="Send message">&rarr;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer>
+  <div class="telemetry-item">
+    <div class="telemetry-live-dot"></div>
+    <span>ENGINE: Dual LLM (Groq Llama 3.3 70B &middot; NVIDIA Nemotron 70B)</span>
+  </div>
+  <div class="telemetry-item">
+    <span>FRAMEWORK: PyQt6 + qasync &middot; EventBus Reactive Loop</span>
+  </div>
+  <div class="telemetry-item" id="fpsDisplay">
+    <span>60 FPS &middot; STABLE</span>
+  </div>
+</footer>
+
+<script>
+  const STATE_COLORS = {
+    "OFFLINE": "#5c5f66",
+    "STARTING": "#c9a227",
+    "IDLE": "#3ddc84",
+    "LISTENING": "#4dabf7",
+    "THINKING": "#ffa94d",
+    "EXECUTING": "#b794f6",
+    "SPEAKING": "#38d9d9",
+    "SHUTTING_DOWN": "#ff6b6b"
+  };
+
+  let currentState = "IDLE";
+  let currentMode = "card";
+  let isListening = false;
+  let wavePhase = 0;
+  let waveAmplitude = 0.5;
+
+  const widget = document.getElementById('ultronWidget');
+  const orbInner = document.getElementById('orbInner');
+  const pillInner = document.getElementById('pillInner');
+  const cardInner = document.getElementById('cardInner');
+  const cardStatusTitle = document.getElementById('cardStatusTitle');
+  const cardDot = document.getElementById('cardDot');
+  const waveformBarsContainer = document.getElementById('waveformBars');
+  const chatHistory = document.getElementById('chatHistory');
+  const chatInput = document.getElementById('chatInput');
+  const micBtn = document.getElementById('micBtn');
+  const cardNote = document.getElementById('cardNote');
+
+  for (let i = 0; i < 13; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'wave-bar';
+    bar.id = 'bar-' + i;
+    waveformBarsContainer.appendChild(bar);
+  }
+
+  function animateWaveform() {
+    wavePhase += 0.22;
+    if (currentState === "LISTENING" || currentState === "SPEAKING") {
+      waveAmplitude = 0.35 + 0.5 * Math.abs(Math.sin(wavePhase * 0.5));
+    } else {
+      waveAmplitude = 0.05;
+    }
+
+    for (let i = 0; i < 13; i++) {
+      const envelope = Math.sin(Math.PI * (i + 0.5) / 13);
+      const wobble = Math.abs(Math.sin(wavePhase + i * 0.55));
+      const level = Math.max(0.12, waveAmplitude * envelope * (0.35 + 0.65 * wobble));
+      const height = Math.max(4, 26 * level);
+      const bar = document.getElementById('bar-' + i);
+      if (bar) {
+        bar.style.height = height + 'px';
+      }
+    }
+    requestAnimationFrame(animateWaveform);
+  }
+  requestAnimationFrame(animateWaveform);
+
+  function setState(stateName) {
+    currentState = stateName.toUpperCase();
+    const color = STATE_COLORS[currentState] || STATE_COLORS["OFFLINE"];
+    document.documentElement.style.setProperty('--active-state-color', color);
+    cardStatusTitle.innerText = 'ULTRON · ' + currentState;
+
+    document.querySelectorAll('.state-pill-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.innerText.includes(currentState));
+    });
+
+    if (currentState === "LISTENING" || currentState === "SPEAKING") {
+      if (currentMode === "orb") setMode("pill");
+    }
+  }
+
+  function setMode(mode) {
+    currentMode = mode;
+    widget.className = 'mode-' + mode;
+
+    orbInner.style.display = mode === 'orb' ? 'flex' : 'none';
+    pillInner.style.display = mode === 'pill' ? 'flex' : 'none';
+    cardInner.style.display = mode === 'card' ? 'flex' : 'none';
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.id === 'mode' + mode.charAt(0).toUpperCase() + mode.slice(1) + 'Btn');
+    });
+  }
+
+  function toggleCardMode() {
+    if (currentMode === 'card') {
+      setMode('orb');
+    } else {
+      setMode('card');
+    }
+  }
+
+  function toggleMic() {
+    isListening = !isListening;
+    micBtn.classList.toggle('active', isListening);
+    if (isListening) {
+      setState("LISTENING");
+      cardNote.innerText = "Listening for speech...";
+    } else {
+      setState("IDLE");
+      cardNote.innerText = "";
+    }
+  }
+
+  function appendMessage(role, text, toolName = null) {
+    const row = document.createElement('div');
+    row.className = 'chat-row ' + role;
+    
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble ' + role;
+
+    if (toolName) {
+      const toolTag = document.createElement('div');
+      toolTag.className = 'tool-tag';
+      toolTag.innerText = '⚙️ TOOL: ' + toolName;
+      bubble.appendChild(toolTag);
+    }
+
+    const contentDiv = document.createElement('div');
+    contentDiv.innerHTML = text.replace(
+      /(https?:\/\/[^\s]+)/g, 
+      '<a href="$1" target="_blank" class="chat-link">$1</a>'
+    ).replace(/
+/g, '<br>');
+    bubble.appendChild(contentDiv);
+
+    row.appendChild(bubble);
+    chatHistory.appendChild(row);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  }
+
+  function handleInputKey(e) {
+    if (e.key === 'Enter') {
+      submitUserMessage();
+    }
+  }
+
+  function submitUserMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    chatInput.value = '';
+    appendMessage('user', text);
+    processQuery(text);
+  }
+
+  function processQuery(text) {
+    setState("THINKING");
+    cardNote.innerText = "Routing query through Groq Llama 3.3 70B...";
+
+    setTimeout(() => {
+      const lower = text.toLowerCase();
+      if (lower.includes('weather') || lower.includes('patiala')) {
+        setState("EXECUTING");
+        cardNote.innerText = "Invoking get_weather(city='Patiala')...";
+        setTimeout(() => {
+          setState("SPEAKING");
+          cardNote.innerText = "";
+          appendMessage('ultron', 
+            "Currently in Patiala, Punjab:
+• Temperature: 28°C (82.4°F)
+• Condition: Clear Skies
+• Humidity: 45%
+• Wind: 8 km/h NW
+
+A clear, pleasant day across Patiala.",
+            "get_weather"
+          );
+          setTimeout(() => setState("IDLE"), 2500);
+        }, 1200);
+      } else if (lower.includes('mlsc') || lower.includes('thapar')) {
+        setState("SPEAKING");
+        cardNote.innerText = "";
+        appendMessage('ultron', 
+          "Microsoft Learn Student Chapter (MLSC) at Thapar Institute of Engineering & Technology (TIET) is one of the premier technical student societies fostering technical innovation, open-source development, and hackathons.
+
+🔗 Official Website: https://mlsctiet.com
+🔗 LinkedIn: https://www.linkedin.com/company/microsoft-learn-student-chapter/posts/"
+        );
+        setTimeout(() => setState("IDLE"), 3000);
+      } else if (lower.includes('volume')) {
+        setState("EXECUTING");
+        cardNote.innerText = "Executing adjust_volume(level=80)...";
+        setTimeout(() => {
+          setState("SPEAKING");
+          cardNote.innerText = "";
+          appendMessage('ultron', "System audio volume set to 80%.", "adjust_volume");
+          setTimeout(() => setState("IDLE"), 2000);
+        }, 1000);
+      } else {
+        setState("SPEAKING");
+        cardNote.innerText = "";
+        appendMessage('ultron', "Greetings! Ultron Cybernetic Intelligence online and ready. Dual-engine LLM pipeline active.");
+        setTimeout(() => setState("IDLE"), 2000);
+      }
+    }, 1000);
+  }
+
+  function triggerScenario(type) {
+    setMode('card');
+    if (type === 'hello') {
+      appendMessage('user', "Hello Ultron");
+      processQuery("Hello Ultron");
+    } else if (type === 'weather') {
+      appendMessage('user', "What is the weather of Patiala?");
+      processQuery("What is the weather of Patiala?");
+    } else if (type === 'mlsc') {
+      appendMessage('user', "Tell me about MLSC TIET at Thapar University and share official links");
+      processQuery("Tell me about MLSC TIET at Thapar University and share official links");
+    } else if (type === 'volume') {
+      appendMessage('user', "Set system volume to 80%");
+      processQuery("Set system volume to 80%");
+    }
+  }
+
+  let demoRunning = false;
+  async function runFullWalkthrough() {
+    if (demoRunning) return;
+    demoRunning = true;
+    const btn = document.getElementById('btnAutoDemo');
+    btn.disabled = true;
+    btn.innerText = "⏳ Running Walkthrough...";
+
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+    setMode('orb');
+    setState('IDLE');
+    await sleep(1500);
+
+    setState('LISTENING');
+    await sleep(2200);
+
+    setMode('card');
+    setState('THINKING');
+    await sleep(1200);
+
+    appendMessage('user', "Hello Ultron");
+    processQuery("Hello Ultron");
+    await sleep(4000);
+
+    appendMessage('user', "What is the weather of Patiala?");
+    processQuery("What is the weather of Patiala?");
+    await sleep(5500);
+
+    appendMessage('user', "Tell me about MLSC TIET at Thapar University and share official links");
+    processQuery("Tell me about MLSC TIET at Thapar University and share official links");
+    await sleep(6500);
+
+    appendMessage('user', "Set system volume to 80%");
+    processQuery("Set system volume to 80%");
+    await sleep(4500);
+
+    setState('IDLE');
+    await sleep(1200);
+    setMode('orb');
+    await sleep(1500);
+    setMode('card');
+
+    btn.disabled = false;
+    btn.innerText = "▶ Run Complete Demo";
+    demoRunning = false;
+  }
+
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  async function toggleScreenRecording() {
+    const btn = document.getElementById('btnRecordVideo');
+    const banner = document.getElementById('recordBanner');
+
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      btn.classList.remove('recording');
+      btn.innerText = "🔴 Record Video (WebM / MP4)";
+      banner.style.display = 'none';
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "browser", frameRate: 60 },
+        audio: false
+      });
+
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ultron_gui_recording_' + Date.now() + '.webm';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+
+      mediaRecorder.start(100);
+      btn.classList.add('recording');
+      btn.innerText = "⏹ Stop & Save Video";
+      banner.style.display = 'block';
+
+      setTimeout(() => {
+        runFullWalkthrough();
+      }, 500);
+
+    } catch (err) {
+      console.warn("DisplayMedia cancelled or not permitted: ", err);
+      alert("To record: select this Google Chrome tab in the window share picker!");
+    }
+  }
+
+  function exportScreenshot() {
+    alert("Press Ctrl + Shift + P in Google Chrome -> type 'Capture full size screenshot' or click 'Record Video'!");
+  }
+
+  let isDragging = false;
+  let dragOffsetX = 0, dragOffsetY = 0;
+  
+  function initDrag(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('chat-link')) return;
+    isDragging = true;
+    const rect = widget.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+  }
+
+  function onDrag(e) {
+    if (!isDragging) return;
+    widget.style.left = (e.clientX - dragOffsetX) + 'px';
+    widget.style.top = (e.clientY - dragOffsetY) + 'px';
+  }
+
+  function stopDrag() {
+    isDragging = false;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', stopDrag);
+  }
+
+  document.getElementById('cardHeader').addEventListener('mousedown', initDrag);
+  document.getElementById('ultronWidget').addEventListener('mousedown', (e) => {
+    if (currentMode !== 'card') initDrag(e);
+  });
+</script>
+</body>
+</html>

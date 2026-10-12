@@ -139,12 +139,17 @@ class MainWindow(QWidget):
         self._dragging = False
         self._settings = QSettings("ULTRON", "orb")
 
-        self.setWindowTitle("ULTRON")
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.Tool,
+        import os
+        self._allow_capture = bool(
+            os.getenv("ULTRON_ALLOW_CAPTURE", "").lower() in ("1", "true", "yes")
+            or os.getenv("ULTRON_RECORDING", "").lower() in ("1", "true", "yes")
         )
+
+        self.setWindowTitle("ULTRON")
+        flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+        if not self._allow_capture:
+            flags |= Qt.WindowType.Tool
+        self.setWindowFlags(flags)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setMouseTracking(True)
@@ -184,11 +189,11 @@ class MainWindow(QWidget):
         self.tray.show_requested.connect(self._on_tray_show)
         self.tray.hide_requested.connect(self.hide)
         self.tray.quit_requested.connect(self._quit)
-        if not self.tray.available:
-            # Without this the frameless Qt.Tool window would be unquittable.
-            logger.warning("System tray unavailable — using right-click Quit on the orb.")
-            self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-            self.customContextMenuRequested.connect(self._show_fallback_menu)
+        self.tray.capture_toggled.connect(self.set_capture_allowed)
+
+        # Right-click context menu on the orb always available (allows toggling screen recording)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_fallback_menu)
 
         # --- geometry --------------------------------------------------------
         self._anim = QPropertyAnimation(self, b"geometry", self)
@@ -225,18 +230,35 @@ class MainWindow(QWidget):
 
     # ====================================================== screen-share privacy
     def _apply_capture_exclusion(self) -> None:
-        """Mark this window as excluded from screen capture.
+        """Mark this window as excluded from screen capture unless recording is enabled.
 
         Reapplied on every show: Qt destroys and recreates the native handle
         when window flags change, and the affinity belongs to the handle.
         """
         try:
-            from vision.screen_hider import hide_from_capture
+            if getattr(self, "_allow_capture", False):
+                from vision.screen_hider import allow_capture
 
-            self._hidden_from_capture = hide_from_capture(self)
+                allow_capture(self)
+                self._hidden_from_capture = False
+            else:
+                from vision.screen_hider import hide_from_capture
+
+                self._hidden_from_capture = hide_from_capture(self)
         except Exception as exc:  # pragma: no cover - platform dependent
             self._hidden_from_capture = False
-            logger.debug("Capture exclusion unavailable: {}", exc)
+            logger.debug("Capture configuration unavailable: {}", exc)
+
+    def set_capture_allowed(self, allowed: bool) -> None:
+        """Dynamically enable or disable screen recording visibility on Windows."""
+        import os
+        self._allow_capture = bool(allowed)
+        if self._allow_capture:
+            os.environ["ULTRON_ALLOW_CAPTURE"] = "1"
+        else:
+            os.environ.pop("ULTRON_ALLOW_CAPTURE", None)
+        self._apply_capture_exclusion()
+        logger.info("Screen recording visibility toggled: allowed={}", self._allow_capture)
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
@@ -860,6 +882,12 @@ class MainWindow(QWidget):
 
     def _show_fallback_menu(self, pos: QPoint) -> None:
         menu = QMenu(self)
+        rec_action = QAction("Allow Screen Recording", menu)
+        rec_action.setCheckable(True)
+        rec_action.setChecked(getattr(self, "_allow_capture", False))
+        rec_action.toggled.connect(self.set_capture_allowed)
+        menu.addAction(rec_action)
+        menu.addSeparator()
         hide_action = QAction("Hide", menu)
         hide_action.triggered.connect(self.hide)
         quit_action = QAction("Quit", menu)

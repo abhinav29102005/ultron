@@ -125,3 +125,10 @@ site/
 # Standalone Nebula repository
 nebula/
 
+
+# Local screen recordings & temporary screenshots
+screenshots/
+*.mp4
+*.webm
+*.gif
+*.webp

@@ -39,6 +39,7 @@ class TrayController(QObject):
     show_requested = pyqtSignal()
     hide_requested = pyqtSignal()
     quit_requested = pyqtSignal()
+    capture_toggled = pyqtSignal(bool)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -54,16 +55,25 @@ class TrayController(QObject):
         self._tray = QSystemTrayIcon(make_orb_icon("IDLE"), self)
         self._tray.setToolTip("ULTRON")
 
+        import os
         self._menu = QMenu()
         show_action = QAction("Show", self._menu)
         show_action.triggered.connect(self.show_requested.emit)
         hide_action = QAction("Hide", self._menu)
         hide_action.triggered.connect(self.hide_requested.emit)
+        
+        rec_action = QAction("Allow Screen Recording", self._menu)
+        rec_action.setCheckable(True)
+        is_rec = os.getenv("ULTRON_ALLOW_CAPTURE", "").lower() in ("1", "true", "yes") or os.getenv("ULTRON_RECORDING", "").lower() in ("1", "true", "yes")
+        rec_action.setChecked(is_rec)
+        rec_action.toggled.connect(self.capture_toggled.emit)
+
         quit_action = QAction("Quit", self._menu)
         quit_action.triggered.connect(self.quit_requested.emit)
 
         self._menu.addAction(show_action)
         self._menu.addAction(hide_action)
+        self._menu.addAction(rec_action)
         self._menu.addSeparator()
         self._menu.addAction(quit_action)
 
@@ -86,8 +96,11 @@ class TrayController(QObject):
         return self._tray is not None
 
     def _hide_menu_from_capture(self) -> None:
-        """Exclude the tray popup from screen capture, best effort."""
+        """Exclude the tray popup from screen capture unless recording is allowed."""
         if self._menu is None:
+            return
+        import os
+        if os.getenv("ULTRON_ALLOW_CAPTURE", "").lower() in ("1", "true", "yes") or os.getenv("ULTRON_RECORDING", "").lower() in ("1", "true", "yes"):
             return
         try:
             from vision.screen_hider import hide_from_capture
